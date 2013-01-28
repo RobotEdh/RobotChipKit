@@ -11,6 +11,18 @@
 #include <wiring.h> // used for analogic read function (core lib)
 #include <PID.h>
 
+
+#define CMD_START   0x01
+#define CMD_STOP    0x02
+#define CMD_INFOS   0x03
+#define CMD_PICTURE 0x04
+
+#define RESP_SIZE 8
+#define RESP_INFOS 0x01
+
+#define FUNC_MAIN 0x01
+#define FUNC_GO   0x02
+
 #define SPEEDNOMINAL 150
 #define SPEEDMAX 255     //(255=PWM max)
 #define SPEEDDELTA 50     
@@ -75,6 +87,7 @@
 
 
 int motor_init();     // initialize everything
+int mainRobot ();
 void IntrTickRight();  // interrupt handler encodeur right
 void IntrTickLeft();   // interrupt handler encodeur right
 

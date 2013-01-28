@@ -16,34 +16,8 @@ void setup()
 void loop()
 {
   int ret;
- 
-  Serial.print(" \n--> stop\n");  
-  stop();
-  delay(5000); //make it readable
-        
-  Serial.print("--> check_around\n");  
-  ret = check_around(); 
-  Serial.print("--> LEFT_DIRECTION 1, RIGHT_DIRECTION 2, ret: "); 
-  Serial.print(ret);  
-  delay(500); //make it readable
-      
-  Serial.print("\n--> start_forward\n"); 
-  start_forward();
-
   
-  Serial.print("--> go 1000 ticks\n"); 
-  delay(500); //make it readable   
-  ret = go(100,0);
-  
- 
-  if (ret == OBSTACLE ) {
-      Serial.print("--> 0bstacle"); 
-  }
-  else
-  {
-      Serial.print(" --> No obstacle, direction: "); 
-      Serial.print(ret);  
-  }
+  ret = mainRobot();
 
   ret = turn (30);
   Serial.print(" \n--> Turn 30, ret: "); 

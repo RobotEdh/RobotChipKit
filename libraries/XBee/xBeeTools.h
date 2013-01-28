@@ -60,8 +60,8 @@ class xBeeTools
 	int xBTprintNumber(long, uint8_t);
 	int xBTprintFloat(double, uint8_t);
 	int xBTsendbufferXbee(char *buf, unsigned int buf_len);
-	int xBTsendXbee(char* msg,  unsigned int msg_len);
-	int xBTreceiveXbee(char * msg, int timeout);
+	int xBTsendXbee(uint8_t* msg,  unsigned int msg_len);
+	int xBTreceiveXbee(uint8_t *msg, int timeout);
 	int xBTprint(const char *str, int size);
 	int xBTprint(const uint8_t *buffer, size_t size);
     int xBTprint(const String &);

@@ -26,13 +26,15 @@ SdVolume volume;    // SD Volume
 SdFile root;        // SD Root
 SdFile FilePicture; // SD File
 
+int no_picture = 0;
+ 
 xBeeTools xBT;           // The Xbee tools class
 
 
 int motor_init()
 {
-  int ret=SUCCESS;
-  
+  int ret = SUCCESS;
+   
   // H bridge setup
   pinMode(In1MotorRight1Pin, OUTPUT);     // set the pin as output
   pinMode(In2MotorRight1Pin, OUTPUT);     // set the pin as output
@@ -317,11 +319,14 @@ int deccelerate_n(int motor, int n)
 
 int go(int d, int pid_ind)
 {
+ int ret = 0;
  int Tick = 0;
  int pid;
  int distance = 0;
  int direction = 0; /* direction between 0-254, 0: North */
- int ret = 0;
+ uint8_t cmd[PAYLOAD_SIZE];
+ uint8_t resp[RESP_SIZE];
+
  
  TickLeft = 0;  // reset ticks
  TickRight = 0;
@@ -343,15 +348,57 @@ int go(int d, int pid_ind)
        } // end PID
        
        distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
-         Serial.print(Tick);  
-         Serial.print("/");
-         Serial.print(distance); 
-         Serial.print("\n"); 
-       if ((distance > 0) && (distance < DISTANCE_MIN)) {
+
+       if ((distance > 0) && (distance < DISTANCE_MIN))
+       {
            return OBSTACLE;       
        }
        
- }
+       ret = xBT.xBTreceiveXbee(cmd, 5); // read 5ms max
+       if (ret > 0)
+       {
+           if (cmd[0] == CMD_STOP)
+           { 
+               stop();
+               Tick = d;  
+           }
+           else if (cmd[0] == CMD_START)
+           { 
+               // nothing to do 
+           }
+           else if (cmd[0] == CMD_INFOS)
+           { 
+               // byte 0: response code
+               resp[0] = RESP_INFOS;
+               // byte 1: function code
+               resp[1] = FUNC_GO;
+               // byte 2: SpeedMotorRight
+               resp[2] = SpeedMotorRight;
+               // byte 3: SpeedMotorLeft
+               resp[3] = SpeedMotorLeft;
+               // byte 4: TickRight
+               resp[4] = TickRight;
+               // byte 5: TickLeft
+               resp[5] = TickLeft;
+               // byte 6: direction
+               resp[6] = CMPS03.CMPS03_read();
+               // byte 7: distance
+               resp[7] = distance;
+               
+               ret = xBT.xBTsendXbee(resp, sizeof (resp));
+           } 
+           else if (cmd[0] == CMD_PICTURE)
+           { 
+               no_picture++;
+               ret = makePicture (no_picture);
+               if (ret == SUCCESS)
+               { 
+                   ret= sendPicture (no_picture);
+               }                 
+           }              
+       }
+       
+ }  // end while Tick < d
  
  direction = CMPS03.CMPS03_read(); // get direction 
  return direction; 
@@ -560,7 +607,7 @@ int sendPicture (int n)
   int16_t nbytes; 
   unsigned int idx = 0;
   char buf[PAYLOAD_SIZE-1];     //First byte is used as indicator
-  char buffer[PAYLOAD_SIZE];
+  uint8_t buffer[PAYLOAD_SIZE];
   char filename[12+1];
   
   
@@ -593,4 +640,58 @@ int sendPicture (int n)
   if (!FilePicture.close()) return -2000;  
   
   return SUCCESS;
+}
+
+
+int mainRobot ()
+{
+ int ret = SUCCESS;
+
+ uint8_t cmd[PAYLOAD_SIZE];
+ uint8_t resp[RESP_SIZE];
+ 
+ 
+ ret = xBT.xBTreceiveXbee(cmd, 5); // read 5ms max
+  if (ret > 0)
+  {
+           if (cmd[0] == CMD_STOP)
+           { 
+               stop();  
+           }
+           else if (cmd[0] == CMD_START)
+           { 
+               start_forward();
+               ret = go(1000,0); 
+           }
+           else if (cmd[0] == CMD_INFOS)
+           { 
+               // byte 0: response code
+               resp[0] = RESP_INFOS;
+               // byte 1: function code
+               resp[1] = FUNC_MAIN;
+               // byte 2: SpeedMotorRight
+               resp[2] = SpeedMotorRight;
+               // byte 3: SpeedMotorLeft
+               resp[3] = SpeedMotorLeft;
+               // byte 4: TickRight
+               resp[4] = 0;
+               // byte 5: TickLeft
+               resp[5] = 0;
+               // byte 6: direction
+               resp[6] = CMPS03.CMPS03_read();
+               // byte 7: distance
+               resp[7] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
+               
+               ret = xBT.xBTsendXbee(resp, sizeof (resp));
+           } 
+           else if (cmd[0] == CMD_PICTURE)
+           { 
+               no_picture++;
+               ret = makePicture (no_picture);
+               if (ret == SUCCESS)
+               { 
+                   ret= sendPicture (no_picture);
+               }                 
+           }     
+   }
 }

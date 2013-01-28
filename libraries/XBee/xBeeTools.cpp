@@ -254,7 +254,7 @@ int start = -1;
 int Endofdata = 0;
 int ret = SUCCESS;
 
-char payload[PAYLOAD_SIZE];
+uint8_t payload[PAYLOAD_SIZE];
 
 while(Endofdata == 0) {
     if (buf_len + 1 > PAYLOAD_SIZE - 1) 
@@ -285,7 +285,7 @@ while(Endofdata == 0) {
 }
 
 
-int xBeeTools::xBTsendXbee(char* msg, unsigned int msg_len)
+int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
  {
   uint8_t payload[PAYLOAD_SIZE];
  
@@ -343,7 +343,7 @@ int xBeeTools::xBTsendXbee(char* msg, unsigned int msg_len)
 
 
 
-int xBeeTools::xBTreceiveXbee(char * msg, int timeout) {
+int xBeeTools::xBTreceiveXbee(uint8_t *msg, int timeout) {
      
   // Create an XBee object
   XBee xbee = XBee();
