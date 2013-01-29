@@ -20,8 +20,8 @@
 #define RESP_SIZE 8
 #define RESP_INFOS 0x01
 
-#define FUNC_MAIN 0x01
-#define FUNC_GO   0x02
+#define STATE_STOP 0x00
+#define STATE_GO   0x01
 
 #define SPEEDNOMINAL 150
 #define SPEEDMAX 255     //(255=PWM max)

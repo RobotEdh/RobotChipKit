@@ -296,8 +296,7 @@ int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
   
   // Create an XBee object
   XBee xbee = XBee();
-  TxStatusResponse txStatus = TxStatusResponse();
-  
+   
   // Tell XBee to start Serial: 
   // Initialize the UART for use, setting the baud rate to 9600, data size of 8-bits, and no parity.
   xbee.begin(9600);
@@ -307,15 +306,17 @@ int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
   
   // Create a TX Request contening payload for the remote XBee, with ACK and frame id = 0x12
   Tx64Request tx = Tx64Request(addr64, ACK_OPTION, payload, msg_len, 0x12); 
+  
+  TxStatusResponse txStatus = TxStatusResponse();
        
   // Send the request  
   xbee.send(tx);
-  
+  Serial.print("\nsendxbee2");
   // after sending a tx request, we expect a status response
   // wait up to 5 seconds for the status response
   if (xbee.readPacket(5000)) {
         // got a response!
-
+  Serial.print("\ngot a response!");
         // should be a tx status            	
     	if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
     	   xbee.getResponse().getTxStatusResponse(txStatus);
@@ -350,11 +351,11 @@ int xBeeTools::xBTreceiveXbee(uint8_t *msg, int timeout) {
   
   // Tell XBee to start Serial: 
   // Initialize the UART for use, setting the baud rate to 9600, data size of 8-bits, and no parity.
-  xbee.begin(9600);;
+  xbee.begin(9600);
 
   // Define a RX Response  
   Rx64Response rx64 = Rx64Response();
-
+ Serial.print("\nXbee_receive");
   // wait up to timeout seconds for the status response     
   if (xbee.readPacket(timeout)) {
         // got a response!

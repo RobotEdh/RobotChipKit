@@ -324,9 +324,6 @@ int go(int d, int pid_ind)
  int pid;
  int distance = 0;
  int direction = 0; /* direction between 0-254, 0: North */
- uint8_t cmd[PAYLOAD_SIZE];
- uint8_t resp[RESP_SIZE];
-
  
  TickLeft = 0;  // reset ticks
  TickRight = 0;
@@ -352,50 +349,6 @@ int go(int d, int pid_ind)
        if ((distance > 0) && (distance < DISTANCE_MIN))
        {
            return OBSTACLE;       
-       }
-       
-       ret = xBT.xBTreceiveXbee(cmd, 5); // read 5ms max
-       if (ret > 0)
-       {
-           if (cmd[0] == CMD_STOP)
-           { 
-               stop();
-               Tick = d;  
-           }
-           else if (cmd[0] == CMD_START)
-           { 
-               // nothing to do 
-           }
-           else if (cmd[0] == CMD_INFOS)
-           { 
-               // byte 0: response code
-               resp[0] = RESP_INFOS;
-               // byte 1: function code
-               resp[1] = FUNC_GO;
-               // byte 2: SpeedMotorRight
-               resp[2] = SpeedMotorRight;
-               // byte 3: SpeedMotorLeft
-               resp[3] = SpeedMotorLeft;
-               // byte 4: TickRight
-               resp[4] = TickRight;
-               // byte 5: TickLeft
-               resp[5] = TickLeft;
-               // byte 6: direction
-               resp[6] = CMPS03.CMPS03_read();
-               // byte 7: distance
-               resp[7] = distance;
-               
-               ret = xBT.xBTsendXbee(resp, sizeof (resp));
-           } 
-           else if (cmd[0] == CMD_PICTURE)
-           { 
-               no_picture++;
-               ret = makePicture (no_picture);
-               if (ret == SUCCESS)
-               { 
-                   ret= sendPicture (no_picture);
-               }                 
-           }              
        }
        
  }  // end while Tick < d
@@ -443,8 +396,7 @@ int check_around()
     else
     {
          return OBSTACLE; 
-    }
-      
+    }      
 }
 
 
@@ -541,7 +493,7 @@ int turn(double alpha)
     	               deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
   	                   accelerate_n(LEFT_MOTOR, delta2);  
                  }
-                 return 0;
+                 return SUCCESS;
         }
   } 
       
@@ -646,45 +598,55 @@ int sendPicture (int n)
 int mainRobot ()
 {
  int ret = SUCCESS;
+ int state = STATE_STOP;
+ long nb_go = 0;
+ long nb_obstacle = 0;
 
  uint8_t cmd[PAYLOAD_SIZE];
  uint8_t resp[RESP_SIZE];
  
- 
- ret = xBT.xBTreceiveXbee(cmd, 5); // read 5ms max
-  if (ret > 0)
-  {
+     
+     ret = xBT.xBTreceiveXbee(cmd, 5000); // read 5 ms max
+   
+     if (ret > 0)
+     {
+           Serial.print(ret);
            if (cmd[0] == CMD_STOP)
            { 
-               stop();  
+               stop();
+               state = STATE_STOP; 
+               Serial.print("CMD_STOP"); 
            }
            else if (cmd[0] == CMD_START)
            { 
                start_forward();
-               ret = go(1000,0); 
+               state = STATE_GO;
+               Serial.print("CMD_START"); 
            }
            else if (cmd[0] == CMD_INFOS)
            { 
+               Serial.print("CMD_INFOS");
                // byte 0: response code
                resp[0] = RESP_INFOS;
-               // byte 1: function code
-               resp[1] = FUNC_MAIN;
+               // byte 1: state
+               resp[1] = state;
                // byte 2: SpeedMotorRight
                resp[2] = SpeedMotorRight;
                // byte 3: SpeedMotorLeft
                resp[3] = SpeedMotorLeft;
-               // byte 4: TickRight
-               resp[4] = 0;
-               // byte 5: TickLeft
-               resp[5] = 0;
+               // byte 4: nb go
+               resp[4] = nb_go;
+               // byte 5: nb obstacle
+               resp[5] = nb_obstacle;
                // byte 6: direction
                resp[6] = CMPS03.CMPS03_read();
                // byte 7: distance
                resp[7] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
-               
+               delay (3000);
                ret = xBT.xBTsendXbee(resp, sizeof (resp));
+               if (ret != SUCCESS){  Serial.print("CMD_INFOS error"); Serial.print(ret);}
            } 
-           else if (cmd[0] == CMD_PICTURE)
+           else if (cmd[0] == CMD_PICTURE) 
            { 
                no_picture++;
                ret = makePicture (no_picture);
@@ -692,6 +654,28 @@ int mainRobot ()
                { 
                    ret= sendPicture (no_picture);
                }                 
-           }     
-   }
+           }
+     }          
+     
+     if (state == STATE_GO)
+     {    
+           nb_go++;
+           ret = go(10,0);
+           if (ret == OBSTACLE)
+           {   
+               nb_obstacle++;
+               ret = check_around ();
+               switch (ret) {
+                     case LEFT_DIRECTION:
+                            ret = turn (-90);
+                            break;
+                     case RIGHT_DIRECTION:
+                            ret = turn (+90);
+                            break;
+                      default:
+                            stop();
+                            state = STATE_STOP;  
+               }
+           }               
+     } 
 }
