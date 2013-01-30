@@ -257,7 +257,7 @@ int accelerate (int motor)
        analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);
        
  }
- return 0;
+ return SUCCESS;
 }
 
 
@@ -285,19 +285,19 @@ int deccelerate(int motor)
        analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
        analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);       
  }     
- return 0; 
+ return SUCCESS; 
 }
 
 
 int accelerate_n(int motor, int n)
 {
- int ret =0;
+ int ret = SUCCESS;
   
  for (int i=0;i<n;i++)
  {
    ret = accelerate(motor);
         
-   if (ret < 0) return i;
+   if (ret < 0) return i;  //stop if any error
  }     
  return n; 
 }
@@ -305,13 +305,13 @@ int accelerate_n(int motor, int n)
 
 int deccelerate_n(int motor, int n)
 {
- int ret =0;
+ int ret = SUCCESS;
   
  for (int i=0;i<n;i++)
  {
    ret = deccelerate(motor);
         
-   if (ret < 0) return i;
+   if (ret < 0) return i;  //stop if any error
  }     
  return n; 
 }
@@ -568,7 +568,7 @@ int sendPicture (int n)
   if (!FilePicture.open(&root, filename, O_READ)) return -1000;  
 
   // read from the file until there's nothing else in it:
-  while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 || ret != SUCCESS) {
+  while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 && ret == SUCCESS) {
       
        if (nbytes == sizeof(buf)) 
        {
@@ -648,11 +648,16 @@ int mainRobot ()
            } 
            else if (cmd[0] == CMD_PICTURE) 
            { 
+               Serial.print("CMD_PICTURE");
                no_picture++;
                ret = makePicture (no_picture);
+                Serial.print("CMD_PICTURE, ret:");
+               Serial.print(ret);
                if (ret == SUCCESS)
                { 
                    ret= sendPicture (no_picture);
+                   Serial.print("sendPicture, ret:");
+                   Serial.print(ret);
                }                 
            }
      }          

@@ -88,32 +88,72 @@
 
 int motor_init();     // initialize everything
 int mainRobot ();
+
+
 void IntrTickRight();  // interrupt handler encodeur right
 void IntrTickLeft();   // interrupt handler encodeur right
 
-void forward(); // set IN1 and IN2 of the 4 motors in order to run clockwise (refer truth table LM293D)
-void forward_test(int num); // set IN1 and IN2 of the motor num , used for testing
-void backward(); // set IN1 and IN2 of the 4 motors in order to run anti-clockwise (refer truth table LM293D)
 
-void start_forward(); // call forward + set enable pin of the 4 motors to SPEEDNOMINAL
+
+void forward();        // set IN1 and IN2 of the 4 motors in order to run clockwise (refer truth table LM293D)
+                       // input: none
+                       // output: none
+
+void forward_test(int num); // set IN1 and IN2 of the motor num , used for testing
+                            // input: num = 1: In1MotorRight1Pin
+                            //        num = 1: In1MotorRight2Pin
+                            //        num = 3: In1MotorLeft1Pin 
+                            //        num = 4: In1MotorLeft2Pin
+                            // output: none
+
+void backward();       // set IN1 and IN2 of the 4 motors in order to run anti-clockwise (refer truth table LM293D)
+                       // input: none
+                       // output: none
+                       
+void start_forward();  // call forward + set enable pin of the 4 motors to SPEEDNOMINAL
+                       // input: none
+                       // output: none
+                       
 void start_forward_test(int num); // call forward (num) + set enable pin of the motor num to SPEEDNOMINAL, used for testing
+                                  // input: num = 1: In1MotorRight1Pin
+                                  //        num = 1: In1MotorRight2Pin
+                                  //        num = 3: In1MotorLeft1Pin 
+                                  //        num = 4: In1MotorLeft2Pin
+                                  // output: none
+
+
 void start_backward(); // call backward + set enable pin of the 4 motors to SPEEDNOMINAL
+                       // input: none
+                       // output: none
 
 void stop(); // set IN1 and IN2 of the 4 motors in order to stop (refer truth table LM293D) and reset enable pin of the 4 motors 
+             // input: none
+             // output: none
+
+
+
 
 int accelerate (int motor); // set enable pin of the corresponding motors to an higher value (one increment)
-                            // motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                            // return -1 if already SPEEDMAX
+                            // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
+                            // output: return -1 if speed = SPEEDMAX
+                            //         return SUCCESS otherwise 
+
 int deccelerate(int motor); // set enable pin of the corresponding motors to an lowest value (one decrement)
-                            // motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                            // return -1 if already SPEEDMAX
+                            // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
+                            // output: return -1 if speed = 0
+                            //         return SUCCESS otherwise                            
                             
 int accelerate_n (int motor, int n); // set enable pin of the corresponding motors to an higher value (n increments)
-                                     // motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                                     // return -1 if already SPEEDMAX
+                                     // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
+                                     //        n = number of increments                                     
+                                     // output: return number of increments done
+                                     
 int deccelerate_n(int motor, int n); // set enable pin of the corresponding motors to an lowest value (n decrements)
-                                     // motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                                     // return -1 if already SPEEDMAX
+                                     // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
+                                     //        n = number of decrements
+                                     // output: return number of decrements done
+                                     
+                                                                      
                                      
 int go(int d, int pid_ind);           // go during d ticks using PID if pid_ind = 1
                                       // Control motors speed between left and right using a tick counter provided by an encoder
