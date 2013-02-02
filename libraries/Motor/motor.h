@@ -12,6 +12,17 @@
 #include <PID.h>
 
 
+#define SPEED_ERROR -1
+#define OBSTACLE -2
+#define TIMEOUT -3
+#define BAD_ANGLE -4
+#define COMPASS_ERROR -5
+#define CAMERA_ERROR -6
+#define XBEE_ERROR -7
+#define FILE_OPEN_ERROR -1000
+#define FILE_CLOSE_ERROR -1001
+
+
 #define CMD_START   0x01
 #define CMD_STOP    0x02
 #define CMD_INFOS   0x03
@@ -30,9 +41,6 @@
 #define CENTER_DIRECTION 0
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
-
-#define OBSTACLE -2
-#define TIMEOUT -3
 
 #define BOTH_MOTOR 0
 #define LEFT_MOTOR 1
@@ -95,82 +103,228 @@ void IntrTickLeft();   // interrupt handler encodeur right
 
 
 
-void forward();        // set IN1 and IN2 of the 4 motors in order to run clockwise (refer truth table LM293D)
-                       // input: none
-                       // output: none
+void forward();     
+/* Description: set IN1 and IN2 of the 4 motors in order to run clockwise     */                                            
+/*              (refer truth table LM293D)                                    */
+/* input:       none                                                          */
+/* output:      none                                                          */
+/* lib:         digitalWrite                                                  */
 
-void forward_test(int num); // set IN1 and IN2 of the motor num , used for testing
-                            // input: num = 1: In1MotorRight1Pin
-                            //        num = 1: In1MotorRight2Pin
-                            //        num = 3: In1MotorLeft1Pin 
-                            //        num = 4: In1MotorLeft2Pin
-                            // output: none
+void forward_test(int num); 
+/* Description: set IN1 and IN2 of the motor num in order to run clockwise    */                                            
+/*              (refer truth table LM293D)                                    */
+/*              used for testing                                              */
+/* input:       num                                                           */ 
+/*                  = 1: In1MotorRight1Pin                                    */ 
+/*                  = 2: In1MotorRight2Pin                                    */ 
+/*                  = 3: In1MotorLeft1Pin                                     */ 
+/*                  = 4: In1MotorLeft2Pin                                     */                       
+/* output:      none                                                          */
+/* lib:         digitalWrite                                                  */
 
-void backward();       // set IN1 and IN2 of the 4 motors in order to run anti-clockwise (refer truth table LM293D)
-                       // input: none
-                       // output: none
-                       
-void start_forward();  // call forward + set enable pin of the 4 motors to SPEEDNOMINAL
-                       // input: none
-                       // output: none
-                       
-void start_forward_test(int num); // call forward (num) + set enable pin of the motor num to SPEEDNOMINAL, used for testing
-                                  // input: num = 1: In1MotorRight1Pin
-                                  //        num = 1: In1MotorRight2Pin
-                                  //        num = 3: In1MotorLeft1Pin 
-                                  //        num = 4: In1MotorLeft2Pin
-                                  // output: none
+void start_forward();
+/* Description: call forward +                                                */ 
+/*              set enable pin of the 4 motors to SPEEDNOMINAL                */
+/* input:       none                                                          */
+/* output:      none                                                          */                       
+/* lib:         forward                                                       */
+/*              analogWrite                                                   */
+                                   
+void start_forward_test(int num);
+/* Description: call forward +                                                */ 
+/*              set enable pin of the 4 motors to SPEEDNOMINAL                */                                           
+/*              (refer truth table LM293D)                                    */
+/*              used for testing                                              */
+/* input:       num                                                           */ 
+/*                  = 1: In1MotorRight1Pin                                    */ 
+/*                  = 2: In1MotorRight2Pin                                    */ 
+/*                  = 3: In1MotorLeft1Pin                                     */ 
+/*                  = 4: In1MotorLeft2Pin                                     */ 
+/* output:      none                                                          */
+/* lib:         forward                                                       */
+/*              analogWrite                                                   */
+
+void backward();
+/* Description: set IN1 and IN2 of the 4 motors in order to run anti-clockwise*/                                            
+/*              (refer truth table LM293D)                                    */
+/* input:       none                                                          */
+/* output:      none                                                          */
+/* lib:         digitalWrite                                                  */
+
+void start_backward();
+/* Description: call backward +                                               */ 
+/*              set enable pin of the 4 motors to SPEEDNOMINAL                */
+/* input:       none                                                          */
+/* output:      none                                                          */
+/* lib:         backward                                                      */
+/*              analogWrite                                                   */
+
+void stop();
+/* Description: set IN1 and IN2 of the 4 motors in order to stop              */
+/*              (refer truth table LM293D)                                    */
+/*              and reset enable pin of the 4 motors                          */
+/* input:       none                                                          */
+/* output:      none                                                          */
+/* lib:         analogWrite                                                   */
+/*              digitalWrite                                                  */
 
 
-void start_backward(); // call backward + set enable pin of the 4 motors to SPEEDNOMINAL
-                       // input: none
-                       // output: none
+int accelerate (int motor);
+/* Description: set enable pin of the corresponding motors to an higher value */
+/*              (one increment)                                               */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/*                  = BOTH_MOTOR                                              */ 
+/* output:      return                                                        */                            
+/*                  = SPEED_ERROR if speed computed > SPEEDMAX                */ 
+/*                  = SUCCESS otherwise                                       */ 
+/* lib:         analogWrite                                                   */
 
-void stop(); // set IN1 and IN2 of the 4 motors in order to stop (refer truth table LM293D) and reset enable pin of the 4 motors 
-             // input: none
-             // output: none
+int accelerate_n (int motor, int n);
+/* Description: set enable pin of the corresponding motors to an higher value */
+/*              (n increments)                                                */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/*                  = BOTH_MOTOR                                              */ 
+/* input:       n                                                             */
+/*                  = number of increments                                    */  
+/* output:      return                                                        */                            
+/*                  = return number of increments done                        */ 
+/* lib:         accelerate                                                    */
 
 
+int deccelerate(int motor);
+/* Description: set enable pin of the corresponding motors to a lower value   */
+/*              (one decrement)                                               */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/*                  = BOTH_MOTOR                                              */ 
+/* output:      return                                                        */                            
+/*                  = SPEED_ERROR if speed = 0                                */ 
+/*                  = SUCCESS otherwise                                       */                             
+/* lib:         analogWrite                                                   */
+                                                                   
+int deccelerate_n(int motor, int n);
+/* Description: set enable pin of the corresponding motors to a lower value   */
+/*              (n decrements)                                                */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/*                  = BOTH_MOTOR                                              */ 
+/* input:       n                                                             */
+/*                  = number of decrements                                    */  
+/* output:      return                                                        */                            
+/*                  = return number of decrements done                        */                                     
+/* lib:         deccelerate                                                   */
 
-
-int accelerate (int motor); // set enable pin of the corresponding motors to an higher value (one increment)
-                            // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                            // output: return -1 if speed = SPEEDMAX
-                            //         return SUCCESS otherwise 
-
-int deccelerate(int motor); // set enable pin of the corresponding motors to an lowest value (one decrement)
-                            // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                            // output: return -1 if speed = 0
-                            //         return SUCCESS otherwise                            
-                            
-int accelerate_n (int motor, int n); // set enable pin of the corresponding motors to an higher value (n increments)
-                                     // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                                     //        n = number of increments                                     
-                                     // output: return number of increments done
-                                     
-int deccelerate_n(int motor, int n); // set enable pin of the corresponding motors to an lowest value (n decrements)
-                                     // input: motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                                     //        n = number of decrements
-                                     // output: return number of decrements done
-                                     
+ 
+ 
+int adjustMotor (int motor, int pid);
+/* Description: Adjust the speed of the motor according the PID value         */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/* input:       pid                                                           */
+/*                  = pid value to adjust                                     */  
+/* output:      return                                                        */                            
+/*                  = SPEED_ERROR if speed computed > SPEEDMAX                */ 
+/*                  = SUCCESS otherwise                                       */                                        
+/* lib:         analogWrite                                                   */                                        
                                                                       
                                      
-int go(int d, int pid_ind);           // go during d ticks using PID if pid_ind = 1
-                                      // Control motors speed between left and right using a tick counter provided by an encoder
-                                      // adjust (calling adjustMotor) the motor speed if necessary using a PID method
-                                      // return -1 if cant adjust motor speed
-                                      // return -2 is something is detected by IR sensor at less than DISTANCE_MIN
-                                      // else returns direction using a compass
-int adjustMotor (int motor, int pid); // function called by the Go function in order to adjust
-                                       // motor = LEFT_MOTOR, RIGHT_MOTOR or BOTH_MOTOR
-                                       // with the value PID computed by the PID library
-                                       // return -1 if cant adjust motor speed
-int check_around();   // move the servo used by the IR sensor in order to determine the direction without obstacle
-                      // returns the direction to go
-int turn(double alpha); // turns with an angle of alpha degrees (-180 < alplha < +180) and alpha <> 0
+int go(int d, int pid_ind); 
+/* Description: go during d ticks using PID adjustement if pid_ind = 1,       */
+/*              control motors speed between left and right                   */
+/*              using a tick counter provided by an encoder                   */
+/*              adjust (calling adjustMotor) the motor speed if necessary     */
+/*              using a PID method                                            */
+/* input:       d                                                             */ 
+/*                  = number of right+left ticks to go                        */ 
+/* input:       pid_ind                                                       */
+/*                  = 0: disable PID adjustement                              */
+/*                  = 1: enable PID adjustement                               */    
+/* output:      return                                                        */                            
+/*                  = SPEED_ERROR if speed computed > SPEEDMAX                */
+/*                  = OBSTACLE if an obstacle is detected before DISTANCE_MIN */
+/*                  = SUCCESS otherwise                                       */                                          
+/* lib:         computePID                                                    */                                
+/*              adjustMotor                                                   */                                
+/*              GP2Y0A21YK_getDistanceCentimeter                              */                                      
+                                       
+                                       
+int check_around();
+/* Description: move the servo used by the IR sensor in order to determine    */
+/*              the direction without obstacle                                */
+/* input:       none                                                          */   
+/* output:      return                                                        */                            
+/*                  = OBSTACLE if an obstacle is detected for both directions */
+/*                  = LEFT_DIRECTION if best direction to go                  */ 
+/*                  = RIGHT_DIRECTION if best direction to go                 */                      
+/* lib:         IRServo.attach                                                */                                
+/*              IRServo.write                                                 */                                
+/*              delay                                                         */
+/*              adjustMotor                                                   */                                
+/*              GP2Y0A21YK_getDistanceCentimeter                              */  
+
+
+                      
+int turn(double alpha, unsigned long timeout);
+/* Description: turns with an angle of alpha degrees before a delay (timeout) */
+/*              using a compass to get the direction                          */
+/* input:       alpha                                                         */ 
+/*                  = angle to turn (-180 < alplha < +180) and alpha <> 0     */
+/*              timeout                                                       */ 
+/*                  = timeout in ms                                           */      
+/* output:      return                                                        */                            
+/*                  = BAD_ANGLE if not (-180 < alplha < +180) and alpha <> 0  */
+/*                  = COMPASS_ERROR if an error occurs with the compass       */
+/*                  = TIMEOUT if turn is not completed before the delay       */
+/*                  = SUCCESS otherwise                                       */  
+/* lib:         CMPS03_read()                                                 */                                
+/*              accelerate_n                                                  */                                
+/*              deccelerate_n                                                 */
+/*              millis                                                        */                                
+
+
+
+
 
 int makePicture (int n);
+/* Description: make a picture using the JPEGCamera lib                       */
+/*              and save it on a SD card in a file PICTxx.jpg                 */
+/* input:       n                                                             */ 
+/*                  = picture number xx                                       */     
+/* output:      return                                                        */                            
+/*                  = FILE_OPEN_ERROR if an error occurs during file opening  */
+/*                  = FILE_CLOSE_ERROR if an error occurs during file closing */
+/*                  = CAMERA_ERROR if an error occurs with the camera         */
+/*                  = SUCCESS otherwise                                       */  
+/* lib:         sprintf                                                       */                                
+/*              open (file)                                                   */
+/*              write (file)                                                  */
+/*              close (file)                                                  */                                  
+/*              JPEGCamera.takePicture                                        */
+/*              JPEGCamera.getSize                                            */  
+/*              JPEGCamera.readData                                           */
+/*              JPEGCamera.stopPictures                                       */
 
 int sendPicture (int n);
+/* Description: send using XBee interface a picture stored                    */
+/*              in a file PICTxx.jpg on a SD card                             */
+/* input:       n                                                             */ 
+/*                  = picture number xx                                       */     
+/* output:      return                                                        */                            
+/*                  = FILE_OPEN_ERROR if an error occurs during file opening  */
+/*                  = FILE_CLOSE_ERROR if an error occurs during file closing */
+/*                  = XBEE_ERROR if an error occurs with the XBee interface   */
+/*                  = SUCCESS otherwise                                       */ 
+/* lib:         sprintf                                                       */                                
+/*              open (file)                                                   */
+/*              read (file)                                                   */
+/*              close (file)                                                  */                                  
+/*              xBTsendXbee                                                   */
 
 #endif

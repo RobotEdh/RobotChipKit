@@ -854,11 +854,16 @@ void XBee::readPacket() {
 	// reset previous response
 	if (_response.isAvailable() || _response.isError()) {
 		// discard previous packet and start over
+		Serial.println("----");
+		Serial.println("resetResponse");
 		resetResponse();
 	}
+	
+	//if (_serial->available() != 0) Serial.print(_serial->available());
 
     while (available()) {
-
+        //.println("----");
+		//Serial.print("read");
         b = read();
 
         if (_pos > 0 && b == START_BYTE && ATAP == 2) {

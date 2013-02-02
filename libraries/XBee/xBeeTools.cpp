@@ -306,16 +306,18 @@ int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
   
   // Create a TX Request contening payload for the remote XBee, with ACK and frame id = 0x12
   Tx64Request tx = Tx64Request(addr64, ACK_OPTION, payload, msg_len, 0x12); 
-       
-  // Send the request  
+ 
+  
+  // Send the request 
   xbee.send(tx);
-  Serial.print("\nsendxbee2");
-   TxStatusResponse txStatus = TxStatusResponse();
+ 
+  TxStatusResponse txStatus = TxStatusResponse();
+  
   // after sending a tx request, we expect a status response
   // wait up to 5 seconds for the status response
   if (xbee.readPacket(5000)) {
         // got a response!
-  Serial.print("got a response!");
+  //Serial.println("got a response!");
         // should be a tx status            	
     	if (xbee.getResponse().getApiId() == TX_STATUS_RESPONSE) {
     	   xbee.getResponse().getTxStatusResponse(txStatus);
@@ -323,13 +325,12 @@ int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
     	   // get the delivery status, the fifth byte    	   
            if (txStatus.getStatus() == SUCCESS) {
                 // success.  time to celebrate
-                  Serial.print("SUCCESS");
                 return SUCCESS;          	
            }
            else
            {
                 // the remote XBee did not receive our packet. is it powered on?
-                Serial.print("STATUS_ERROR");
+                Serial.println("STATUS_ERROR");
                 return ((-100*STATUS_ERROR) - txStatus.getStatus());
            }         
       }
@@ -340,7 +341,7 @@ int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
     }
     else {
       // local XBee did not provide a timely TX Status Response.  Radio is not configured properly or connected
-      Serial.print("NO_RESPONSE");
+      Serial.println("NO_RESPONSE");
       return NO_RESPONSE; 
     }
 }
@@ -358,7 +359,7 @@ int xBeeTools::xBTreceiveXbee(uint8_t *msg, int timeout) {
 
   // Define a RX Response  
   Rx64Response rx64 = Rx64Response();
- Serial.print("\nXbee_receive");
+
   // wait up to timeout seconds for the status response     
   if (xbee.readPacket(timeout)) {
         // got a response!
@@ -372,7 +373,7 @@ int xBeeTools::xBTreceiveXbee(uint8_t *msg, int timeout) {
            {
                 msg [i] = rx64.getData(i);
            }
-           return rx64.getDataLength();
+           return SUCCESS;
         }
         else
         {

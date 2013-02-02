@@ -1,5 +1,4 @@
 #include <XBee.h>
-#include <xPrint.h>
 
 /**
  * Copyright (c) 2009 Andrew Rapp. All rights reserved.
@@ -20,7 +19,7 @@
  * along with XBee-Arduino.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <XPrint.h>
+#include "xBeeTools.h"
 
 #include <SD.h>
 
@@ -28,16 +27,16 @@
 void setup() {
   
   int ret = SUCCESS;
-  xPrint p;
   
   Sd2Card card;
   SdVolume volume;
-  SdFile myFile;
+  SdFile FilePicture;
   SdFile root;
-  int16_t n; 
-  unsigned int idx = 0;
-  char buf[PAYLOAD_SIZE-1]; //First byte is used as indicator
-  char buffer[PAYLOAD_SIZE];
+  int16_t nbytes; 
+  xBeeTools xBT;           // The Xbee tools class
+
+  uint8_t buf[PAYLOAD_SIZE-1]; //First byte is used as indicator
+  uint8_t buffer[PAYLOAD_SIZE];
   
   Serial.begin(9600); // initialize serial port for debug
 
@@ -59,14 +58,13 @@ void setup() {
   Serial.println("Initialization done.");
     
  
-  if (myFile.open(&root, "test.jpg", O_READ)){
- 
-    Serial.println("File open OK");
+  // Open the file
+  if (!FilePicture.open(&root, "PICT01.jpg", O_READ)) Serial.println("Error file open"); 
 
-    // read from the file until there's nothing else in it:
-    while ((n = myFile.read(buf, sizeof(buf))) > 0 || ret != SUCCESS) {
+  // read from the file until there's nothing else in it:
+  while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 && ret == SUCCESS) {
       
-       if (n == sizeof(buf)) 
+       if (nbytes == sizeof(buf)) 
        {
            buffer[0] = 0;
        }
@@ -74,28 +72,20 @@ void setup() {
        {
            buffer[0] = 1; //end file read
        }  
-    
-       for (unsigned int i = 1;i<n+1;i++)
+       
+       unsigned int idx = 0;
+       for (unsigned int i = 1;i<nbytes+1;i++)
        {
            buffer [i] = buf[idx++];
        }
-   	
-       ret = p.xsendXbee(buffer, n+1);
- 
-    }// while
-    
-    // close the file
-    if (!myFile.close())
-    {
-       Serial.println("Error close file");
-    }
-  }
-  else
-  {
-    // if the file didn't open, print an error
-    Serial.println("Error opening file");
-  }
+       ret = xBT.xBTsendXbee(buffer, nbytes+1);
 
+  }// while
+   Serial.println("end");
+   Serial.println("+++++++");
+  //Close file
+  if (!FilePicture.close()) Serial.println("Error file close");
+  
 }
 
 void loop() {
@@ -104,6 +94,3 @@ void loop() {
  
 }
   
-  
-
-

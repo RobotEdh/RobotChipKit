@@ -236,21 +236,21 @@ int accelerate (int motor)
 {
  if (motor == LEFT_MOTOR) {
        if  (SpeedMotorLeft < SPEEDMAX)   SpeedMotorLeft++;
-       else return -1; 
+       else return SPEED_ERROR; 
        analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
        analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);       
  }
  else if (motor == RIGHT_MOTOR) {
        if  (SpeedMotorRight < SPEEDMAX)  SpeedMotorRight++;
-       else return -1; 
+       else return SPEED_ERROR; 
        analogWrite(EnableMotorRight1Pin, SpeedMotorRight); 
        analogWrite(EnableMotorRight2Pin, SpeedMotorRight);         
  }
  else {
        if  (SpeedMotorRight < SPEEDMAX)  SpeedMotorRight++;
-       else return -1; 
+       else return SPEED_ERROR; 
        if  (SpeedMotorLeft < SPEEDMAX)   SpeedMotorLeft++; 
-       else return -1;  
+       else return SPEED_ERROR;  
        analogWrite(EnableMotorRight1Pin, SpeedMotorRight);
        analogWrite(EnableMotorRight2Pin, SpeedMotorRight);  
        analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
@@ -265,21 +265,21 @@ int deccelerate(int motor)
 {
  if (motor == LEFT_MOTOR) {
        if  (SpeedMotorLeft > 0)   SpeedMotorLeft--;
-       else return -1; 
+       else return SPEED_ERROR; 
        analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
        analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);       
  }
  else if (motor == RIGHT_MOTOR) {
        if  (SpeedMotorRight > 0)  SpeedMotorRight--;
-       else return -1; 
+       else return SPEED_ERROR; 
        analogWrite(EnableMotorRight1Pin, SpeedMotorRight); 
        analogWrite(EnableMotorRight2Pin, SpeedMotorRight);          
  }
  else {
        if  (SpeedMotorRight > 0)  SpeedMotorRight--;
-       else return -1; 
+       else return SPEED_ERROR; 
        if  (SpeedMotorLeft >0)   SpeedMotorLeft--; 
-       else return -1;  
+       else return SPEED_ERROR;  
        analogWrite(EnableMotorRight1Pin, SpeedMotorRight); 
        analogWrite(EnableMotorRight2Pin, SpeedMotorRight);         
        analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
@@ -297,7 +297,7 @@ int accelerate_n(int motor, int n)
  {
    ret = accelerate(motor);
         
-   if (ret < 0) return i;  //stop if any error
+   if (ret == SPEED_ERROR) return i;  //stop if any error
  }     
  return n; 
 }
@@ -311,7 +311,7 @@ int deccelerate_n(int motor, int n)
  {
    ret = deccelerate(motor);
         
-   if (ret < 0) return i;  //stop if any error
+   if (ret == SPEED_ERROR) return i;  //stop if any error
  }     
  return n; 
 }
@@ -335,12 +335,12 @@ int go(int d, int pid_ind)
              if (TickLeft > TickRight) {
                    pid = computePID (TickLeft - TickRight); // compute PID
                    ret = adjustMotor (LEFT_MOTOR, pid);     // Adjust according PID
-                   if (ret != 0) return ret;
+                   if (ret == SPEED_ERROR) return SPEED_ERROR;
              }      
               if (TickLeft < TickRight) {
                    pid = computePID (TickRight - TickLeft);  // compute PID
                    ret = adjustMotor (RIGHT_MOTOR, pid);     // Adjust according PID
-                   if (ret != 0) return ret;
+                   if (ret == SPEED_ERROR) return SPEED_ERROR;
              }
        } // end PID
        
@@ -353,8 +353,7 @@ int go(int d, int pid_ind)
        
  }  // end while Tick < d
  
- direction = CMPS03.CMPS03_read(); // get direction 
- return direction; 
+ return SUCCESS; 
 }
 
 int check_around()
@@ -362,7 +361,7 @@ int check_around()
  int distance_right = 0;
  int distance_left = 0; 
    
-    // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
+    // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt (if not already done)
     IRServo.attach(SERVO_Pin);  
        
     IRServo.write(0);  // turn servo left
@@ -430,13 +429,13 @@ int adjustMotor (int motor, int pid)
   
   // check speed max
   
-  if (SpeedMotorRight - SPEEDMAX > SpeedMotorLeft) return -1;
+  if (SpeedMotorRight - SPEEDMAX > SpeedMotorLeft) return SPEED_ERROR;
   if (SpeedMotorRight - SPEEDMAX > 0) {
        SpeedMotorRight = SPEEDMAX;
        SpeedMotorLeft = SpeedMotorLeft - (SPEEDMAX - SpeedMotorRight) ;
   } 
   
-  if (SpeedMotorLeft - SPEEDMAX > SpeedMotorRight) return -1;
+  if (SpeedMotorLeft - SPEEDMAX > SpeedMotorRight) return SPEED_ERROR;
   if (SpeedMotorLeft - SPEEDMAX > 0) {
        SpeedMotorLeft = SPEEDMAX;
        SpeedMotorRight = SpeedMotorRight - (SPEEDMAX - SpeedMotorLeft) ;
@@ -447,53 +446,51 @@ int adjustMotor (int motor, int pid)
   analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
   analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);
   
-  return 0;
+  return SUCCESS;
    
 }
 
  
-int turn(double alpha)
+int turn(double alpha, unsigned long timeout)
 {
   int direction = 0; /* direction between 0-254, 0: North */
   int direction_target = 0; /* direction between 0-254, 0: North */
   int delta1 = 0;
   int delta2 = 0;
   
-  if ((alpha == 0) || (alpha < -180) || (alpha > 180)) return -1; // alpha between -180 and +180 and <> 0
+  if ((alpha == 0) || (alpha < -180) || (alpha > 180)) return BAD_ANGLE; // alpha between -180 and +180 and <> 0
   
-  direction = CMPS03.CMPS03_read(); // get initial direction 
+  direction = CMPS03.CMPS03_read(); // get initial direction
+  if (direction < 0)  return COMPASS_ERROR;
+  
   direction_target = direction + (int)(254.0*alpha/360.0); // compute target direction 
   
   if (alpha > 0 ) {
         delta1 = accelerate_n(LEFT_MOTOR, SPEEDDELTA); // turns right
-  	    delta2 = deccelerate_n(RIGHT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
+  	delta2 = deccelerate_n(RIGHT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
   }
   else
   {
         delta1 = accelerate_n(RIGHT_MOTOR, SPEEDDELTA); // turns left
-  	    delta2 = deccelerate_n(LEFT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
+  	delta2 = deccelerate_n(LEFT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
   }
   
-  for (int i=0;i<1000;i++)  // simulate a timeout
-  {      
-        direction = CMPS03.CMPS03_read(); // get current direction 
-         Serial.print(i);  
-         Serial.print("/");
-         Serial.print(direction); 
-         Serial.print("/");
-         Serial.print(direction_target); 
-         Serial.print("\n");
-        if ( ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) {
+  unsigned long start = millis();
+
+  while (int((millis() - start)) < timeout) {  // turn during maximum timeout milliseconds   
+        direction = CMPS03.CMPS03_read(); // get current direction
+ 
+        if ( (direction < 0)  || ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) {
                  if (alpha > 0) {
   	                   deccelerate_n(LEFT_MOTOR, delta1); // stop turns right
   	                   accelerate_n(RIGHT_MOTOR, delta2);  
                  }
                  else
                  {
-    	               deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
+    	                   deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
   	                   accelerate_n(LEFT_MOTOR, delta2);  
                  }
-                 return SUCCESS;
+                 if (direction < 0)  return COMPASS_ERROR else return SUCCESS;
         }
   } 
       
@@ -514,22 +511,22 @@ int makePicture (int n)
   
   // Open the file
   sprintf(filename, "PICT%02d.jpg", n);
-  if (!FilePicture.open(&root, filename, O_CREAT|O_WRITE|O_TRUNC)) return -1000;  
+  if (!FilePicture.open(&root, filename, O_CREAT|O_WRITE|O_TRUNC)) return FILE_OPEN_ERROR;  
   
   //Take a picture
   ret=JPEGCamera.takePicture();
-  if (ret != SUCCESS) return ret;
+  if (ret != SUCCESS) return CAMERA_ERROR;
      
   //Get the size of the picture    
   ret=JPEGCamera.getSize(&size);
-  if (ret != SUCCESS ) return ret;
+  if (ret != SUCCESS ) return CAMERA_ERROR;
  
   //Starting at address 0, keep reading data until we've read 'size' data
   while(address < size)
   {       
         //Read the data starting at the current address
         ret=JPEGCamera.readData(address, buf, &count, &eof);
-        if (ret != SUCCESS ) return ret;
+        if (ret != SUCCESS ) return CAMERA_ERROR;
  
         for(int i=0; i<count; i++)
         {  
@@ -543,10 +540,10 @@ int makePicture (int n)
 
   //Stop taking picture
   ret=JPEGCamera.stopPictures();
-  if (ret != SUCCESS ) return ret;
+  if (ret != SUCCESS ) return CAMERA_ERROR;
   
   //Close file
-  if (!FilePicture.close()) return -2000;  
+  if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
   
   return SUCCESS;
 }
@@ -557,7 +554,6 @@ int sendPicture (int n)
 {
   int ret=SUCCESS;
   int16_t nbytes; 
-  unsigned int idx = 0;
   char buf[PAYLOAD_SIZE-1];     //First byte is used as indicator
   uint8_t buffer[PAYLOAD_SIZE];
   char filename[12+1];
@@ -565,7 +561,7 @@ int sendPicture (int n)
   
   // Open the file
   sprintf(filename, "PICT%02d.jpg", n);
-  if (!FilePicture.open(&root, filename, O_READ)) return -1000;  
+  if (!FilePicture.open(&root, filename, O_READ)) return FILE_OPEN_ERROR;  
 
   // read from the file until there's nothing else in it:
   while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 && ret == SUCCESS) {
@@ -579,17 +575,19 @@ int sendPicture (int n)
            buffer[0] = 1; //end file read
        }  
     
+       unsigned int idx = 0;
        for (unsigned int i = 1;i<nbytes+1;i++)
        {
            buffer [i] = buf[idx++];
        }
    	
        ret = xBT.xBTsendXbee(buffer, nbytes+1);
+       if (ret != SUCCESS ) return XBEE_ERROR;
  
   }// while
   
   //Close file
-  if (!FilePicture.close()) return -2000;  
+  if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
   
   return SUCCESS;
 }
@@ -608,7 +606,7 @@ int mainRobot ()
      
      ret = xBT.xBTreceiveXbee(cmd, 5000); // read 5 ms max
    
-     if (ret > 0)
+     if (ret == SUCCESS)
      {
            Serial.print(ret);
            if (cmd[0] == CMD_STOP)
@@ -651,13 +649,10 @@ int mainRobot ()
                Serial.print("CMD_PICTURE");
                no_picture++;
                ret = makePicture (no_picture);
-                Serial.print("CMD_PICTURE, ret:");
-               Serial.print(ret);
+
                if (ret == SUCCESS)
                { 
                    ret= sendPicture (no_picture);
-                   Serial.print("sendPicture, ret:");
-                   Serial.print(ret);
                }                 
            }
      }          
