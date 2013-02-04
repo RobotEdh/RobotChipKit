@@ -18,7 +18,11 @@ volatile int TickLeft = 0;
 volatile int DirLeft = 0;
 
 CMPS03Class CMPS03;          // The Compass class
-Servo IRServo;               // The Servo class
+Servo IRServo;               // The Servo class used for IR sensor
+Servo HServo;                // The Servo class used for Horizontal Tilt & Pan
+Servo VServo;                // The Servo class used for Vertical Tilt & Pan
+int HPos = 90;               // neutral position for Horizontal Tilt & Pan
+int VPos = 90;               // neutral position for Vertical Tilt & Pan
 JPEGCameraClass JPEGCamera;  // The Camera class
 
 Sd2Card card;       // SD Card       
@@ -53,15 +57,29 @@ int motor_init()
   GP2Y0A21YK_init(GP2Y0A21YK_Pin); 
 
   // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
-  IRServo.attach(SERVO_Pin);  
- 
+  IRServo.attach(IRSERVO_Pin);  
   // reset the servo position
   IRServo.write(90);  // reset servo position
   delay(15);          // waits 15ms for the servo to reach the position 
- 
   // reset the Timer interrupt associate to the Timer interrupt
   IRServo.detach(); 
   
+  // initialize the PWM pin connected to the servo used for the Horizontal Tilt&Pan and initialize the associate Timer interrupt
+  HServo.attach(HSERVO_Pin);   
+  // reset the servo position
+  HServo.write(HPos);  // reset servo position
+  delay(15);           // waits 15ms for the servo to reach the position 
+  // reset the Timer interrupt associate to the Timer interrupt
+  HServo.detach();
+  
+  // initialize the PWM pin connected to the servo used for the Vertical Tilt&Pan and initialize the associate Timer interrupt
+  VServo.attach(VSERVO_Pin);   
+  // reset the servo position
+  VServo.write(VPos);  // reset servo position
+  delay(15);           // waits 15ms for the servo to reach the position 
+  // reset the Timer interrupt associate to the Timer interrupt
+  VServo.detach(); 
+     
   // initialize the compas  
   CMPS03.CMPS03_begin();
   
@@ -356,26 +374,27 @@ int go(int d, int pid_ind)
  return SUCCESS; 
 }
 
+
 int check_around()
 {
  int distance_right = 0;
  int distance_left = 0; 
    
     // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt (if not already done)
-    IRServo.attach(SERVO_Pin);  
+    IRServo.attach(IRSERVO_Pin);  
        
-    IRServo.write(0);  // turn servo left
-    delay(15*90);      // waits 15ms for the servo to reach the position 
+    IRServo.write(0);    // turn servo left
+    delay(15*90);        // waits the servo to reach the position 
     distance_left = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance on right side
     if ((distance_left > 0) && (distance_left < DISTANCE_MIN)) distance_left = 0;  // Robot need a min distance to turn
        
     IRServo.write(180);  // turn servo right
-    delay(15*180);       // waits 15ms for the servo to reach the position 
+    delay(15*180);       // waits the servo to reach the position 
     distance_right = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance on left side
     if ((distance_right > 0) && (distance_right < DISTANCE_MIN)) distance_right = 0;  // Robot need a min distance to turn
   
-    IRServo.write(90);  // reset servo position
-    delay(15*90);       // waits 15ms for the servo to reach the position 
+    IRServo.write(90);   // reset servo position
+    delay(15*90);        // waits the servo to reach the position 
 	 
     if (distance_left == -1) 
     {
@@ -467,17 +486,16 @@ int turn(double alpha, unsigned long timeout)
   
   if (alpha > 0 ) {
         delta1 = accelerate_n(LEFT_MOTOR, SPEEDDELTA); // turns right
-  	delta2 = deccelerate_n(RIGHT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
+  	    delta2 = deccelerate_n(RIGHT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
   }
   else
   {
         delta1 = accelerate_n(RIGHT_MOTOR, SPEEDDELTA); // turns left
-  	delta2 = deccelerate_n(LEFT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
+  	    delta2 = deccelerate_n(LEFT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
   }
   
   unsigned long start = millis();
-
-  while (int((millis() - start)) < timeout) {  // turn during maximum timeout milliseconds   
+  while ((millis() - start) < timeout) {  // turn during maximum timeout milliseconds   
         direction = CMPS03.CMPS03_read(); // get current direction
  
         if ( (direction < 0)  || ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) {
@@ -487,10 +505,11 @@ int turn(double alpha, unsigned long timeout)
                  }
                  else
                  {
-    	                   deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
+    	               deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
   	                   accelerate_n(LEFT_MOTOR, delta2);  
                  }
-                 if (direction < 0)  return COMPASS_ERROR else return SUCCESS;
+                 if (direction < 0)  return COMPASS_ERROR;
+                 else                return SUCCESS;
         }
   } 
       
@@ -593,6 +612,33 @@ int sendPicture (int n)
 }
 
 
+
+void move_Tilt_Pan(int HTick, int VTick)
+{
+ 
+    // initialize the PWM pin connected to the servo used for the Tilt&Pan and initialize the associate Timer interrupt (if not already done)
+    HServo.attach(HSERVO_Pin);  
+    VServo.attach(VSERVO_Pin);  
+
+    HPos = HPos +  HTick;
+    if (HPos > 180) HPos = 180; 
+    if (HPos < 0) HPos = 0;
+            
+    VPos = VPos +  VTick;
+    if (VPos > 180) VPos = 180; 
+    if (VPos < 0) VPos = 0;
+           
+    HServo.write(HPos);  // moves Horizontal servo to position HPos
+    delay(15);           // waits 15ms for the servo to reach the position 
+    
+    VServo.write(VPos);  // moves Vertical servo to position VPos
+    delay(15);           // waits 15ms for the servo to reach the position 
+        
+    return;      
+}
+
+
+
 int mainRobot ()
 {
  int ret = SUCCESS;
@@ -667,10 +713,10 @@ int mainRobot ()
                ret = check_around ();
                switch (ret) {
                      case LEFT_DIRECTION:
-                            ret = turn (-90);
+                            ret = turn (-90,100);
                             break;
                      case RIGHT_DIRECTION:
-                            ret = turn (+90);
+                            ret = turn (+90,100);
                             break;
                       default:
                             stop();

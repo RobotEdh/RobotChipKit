@@ -18,14 +18,4 @@ void loop()
   int ret;
   
   ret = mainRobot();
-
-  ret = turn (30);
-  Serial.print(" \n--> Turn 30, ret: "); 
-  Serial.print(ret);  
-  delay(5000); //make it readable
-    
-  ret = turn (-50);
-  Serial.print(" \n--> Turn -50, ret: "); 
-  Serial.print(ret);  
-  delay(5000); //make it readable
 }

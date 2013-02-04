@@ -73,10 +73,15 @@
 /* Power +3V is set on pin VCC              */
 /* Ground    is set on pin GND              */
 
-#define SERVO_Pin  34   // Servo pin connected to digital pin J5-02 (PMRD/CN14/RD5)
+#define IRSERVO_Pin 34   // IR Servo pin connected to digital pin J5-02 (PMRD/CN14/RD5)
 /* Power +5V */
 /* Ground    */
-
+#define HSERVO_Pin  36   // Horizontal Servo pin connected to digital pin J5-06 (CN15/RD6)
+/* Power +5V */
+/* Ground    */
+#define VSERVO_Pin  37   // Vertical Servo pin connected to digital pin J5-08 (CN16/RD7)
+/* Power +5V */
+/* Ground    */
 
 /* Compas                                                           */
 /* I2C interface is provided on pins:                               */
@@ -289,7 +294,17 @@ int turn(double alpha, unsigned long timeout);
 /*              millis                                                        */                                
 
 
-
+void move_Tilt_Pan(int HTick, int VTick);
+/* Description: move the Tilt&Pan depending on the                            */
+/*              Horizontal and Vertical Tick                                  */
+/* input:       HTick                                                         */ 
+/*                  = tick to move the Vertiacl Tilt&Pan                      */
+/*              VTick                                                         */ 
+/*                  = tick to move the Vertiacl Tilt&Pan                      */      
+/* output:      none                                                          */                            
+/* lib:         IRServo.attach                                                */                                
+/*              IRServo.write                                                 */                                
+/*              delay                                                         */
 
 
 int makePicture (int n);
