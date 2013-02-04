@@ -613,7 +613,7 @@ int sendPicture (int n)
 
 
 
-void move_Tilt_Pan(int HTick, int VTick)
+void move_Tilt_Pan(uint8_t HTick, uint8_t VTick)
 {
  
     // initialize the PWM pin connected to the servo used for the Tilt&Pan and initialize the associate Timer interrupt (if not already done)
@@ -648,7 +648,7 @@ int mainRobot ()
 
  uint8_t cmd[PAYLOAD_SIZE];
  uint8_t resp[RESP_SIZE];
- 
+
      
      ret = xBT.xBTreceiveXbee(cmd, 5000); // read 5 ms max
    
@@ -657,15 +657,49 @@ int mainRobot ()
            Serial.print(ret);
            if (cmd[0] == CMD_STOP)
            { 
+               Serial.print("CMD_STOP"); 
                stop();
                state = STATE_STOP; 
-               Serial.print("CMD_STOP"); 
            }
            else if (cmd[0] == CMD_START)
            { 
+               Serial.print("CMD_START"); 
                start_forward();
                state = STATE_GO;
-               Serial.print("CMD_START"); 
+           }
+           else if (cmd[0] == CMD_CHECK_AROUND)
+           { 
+               Serial.print("CMD_CHECK_AROUND"); 
+               ret = check_around();
+               // byte 0: response code
+               resp[0] = RESP_CHECK_AROUND;
+               // byte 1: direction
+               resp[1] = ret;
+               delay (3000);
+               ret = xBT.xBTsendXbee(resp, sizeof (resp));
+               if (ret != SUCCESS){  Serial.print("RESP_CHECK_AROUND error"); Serial.print(ret);}
+           }
+           else if (cmd[0] == CMD_MOVE_TILT_PAN)
+           { 
+               Serial.print("CMD_MOVE_TILT_PAN"); 
+               move_Tilt_Pan(cmd[1], cmd[2]);
+           }                      
+           else if (cmd[0] == CMD_TURN_RIGHT)
+           { 
+               if (state == STATE_GO)
+               { 
+                     Serial.print("CMD_TURN_RIGHT");
+                     ret = turn ((double)cmd[1], 100);
+                     if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.print(ret);}              }       
+           }
+           else if (cmd[0] == CMD_TURN_LEFT)
+           { 
+               if (state == STATE_GO)
+               { 
+                     Serial.print("CMD_TURN_LEFT");
+                     ret = turn (-(double)cmd[1], 100);
+                     if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.print(ret);}
+               }       
            }
            else if (cmd[0] == CMD_INFOS)
            { 
@@ -688,7 +722,7 @@ int mainRobot ()
                resp[7] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
                delay (3000);
                ret = xBT.xBTsendXbee(resp, sizeof (resp));
-               if (ret != SUCCESS){  Serial.print("CMD_INFOS error"); Serial.print(ret);}
+               if (ret != SUCCESS){  Serial.print("RESP_INFOS error"); Serial.print(ret);}
            } 
            else if (cmd[0] == CMD_PICTURE) 
            { 
@@ -699,6 +733,12 @@ int mainRobot ()
                if (ret == SUCCESS)
                { 
                    ret= sendPicture (no_picture);
+                   if (ret != SUCCESS){  Serial.print("sendPicture error"); Serial.print(ret);}
+               }
+               else
+               {
+                  Serial.print("makePicture error");
+                  Serial.print(ret);
                }                 
            }
      }          
@@ -706,7 +746,7 @@ int mainRobot ()
      if (state == STATE_GO)
      {    
            nb_go++;
-           ret = go(10,0);
+/*         ret = go(10,0);
            if (ret == OBSTACLE)
            {   
                nb_obstacle++;
@@ -723,5 +763,5 @@ int mainRobot ()
                             state = STATE_STOP;  
                }
            }               
-     } 
+*/    } 
 }

@@ -23,13 +23,18 @@
 #define FILE_CLOSE_ERROR -1001
 
 
-#define CMD_START   0x01
-#define CMD_STOP    0x02
-#define CMD_INFOS   0x03
-#define CMD_PICTURE 0x04
+#define CMD_START         0x01
+#define CMD_STOP          0x02
+#define CMD_INFOS         0x03
+#define CMD_PICTURE       0x04
+#define CMD_TURN_RIGHT    0x05
+#define CMD_TURN_LEFT     0x06
+#define CMD_CHECK_AROUND  0x07
+#define CMD_MOVE_TILT_PAN 0x08
 
 #define RESP_SIZE 8
-#define RESP_INFOS 0x01
+#define RESP_INFOS        0x01
+#define RESP_CHECK_AROUND 0x02
 
 #define STATE_STOP 0x00
 #define STATE_GO   0x01
@@ -294,7 +299,7 @@ int turn(double alpha, unsigned long timeout);
 /*              millis                                                        */                                
 
 
-void move_Tilt_Pan(int HTick, int VTick);
+void move_Tilt_Pan(uint8_t HTick, uint8_t VTick);
 /* Description: move the Tilt&Pan depending on the                            */
 /*              Horizontal and Vertical Tick                                  */
 /* input:       HTick                                                         */ 
