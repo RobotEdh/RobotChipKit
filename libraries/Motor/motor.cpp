@@ -21,8 +21,6 @@ CMPS03Class CMPS03;          // The Compass class
 Servo IRServo;               // The Servo class used for IR sensor
 Servo HServo;                // The Servo class used for Horizontal Tilt & Pan
 Servo VServo;                // The Servo class used for Vertical Tilt & Pan
-int HPos = 90;               // neutral position for Horizontal Tilt & Pan
-int VPos = 90;               // neutral position for Vertical Tilt & Pan
 JPEGCameraClass JPEGCamera;  // The Camera class
 
 Sd2Card card;       // SD Card       
@@ -67,7 +65,7 @@ int motor_init()
   // initialize the PWM pin connected to the servo used for the Horizontal Tilt&Pan and initialize the associate Timer interrupt
   HServo.attach(HSERVO_Pin);   
   // reset the servo position
-  HServo.write(HPos);  // reset servo position
+  HServo.write(90);    // reset servo position
   delay(15);           // waits 15ms for the servo to reach the position 
   // reset the Timer interrupt associate to the Timer interrupt
   HServo.detach();
@@ -75,7 +73,7 @@ int motor_init()
   // initialize the PWM pin connected to the servo used for the Vertical Tilt&Pan and initialize the associate Timer interrupt
   VServo.attach(VSERVO_Pin);   
   // reset the servo position
-  VServo.write(VPos);  // reset servo position
+  VServo.write(90);    // reset servo position
   delay(15);           // waits 15ms for the servo to reach the position 
   // reset the Timer interrupt associate to the Timer interrupt
   VServo.detach(); 
@@ -92,7 +90,71 @@ int motor_init()
   // initialize a FAT volume
   if (!volume.init(&card)) return -2; 
   // Open volume
-  if (!root.openRoot(&volume)) return -3; 
+  if (!root.openRoot(&volume)) return -3;
+    
+    switch(card.type()) {
+    case SD_CARD_TYPE_SD1:
+      Serial.println("SD1");
+      break;
+    case SD_CARD_TYPE_SD2:
+      Serial.println("SD2");
+      break;
+    case SD_CARD_TYPE_SDHC:
+      Serial.println("SDHC");
+      break;
+    default:
+      Serial.println("Unknown");
+  }
+
+  cid_t* cid;
+  ret = card.readCID(cid);
+
+  Serial.println("Manufacturer ID: ");
+  Serial.print(cid->mid);
+  
+  Serial.println("OEM/Application ID: ");
+  Serial.print(cid->oid);
+  
+  Serial.println("Product name: ");
+  Serial.print(cid->pnm);
+ 
+  Serial.println("Product revision n.m: ");
+  Serial.print(cid->prv_m);
+  Serial.print(".");
+  Serial.print(cid->prv_n);
+
+  Serial.println("Product serial number: ");
+  Serial.print(cid->psn);
+ 
+  Serial.println("Manufacturing dater: ");
+  Serial.print(cid->mdt_year_high);
+  Serial.print(cid->mdt_year_low);
+  Serial.print(cid->mdt_month); 
+
+  // print the type and size of the first FAT-type volume
+  long volumesize;
+  Serial.print("\nVolume type is FAT");
+  Serial.println(volume.fatType(), DEC);
+  Serial.println();
+  
+  volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
+  volumesize *= volume.clusterCount();       // we'll have a lot of clusters
+  volumesize *= 512;                            // SD card blocks are always 512 bytes
+  Serial.print("Volume size (bytes): ");
+  Serial.println(volumesize);
+  Serial.print("Volume size (Kbytes): ");
+  volumesize /= 1024;
+  Serial.println(volumesize);
+  Serial.print("Volume size (Mbytes): ");
+  volumesize /= 1024;
+  Serial.println(volumesize);
+
+  
+  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
+   // list all files in the card with date and size
+  root.ls(LS_R | LS_DATE | LS_SIZE);
+  
+  int32_t volume_free = volume.freeClusterCount();
 
   // interrupts setup
   attachInterrupt(EncodeurTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
@@ -613,18 +675,16 @@ int sendPicture (int n)
 
 
 
-void move_Tilt_Pan(uint8_t HTick, uint8_t VTick)
+void move_Tilt_Pan(uint8_t HPos, uint8_t VPos)
 {
  
     // initialize the PWM pin connected to the servo used for the Tilt&Pan and initialize the associate Timer interrupt (if not already done)
     HServo.attach(HSERVO_Pin);  
     VServo.attach(VSERVO_Pin);  
 
-    HPos = HPos +  HTick;
     if (HPos > 180) HPos = 180; 
     if (HPos < 0) HPos = 0;
             
-    VPos = VPos +  VTick;
     if (VPos > 180) VPos = 180; 
     if (VPos < 0) VPos = 0;
            

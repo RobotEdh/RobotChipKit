@@ -43,7 +43,6 @@
 #define SPEEDMAX 255     //(255=PWM max)
 #define SPEEDDELTA 50     
 
-#define CENTER_DIRECTION 0
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
 
@@ -299,13 +298,13 @@ int turn(double alpha, unsigned long timeout);
 /*              millis                                                        */                                
 
 
-void move_Tilt_Pan(uint8_t HTick, uint8_t VTick);
+void move_Tilt_Pan(uint8_t HPos, uint8_t VPos);
 /* Description: move the Tilt&Pan depending on the                            */
-/*              Horizontal and Vertical Tick                                  */
-/* input:       HTick                                                         */ 
-/*                  = tick to move the Vertiacl Tilt&Pan                      */
-/*              VTick                                                         */ 
-/*                  = tick to move the Vertiacl Tilt&Pan                      */      
+/*              Horizontal and Vertical position                              */
+/* input:       HPos                                                          */ 
+/*                  = Horizontal position to move the Tilt&Pan (0< HPos <180) */
+/*              VPos                                                          */ 
+/*                  = Vertical position to move the Tilt&Pan  (0< VPos <180)  */      
 /* output:      none                                                          */                            
 /* lib:         IRServo.attach                                                */                                
 /*              IRServo.write                                                 */                                

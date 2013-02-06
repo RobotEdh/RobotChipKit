@@ -382,8 +382,8 @@ int JPEGCameraClass::compress(int ratio)
 //NOTE: This function must be called repeatedly until all of the data is read
 int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int * eof)
 {
-        const int read_size=32; //We read data from the camera in chunks, this is the chunk size
-        int ibuf=-1;
+    const int read_size=32; //We read data from the camera in chunks, this is the chunk size
+    int ibuf=-1;
 	uint8_t response[5]; 
 	int j=0;
 	int icount=0;
