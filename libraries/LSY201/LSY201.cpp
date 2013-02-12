@@ -41,10 +41,7 @@ JPEGCameraClass::JPEGCameraClass()
 {
 }
 
-//Initialize the serial and reset
-//returns:
-//        0 OK
-//       -1 KO
+//Initialize the serial1 port and call reset ()
 int JPEGCameraClass::begin(void)
 {
 	//Camera baud rate is 38400
@@ -55,10 +52,7 @@ int JPEGCameraClass::begin(void)
 }
 
 
-//Compare 2 uint8_t
-//returns:
-//        0 equal
-//       -1 not equal
+//Compare 2 uint8_t arrays
 int JPEGCameraClass::uint8Compare(const uint8_t *a1, const uint8_t *a2, int len) 
 {
   for(int i=0; i<len; i++)
@@ -68,37 +62,29 @@ int JPEGCameraClass::uint8Compare(const uint8_t *a1, const uint8_t *a2, int len)
   return 0;
 }
 
-//Send a basic command to the camera
-//pre: command is a string with the command to be sent to the camera
-//     response is an empty string
-//	   length is the number of characters in the command
-//post: response contains the camera response to the command
-//return: the number of characters in the response string
-//usage: None (private function)
+//Send a basic command to the camera and get the response 
 int JPEGCameraClass::sendCommand(const uint8_t * command, uint8_t* response, int wlen, int rlen)
 {
 	int ibuf=-1;
-	
-	//Clear any data currently in the serial buffer
-	//Serial1.flush();
 	
 	delay(3);
 
 	while(Serial1.available() > 0) {
 	    ibuf = Serial1.read();
 	    } // waiting for data in the serial buffer
-	
+
 	//Send each character in the command string to the camera through the camera serial port
 	for(int i=0; i<wlen; i++){
 		Serial1.write(*command++);
 	}
-	
+
 	//Get the response from the camera and add it to the response string
 	for(int i=0; i<rlen; i++)
 	{
-		while(Serial1.available() == 0); // waiting for data in the serial buffer
+		unsigned long start = millis();
+		while((Serial1.available() == 0)  &&  (millis() - start < 1000)); // waiting for data in the serial buffer for 1s max
 		ibuf = Serial1.read();
-		if (ibuf == -1) return -1; // serial buffer empty, should not happen as we wait before
+		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}
 	
@@ -151,10 +137,6 @@ int JPEGCameraClass::getSize(int * size)
 }
 
 //Reset the camera
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: ret=camera.reset();
 int JPEGCameraClass::reset()
 {
 	int ret=0;
@@ -163,26 +145,24 @@ int JPEGCameraClass::reset()
 	
 	//Flush out any data currently in the serial buffer
 	Serial1.flush();
-	
+
 	ret = sendCommand(RESET_CAMERA, response, 4, 4);
 	if (ret != 0) return -1;
 	if (uint8Compare(response,RESET_CAMERA_OK,4) != 0) return -2;   
-	    
-	    
-        // Wait for Init end
-        for (int k = 0; k < strlen(PWR_ON_MSG); k++) {
-              int cnt = 0;
+  
+    // Wait for Init end
+    for (int k = 0; k < strlen(PWR_ON_MSG); k++) {
+          int cnt = 0;
 
-              do {
+          do {
 		    while(Serial1.available() == 0); // waiting for data in the serial buffer
 		    ibuf = Serial1.read();
 		    if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
-		    Serial.print(ibuf,BYTE);
-
-                    cnt++;
-                    if (cnt > 128) return -5;
-              } while (ibuf != PWR_ON_MSG[k]);
-        }    
+		    Serial.print(ibuf,BYTE);    // display the init message
+            cnt++;
+            if (cnt > 128) return -5;
+          } while (ibuf != PWR_ON_MSG[k]);
+    }    
 	    
 	delay(3000); // wait 3s after a reset
 	 

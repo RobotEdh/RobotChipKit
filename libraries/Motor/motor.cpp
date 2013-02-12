@@ -50,9 +50,12 @@ int motor_init()
   pinMode(In1MotorLeft2Pin, OUTPUT);      // set the pin as output
   pinMode(In2MotorLeft2Pin, OUTPUT);      // set the pin as output
   pinMode(EnableMotorLeft2Pin, OUTPUT);   // set the analogig pin as output for PWM
-    
+   
+  Serial.println("\nInit motors OK"); 
+  
   // initialize the pin connected to the sensor 
   GP2Y0A21YK_init(GP2Y0A21YK_Pin); 
+  Serial.println("\nInit IR sensor OK");
 
   // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
   IRServo.attach(IRSERVO_Pin);  
@@ -77,112 +80,140 @@ int motor_init()
   delay(15);           // waits 15ms for the servo to reach the position 
   // reset the Timer interrupt associate to the Timer interrupt
   VServo.detach(); 
-     
+  Serial.println("\nInit servos OK");   
  
   // Initialize the SD-Card
-  if (!card.init(SPI_HALF_SPEED, SS_CS_Pin)) return -1; //Set SCK rate to F_CPU/4 (mode 1)
-  // initialize a FAT volume
-  if (!volume.init(&card)) return -2; 
-  // Open volume
-  if (!root.openRoot(&volume)) return -3;
-    
-    switch(card.type()) {
-    case SD_CARD_TYPE_SD1:
-      Serial.println("SD1");
-      break;
-    case SD_CARD_TYPE_SD2:
-      Serial.println("SD2");
-      break;
-    case SD_CARD_TYPE_SDHC:
-      Serial.println("SDHC");
-      break;
-    default:
-      Serial.println("Unknown");
+  if (!card.init(SPI_HALF_SPEED, SS_CS_Pin))  //Set SCK rate to F_CPU/4 (mode 1)
+  {
+  	Serial.println("\nError Init SD-Card");
   }
+  else
+  {	 
+  	// initialize a FAT volume
+  	if (!volume.init(&card))
+  	{
+  	  	Serial.println("\nError Init Volume in SD-Card");
+	}  	  	
+  	else
+  	{ 
+  		// Open volume
+  		if (!root.openRoot(&volume))
+  		{
+  			Serial.println("\nError Open Volume in SD-Card");
+		}  	  	
+  		else
+  		{   
+    			Serial.print("\nSD-Card type is ");
+    			switch(card.type()) {
+    			case SD_CARD_TYPE_SD1:
+      				Serial.print("SD1");
+      			break;
+    			case SD_CARD_TYPE_SD2:
+      				Serial.print("SD2");
+      			break;
+    			case SD_CARD_TYPE_SDHC:
+      				Serial.print("SDHC");
+      			break;
+    			default:
+      				Serial.println("Unknown");
+  			}
 
-  cid_t cid;
-  ret = card.readCID(&cid);
+  			cid_t cid;
+  			if (!card.readCID(&cid))
+   			{
+   				Serial.print("\nError Open read CID of SD-Card");
+			}  	  	
+  			else
+  			{  
+  				Serial.print("\nManufacturer ID: ");
+  				Serial.print(cid.mid, HEX);
+
+  				Serial.print("\nOEM/Application ID: ");
+  				Serial.print(cid.oid[0]);
+  				Serial.print(cid.oid[1]);
   
-  Serial.print("\nManufacturer ID: ");
-  Serial.print(cid.mid);
-  
-  Serial.println("\nApplication ID: ");
-  Serial.print(cid.oid);
-  
-  Serial.print("\nProduct name: ");
-  Serial.print(cid.pnm);
+  				Serial.print("\nProduct name: ");
+  				for (uint8_t i = 0; i < 5; i++) {
+    					Serial.print(cid.pnm[i]);
+  				}
  
-  Serial.println("\nProduct revision n.m: ");
-  Serial.print(cid.prv_m);
-  Serial.print(".");
-  Serial.print(cid.prv_n);
+  				Serial.print("\nProduct revision: ");
+  				Serial.print(cid.prv_m, DEC);
+  				Serial.print(".");
+  				Serial.print(cid.prv_n, DEC);
 
-  Serial.print("\nProduct serial number: ");
-  Serial.print(cid.psn);
+  				Serial.print("\nProduct serial number: ");
+  				Serial.print(cid.psn);
  
-  Serial.println("\nManufacturing date raw: ");
-  Serial.print(cid.mdt_month);
-   Serial.print(cid.mdt_year_low);
-    Serial.print(cid.mdt_year_high);
-     Serial.println("\nManufacturing date:  ");
-     Serial.print(cid.mdt_month);
-  Serial.print('/');
-  Serial.println(2000 + cid.mdt_year_low + (cid.mdt_year_high <<4));
-  Serial.println();
+  				Serial.print("\nManufacturing date: ");
+  				Serial.print(cid.mdt_month);
+  				Serial.print('/');
+  				Serial.print(2000 + (10*cid.mdt_year_high) + cid.mdt_year_low);
 
-  // print the type and size of the first FAT-type volume
-  long volumesize;
-  Serial.print("\nVolume type is FAT");
-  Serial.println(volume.fatType(), DEC);
-  Serial.println();
-  
-
-  volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
-  Serial.print("blocksPerCluster: ");
-  Serial.print(volumesize);
-  volumesize *= volume.clusterCount();       // we'll have a lot of clusters
-  Serial.print("\nclusterCount: ");
-  Serial.print(volume.clusterCount());  
-  volumesize *= 512;
-  Serial.print("\nblock sizet: 512");        // SD card blocks are always 512 bytes
-  Serial.print("Volume size (bytes): ");
-  Serial.println(volumesize);
-  Serial.print("Volume size (Kbytes): ");
-  volumesize /= 1024;
-  Serial.println(volumesize);
-  Serial.print("Volume size (Mbytes): ");
-  volumesize /= 1024;
-  Serial.println(volumesize);
-
-  
-  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
-   // list all files in the card with date and size
-  root.ls(LS_R | LS_DATE | LS_SIZE);
-  
-  int32_t volume_free = volume.freeClusterCount();
-  Serial.print("volume_free (bytes): ");
-  Serial.println(volume_free);
-  Serial.print("volume_free (Kbytes): ");
-  volume_free /= 1024;
-  Serial.println(volume_free);
-  Serial.print("volume_free (Mbytes): ");
-  volume_free /= 1024;
-  Serial.println(volume_free);
-
-
+  				// print the type and size of the first FAT-type volume
+				Serial.print("\nVolume type is FAT");
+				Serial.print(volume.fatType(), DEC);
+				  				
+  				uint32_t volumesize, volume_free;
+				volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
+				volume_free = volume.blocksPerCluster();  
+				Serial.print("\nNb blocks per cluster: ");
+				Serial.print(volumesize);
+				volumesize *= volume.clusterCount();       // we'll have a lot of clusters
+			    volume_free *= volume.freeClusterCount();
+				Serial.print("\nClusters count: ");
+				Serial.print(volume.clusterCount());  
+				volumesize *= 512;
+				volume_free *= 512;
+				Serial.print("\nBlock size: 512");        // SD card blocks are always 512 bytes
+				Serial.print("\nVolume size (bytes): ");
+				Serial.print(volumesize);
+				Serial.print(" / Volume free (bytes): ");
+				Serial.print(volume_free);	
+				Serial.print(" / % free: ");
+				Serial.print(100.0*(double)(volume_free)/(double)(volumesize));			
+				Serial.print("\nVolume size (Kbytes): ");
+				volumesize /= 1024;
+				Serial.print(volumesize);
+				Serial.print(" / Volume free (Kbytes): ");
+				volume_free /= 1024;
+				Serial.print(volume_free);				
+				Serial.print("\nVolume size (Mbytes): ");
+				volumesize /= 1024;
+				Serial.print(volumesize);
+				Serial.print(" / Volume free (Mbytes): ");
+				volume_free /= 1024;
+				Serial.print(volume_free);
+				
+				// list all files in the card with date and size			    
+			    Serial.println("\nFiles found on the card (name, date and size in bytes): ");
+				root.ls(LS_R | LS_DATE | LS_SIZE);
+			}				
+		}
+	}
+  }			
   // initialize the compas  
   CMPS03.CMPS03_begin();
+  Serial.println("\nInit compas OK");
 
   // Initialize the camera
   ret=JPEGCamera.begin();
-  if (ret != SUCCESS) return ret;
-    
+  if (ret != SUCCESS)
+  {  
+        Serial.println("\nError Init Camera");
+  }  	  	
+  else
+  {
+        Serial.println("\nInit Camera OK");
+  } 
+      
   // interrupts setup
   attachInterrupt(EncodeurTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
   attachInterrupt(EncodeurTickLeftINT, IntrTickLeft, FALLING);    //set left tick interrupt
   
   interrupts();                          // enable all interrupts
-  
+  	
+  Serial.println("\nEnd Init");
   return SUCCESS;
   
 }
@@ -578,7 +609,7 @@ int turn(double alpha, unsigned long timeout)
   }
   
   unsigned long start = millis();
-  while ((millis() - start) < timeout) {  // turn during maximum timeout milliseconds   
+  while (millis() - start < timeout) {  // turn during maximum timeout milliseconds   
         direction = CMPS03.CMPS03_read(); // get current direction
  
         if ( (direction < 0)  || ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) {
@@ -707,7 +738,7 @@ void move_Tilt_Pan(uint8_t HPos, uint8_t VPos)
     if (HPos < 0) HPos = 0;
             
     if (VPos > 180) VPos = 180; 
-    if (VPos < 0) VPos = 0;
+    if (VPos < 45) VPos = 45; //45° minimum due to the TiltPan
            
     HServo.write(HPos);  // moves Horizontal servo to position HPos
     delay(15);           // waits 15ms for the servo to reach the position 
