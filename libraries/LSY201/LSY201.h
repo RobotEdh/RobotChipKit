@@ -38,8 +38,41 @@ class JPEGCameraClass
 		
 		
 		int getSize(int * size);
+        /* Description: Get the size of the image currently stored in the camera      */                                            
+        /* input:       none                                                          */                      
+        /* output:      size                                                          */
+        /*                  = size of the image                                       */
+        /*              return                                                        */                            
+        /*                  = -2 if bad answer from the camera                        */
+        /*                  = -10 if error reading the serial buffer                  */
+        /*                  = 0 otherwise                                             */ 
+        /* lib:         uint8Compare                                                  */
+        /*              Serial1.flush                                                 */
+        /*              Serial1.available                                             */
+        /*              Serial1.read                                                  */
+        /*              Serial1.write                                                 */       		
+		
 		int takePicture(void);
+        /* Description: Take a picture                                                */                                            
+        /* input:       none                                                          */                      
+        /* output:      return                                                        */
+        /*                  = -2 if bad answer from the camera                        */
+        /*                  = -10 if error sendCommand                                */
+        /*                  = 0 otherwise                                             */ 
+        /* lib:         uint8Compare                                                  */
+        /*              sendCommand                                                   */
+ 		
+		
 		int stopPictures(void);
+        /* Description: Stop taking pictures                                          */                                            
+        /* input:       none                                                          */                      
+        /* output:      return                                                        */
+        /*                  = -2 if bad answer from the camera                        */
+        /*                  = -10 if error sendCommand                                */
+        /*                  = 0 otherwise                                             */ 
+        /* lib:         uint8Compare                                                  */
+        /*              sendCommand                                                   */
+		
 		int readData(long int address, uint8_t *buf, int *count, int * eof);
 		int compress( int ratio);
 		int imageSizeSmall(void);

@@ -56,8 +56,8 @@ int JPEGCameraClass::begin(void)
 int JPEGCameraClass::uint8Compare(const uint8_t *a1, const uint8_t *a2, int len) 
 {
   for(int i=0; i<len; i++)
-    if(a1[i]!=a2[i])
-      return -1;
+      if(a1[i]!=a2[i])
+          return -1;
 
   return 0;
 }
@@ -92,12 +92,6 @@ int JPEGCameraClass::sendCommand(const uint8_t * command, uint8_t* response, int
 }
 
 //Get the size of the image currently stored in the camera
-//pre: size is a pointer to an integer
-//post: size is set to the size of the image
-//returns:
-//        0 OK
-//       -1 KO
-//usage: ret=camera.getSize(&img_size);
 int JPEGCameraClass::getSize(int * size)
 {
 	int ibuf=-1;
@@ -107,21 +101,21 @@ int JPEGCameraClass::getSize(int * size)
 	Serial1.flush();
 	
 	//Send the command to get read_size bytes of data from the current address
-	for(int i=0; i<5; i++)Serial1.write(GET_SIZE[i]);
+	for(int i=0; i<5; i++) Serial1.write(GET_SIZE[i]);
 
 
 	//Read the response header.
 	for(int i=0; i<7; i++){
 		while(Serial1.available() == 0);
 		ibuf = Serial1.read();
-		if (ibuf == -1) return -1; // serial buffer empty, should not happen as we wait before
+		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;;
 	}
 	
 	if (uint8Compare(response,GET_SIZE_OK,7) != 0) return -2;   
 	
 	//Now read the actual data and add it to the response string.
-        for(int j=0; j<2; j++){
+    for(int j=0; j<2; j++){
 		while(Serial1.available() == 0);
 		ibuf = Serial1.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
@@ -130,8 +124,8 @@ int JPEGCameraClass::getSize(int * size)
 	
 	//The size is in the last 2 characters of the response.
 	//Parse them and convert the characters to an integer
-        *size = (int)response[0]*256;
-        *size += (int)response[1] & 0x00FF;	
+    *size = (int)response[0] * 256;
+    *size += (int)response[1] & 0x00FF;	
     
 	return 0;
 }
@@ -169,103 +163,85 @@ int JPEGCameraClass::reset()
 	return 0;
 }
 
-//Take a new picture
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.takePicture();
+//Take a picture
 int JPEGCameraClass::takePicture()
 {
     int ret=0;
     uint8_t response[5];
 		
     ret = sendCommand(TAKE_PICTURE, response, 5, 5);
-    if (ret != 0) return -1;
+    if (ret != 0) return -10;
+    
     if (uint8Compare(response,TAKE_PICTURE_OK,5) != 0) return -2;
 	    
     return 0;      
 }
 
 //Stop taking pictures
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.stopPictures();
 int JPEGCameraClass::stopPictures()
 {
 	int ret=0;
 	uint8_t response[5];
 
 	ret = sendCommand(STOP_TAKING_PICS, response, 5, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	
 	if (uint8Compare(response,STOP_TAKING_PICS_OK,5) != 0) return -2;
 	    
 	return 0; 
 }
 
 //Change the size of the image is Small format (160*120) but without saving the configuration so it will turn back to 320*240 after disconnect or reset
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.imageSizeSmall();
 int JPEGCameraClass::imageSizeSmall()
 {
 	int ret=0;
 	uint8_t response[5];
 	
 	ret = sendCommand(IMAGE_SIZE_SMALL, response, 5, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	
 	if (uint8Compare(response,IMAGE_SIZE_OK,5) != 0) return -2;
 	    
 	return 0;	
 }
 
 //Change the size of the image is Medium format (320*240) but without saving the configuration so it will turn back to 320*240 after disconnect or reset
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.imageSizeSmall();
 int JPEGCameraClass::imageSizeMedium()
 {
 	int ret=0;
 	uint8_t response[5];
 		
 	ret = sendCommand(IMAGE_SIZE_MEDIUM, response, 5, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	
 	if (uint8Compare(response,IMAGE_SIZE_OK,5) != 0) return -2;
 	    
 	return 0;	
 }
 
 //Change the size of the image is Large format (640*480) but without saving the configuration so it will turn back to 320*240 after disconnect or reset
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.imageSizeSmall();
 int JPEGCameraClass::imageSizeLarge()
 {
 	int ret=0;
 	uint8_t response[5];
 		
 	ret = sendCommand(IMAGE_SIZE_LARGE, response, 5, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	    
 	if (uint8Compare(response,IMAGE_SIZE_OK,5) != 0) return -2;
 	    
 	return 0;	
 }
 
 //Change the size of the image is Small format (160*120) with saving the configuration then reset
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.imageSizeSmallSave();
 int JPEGCameraClass::imageSizeSmallSave()
 {
 	int ret=0;
 	uint8_t response[5];
 		
 	ret = sendCommand(IMAGE_SIZE_SMALL_S, response, 9, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	
 	if (uint8Compare(response,IMAGE_SIZE_S_OK,5) != 0) return -2;
 	    
 	return reset();
@@ -273,17 +249,14 @@ int JPEGCameraClass::imageSizeSmallSave()
 }
 
 //Change the size of the image is Medium format (320*240) with saving the configuration then reset
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.imageSizeMediumSave();
 int JPEGCameraClass::imageSizeMediumSave()
 {
     int ret=0;
 	uint8_t response[5];
 		
 	ret = sendCommand(IMAGE_SIZE_MEDIUM_S, response, 9, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	
 	if (uint8Compare(response,IMAGE_SIZE_S_OK,5) != 0) return -2;	
 	    
 	return reset();
@@ -291,17 +264,14 @@ int JPEGCameraClass::imageSizeMediumSave()
 }
 
 //Change the size of the image is Large format (640*480) with saving the configuration then reset
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: lret=camera.imageSizeLargeSave();
 int JPEGCameraClass::imageSizeLargeSave()
 {
     int ret=0;
 	uint8_t response[5];
 		
 	ret = sendCommand(IMAGE_SIZE_LARGE_S, response, 9, 5);
-	if (ret != 0) return -1;
+	if (ret != 0) return -10;
+	
 	if (uint8Compare(response,IMAGE_SIZE_S_OK,5) != 0) return -2;	
 	
 	return reset();
