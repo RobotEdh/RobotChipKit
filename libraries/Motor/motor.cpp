@@ -249,14 +249,6 @@ void forward()
 
 void forward_test(int num) // for test only
 {
-  digitalWrite(In1MotorRight1Pin, LOW); 
-  digitalWrite(In2MotorRight1Pin, LOW);
-  digitalWrite(In1MotorRight2Pin, LOW); 
-  digitalWrite(In2MotorRight2Pin, LOW);  
-  digitalWrite(In1MotorLeft1Pin,  LOW); 
-  digitalWrite(In2MotorLeft1Pin,  LOW); 
-  digitalWrite(In1MotorLeft2Pin,  LOW); 
-  digitalWrite(In2MotorLeft2Pin,  LOW);   
   if (num == 1) {
         digitalWrite(In1MotorRight1Pin, HIGH); 
   }
@@ -590,6 +582,7 @@ int turn(double alpha, unsigned long timeout)
   int direction_target = 0; /* direction between 0-254, 0: North */
   int delta1 = 0;
   int delta2 = 0;
+  int end_turn =0;
   
   if ((alpha == 0) || (alpha < -180) || (alpha > 180)) return BAD_ANGLE; // alpha between -180 and +180 and <> 0
   
@@ -609,25 +602,31 @@ int turn(double alpha, unsigned long timeout)
   }
   
   unsigned long start = millis();
-  while (millis() - start < timeout) {  // turn during maximum timeout milliseconds   
+  while ((millis() - start < timeout) || end_turn == 1) {  // turn during maximum timeout milliseconds   
         direction = CMPS03.CMPS03_read(); // get current direction
- 
+      
+        if ( ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) end_turn = 1;
+   
         if ( (direction < 0)  || ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) {
-                 if (alpha > 0) {
-  	                   deccelerate_n(LEFT_MOTOR, delta1); // stop turns right
-  	                   accelerate_n(RIGHT_MOTOR, delta2);  
-                 }
-                 else
-                 {
-    	               deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
-  	                   accelerate_n(LEFT_MOTOR, delta2);  
-                 }
-                 if (direction < 0)  return COMPASS_ERROR;
-                 else                return SUCCESS;
+
+
         }
   } 
-      
-  return TIMEOUT; // timeout
+  
+  if (alpha > 0)
+  {
+          deccelerate_n(LEFT_MOTOR, delta1); // stop turns right
+          accelerate_n(RIGHT_MOTOR, delta2);  
+  }
+  else
+  {
+          deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
+          accelerate_n(LEFT_MOTOR, delta2);  
+  }
+   
+  if(end_turn == 1)        return SUCCESS;
+  else if (direction < 0)  return COMPASS_ERROR;
+  else                     return TIMEOUT; 
 }
 
 int makePicture (int n)
@@ -760,28 +759,37 @@ int mainRobot ()
 
  uint8_t cmd[PAYLOAD_SIZE];
  uint8_t resp[RESP_SIZE];
-
-     
+ 
+ while (1) { 
      ret = xBT.xBTreceiveXbee(cmd, 5000); // read 5 ms max
    
      if (ret == SUCCESS)
      {
-           Serial.print(ret);
+           Serial.println(ret);
            if (cmd[0] == CMD_STOP)
            { 
-               Serial.print("CMD_STOP"); 
+               Serial.println("CMD_STOP"); 
                stop();
                state = STATE_STOP; 
            }
            else if (cmd[0] == CMD_START)
            { 
-               Serial.print("CMD_START"); 
-               start_forward();
+               if (cmd[1] == 0)
+               {  
+                     Serial.println("CMD_START")
+                     start_forward();
+               }
+               else
+               {  
+                     Serial.print("CMD_START_TEST motor: ");
+                     Serial.println(cmd[1]);
+                     start_forward_test(cmd[1]);
+               }                      
                state = STATE_GO;
            }
            else if (cmd[0] == CMD_CHECK_AROUND)
            { 
-               Serial.print("CMD_CHECK_AROUND"); 
+               Serial.println("CMD_CHECK_AROUND"); 
                ret = check_around();
                // byte 0: response code
                resp[0] = RESP_CHECK_AROUND;
@@ -793,29 +801,34 @@ int mainRobot ()
            }
            else if (cmd[0] == CMD_MOVE_TILT_PAN)
            { 
-               Serial.print("CMD_MOVE_TILT_PAN"); 
+               Serial.print("CMD_MOVE_TILT_PAN, X Y: "); 
+               Serial.print(cmd[1]);
+               Serial.println(cmd[2]);
                move_Tilt_Pan(cmd[1], cmd[2]);
            }                      
            else if (cmd[0] == CMD_TURN_RIGHT)
            { 
                if (state == STATE_GO)
                { 
-                     Serial.print("CMD_TURN_RIGHT");
+                     Serial.print("CMD_TURN_RIGHT, alpha: ");
+                     Serial.println(cmd[1]);
                      ret = turn ((double)cmd[1], 100);
-                     if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.print(ret);}              }       
+                     if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.print(ret);}
+              }       
            }
            else if (cmd[0] == CMD_TURN_LEFT)
            { 
                if (state == STATE_GO)
                { 
-                     Serial.print("CMD_TURN_LEFT");
+                     Serial.print("CMD_TURN_LEFT, alpha: ");
+                     Serial.println(cmd[1]);
                      ret = turn (-(double)cmd[1], 100);
                      if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.print(ret);}
                }       
            }
            else if (cmd[0] == CMD_INFOS)
            { 
-               Serial.print("CMD_INFOS");
+               Serial.println("CMD_INFOS");
                // byte 0: response code
                resp[0] = RESP_INFOS;
                // byte 1: state
@@ -838,7 +851,7 @@ int mainRobot ()
            } 
            else if (cmd[0] == CMD_PICTURE) 
            { 
-               Serial.print("CMD_PICTURE");
+               Serial.println("CMD_PICTURE");
                no_picture++;
                ret = makePicture (no_picture);
 
@@ -876,4 +889,5 @@ int mainRobot ()
                }
            }               
 */    } 
+  }// end while 1
 }
