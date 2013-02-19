@@ -1,0 +1,94 @@
+UDPEchoServer 1.0
+
+0.  Select the hardware library that matches the network adaptor you are using. Make sure to look in the hardware library
+    header file to see exactly how to configure your board; for example there may be some jumpers to set. If you have
+    a network adaptor physically mounted on the chipKIT board, then comment out ALL hardware libraries as the correct software
+    will be included with the MPIDE selection of the chipKIT board. For example, the MX7cK has an SMSC-8720 phy on the board
+    and uses the MX7 internal network MAC, no hardware library is needed for the MX7cK.
+
+        /************************************************************************/
+        /*                                                                      */
+        /*              Include ONLY 1 hardware library that matches            */
+        /*              the network hardware you are using                      */
+        /*                                                                      */
+        /*              If your base chipKIT board has a network adaptor        */
+        /*              manufactured on the board, such as the MX7cK,           */
+        /*              then you do not need to specify any hardware library    */
+        /*              for that network hardware on the board.                 */
+        /*              However, if you are using alternate network hardware,   */
+        /*              then you will need to specify the hardware library      */
+        /*              for the hardware you are using.                         */
+        /*                                                                      */
+        /*              Refer to the hardware library header file               */
+        /*              for supported boards and hardware configurations        */
+        /*                                                                      */
+        /************************************************************************/
+        #include <NetworkShield.h>
+        // #include <PmodNIC.h>
+        // #include <PmodNIC100.h>
+
+1.  Make sure that the UDP Server address of 192.168.1.190:44400 will work on your network.
+    If not then modify the server address in the sketch to one that will.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              SET THESE VALUES FOR YOUR NETWORK                       */
+            /*                                                                      */
+            /************************************************************************/
+
+            IPv4 ipServer = {192,168,1,190};
+            unsigned short portServer = 44400;    
+ 
+2.  Compile and upload UDPEchoServer from MPIDE. Once UDPEchoServer is uploaded open the serial monitor at 9600 baud. 
+    You should see something like:
+
+            UDPEchoServer 1.0
+            Digilent, Copyright 2011
+
+            Started Listening
+            Listening on port: 44400
+
+3.  Under the ...\libraries\DNETcK\examples\UDPEchoServer\PCCode directory start UDPEchoClient.exe; this is a windows Forms application 
+    so a window will automatically open.
+
+4.  In UDPEchoClient it defaults to the same hostname IP and port as the sketch was originally coded to. However, if you 
+    changed those values, change them in UDPEchoClient before proceeding.
+
+5.  The default "Send Text" in UDPEchoClient is "Text to Echo", you may leave this as is, or change it. This documentation is 
+    assuming you left it as is.
+
+6.  The Log in UDPEchoClient should look something like:
+
+            UDPEchoClient Version 1.0.4414.23751
+            Digilent, Copyright 2011
+
+7.  Click the Send button in UDPEchoClient and wait about 10 seconds. You should see in the serial monitor something like:
+
+            UDPEchoServer 1.0
+            Digilent, Copyright 2011
+
+            Started Listening
+            Listening on port: 44400
+            Got 1 clients pending
+            Got a Connection
+            Got 12 bytes
+            Writing datagram: 
+            Text to Echo
+            Closing UdpClient
+
+            Listening on port: 44400
+
+8.  In the UDPEchoClient log you should see something like:
+
+            UDPEchoClient Version 1.0.4414.23751
+            Digilent, Copyright 2011
+            Info: Please wait, attempting to resolve remote endpoint: 192.168.1.190:44400
+            TX: Text to Echo
+            Starting to listen
+            RX: Text to Echo
+            Ending listening
+
+9.  If you hit the Send button repeatedly quickly (within a second or so; actually less than 5 seconds).  You will see a repetition 
+    of the TX and RX without Start/End listening as the connection is not dropped between sends.
+
+10. To close UDPEchoClient, hit the RED X.

@@ -1,0 +1,116 @@
+TCPEchoClient 1.0
+
+0.  Select the hardware library that matches the network adaptor you are using. Make sure to look in the hardware library
+    header file to see exactly how to configure your board; for example there may be some jumpers to set. If you have
+    a network adaptor physically mounted on the chipKIT board, then comment out ALL hardware libraries as the correct software
+    will be included with the MPIDE selection of the chipKIT board. For example, the MX7cK has an SMSC-8720 phy on the board
+    and uses the MX7 internal network MAC, no hardware library is needed for the MX7cK.
+
+        /************************************************************************/
+        /*                                                                      */
+        /*              Include ONLY 1 hardware library that matches            */
+        /*              the network hardware you are using                      */
+        /*                                                                      */
+        /*              If your base chipKIT board has a network adaptor        */
+        /*              manufactured on the board, such as the MX7cK,           */
+        /*              then you do not need to specify any hardware library    */
+        /*              for that network hardware on the board.                 */
+        /*              However, if you are using alternate network hardware,   */
+        /*              then you will need to specify the hardware library      */
+        /*              for the hardware you are using.                         */
+        /*                                                                      */
+        /*              Refer to the hardware library header file               */
+        /*              for supported boards and hardware configurations        */
+        /*                                                                      */
+        /************************************************************************/
+        #include <NetworkShield.h>
+        // #include <PmodNIC.h>
+        // #include <PmodNIC100.h>
+
+1.  Under ...\libraries\DNETcK\examples\TCPEchoClient\PCCode start the TCPEchoServer, once started the command window should look something like:
+
+            TCPEchoServer Version 1.0.4414.23705
+            Digilent, Copyright 2011
+
+            Listening on port 44300
+
+2.  Edit the TCPEchoClient.pde to have the correct IP address of your PC server. You probably only need to 
+    Change szIPServer as the port number is the default port.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              SET THESE VALUES FOR YOUR NETWORK                       */
+            /*                                                                      */
+            /************************************************************************/
+
+            char * szIPServer = "192.168.1.180";
+            unsigned short portServer = 44300;    
+
+3.  Build and upload TCPEchoClient.pde; before opening the serial monitor, wait about 10 seconds after the sketch is done
+    uploading and you should see something like the following in the TCPEchoServer command window:
+
+            TCPEchoServer Version 1.0.4505.27370
+            Digilent, Copyright 2011
+
+            Listening on port 44300
+            Detected Client
+            *Wrote from tcpClient.writeStream*
+            *Printed from tcpClient.print*
+            *Printed from tcpClient.println*
+            *Printed from print.print*
+            *Printed from print.println*
+            b
+            *Wrote from print.write*
+            *Wrote from print.write*
+            Listening on port 44300
+
+4.  Open the serial monitor at 9600 baud to restart the sketch, after about 10 seconds your serial monitor 
+    should display something like:
+
+            TCPEchoClient 1.0
+            Digilent, Copyright 2011
+
+            Got Connection
+            Bytes Read Back:
+            *Wrote from tcpClient.writeStream*
+            *Printed from tcpClient.print*
+            *Printed from tcpClient.println*
+            *Printed from print.print*
+            *Printed from print.println*
+            b
+            *Wrote from print.write*
+            *Wrote from print.write*
+
+            Closing TcpClient, Done with sketch.
+
+5.  Your command window should look something like:
+
+            TCPEchoServer Version 1.0.4505.27370
+            Digilent, Copyright 2011
+
+            Listening on port 44300
+            Detected Client
+            *Wrote from tcpClient.writeStream*
+            *Printed from tcpClient.print*
+            *Printed from tcpClient.println*
+            *Printed from print.print*
+            *Printed from print.println*
+            b
+            *Wrote from print.write*
+            *Wrote from print.write*
+            Listening on port 44300
+            Detected Client
+            *Wrote from tcpClient.writeStream*
+            *Printed from tcpClient.print*
+            *Printed from tcpClient.println*
+            *Printed from print.print*
+            *Printed from print.println*
+            b
+            *Wrote from print.write*
+            *Wrote from print.write*
+            Listening on port 44300
+
+6.  Shutdown your sketch.
+7.  Shutdown the TCPEchoServer by typing ^C in the command window.
+
+

@@ -1,0 +1,165 @@
+WiFiSPIOverride (for MX7cK ONLY; DO NOT OPEN THE SERIAL MONITOR).
+
+0.  Select the hardware library that matches the network adaptor you are using. Make sure to look in the hardware library
+    header file to see exactly how to configure your board; for example there may be some jumpers to set. If you have
+    a network adaptor physically mounted on the chipKIT board, then comment out ALL hardware libraries as the correct software
+    will be included with the MPIDE selection of the chipKIT board. For example, the MX7cK has an SMSC-8720 phy on the board
+    and uses the MX7 internal network MAC, no hardware library is needed for the MX7cK.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              Include ONLY 1 hardware library that matches            */
+            /*              the network hardware you are using                      */
+            /*                                                                      */
+            /*              Refer to the hardware library header file               */
+            /*              for supported boards and hardware configurations        */
+            /*                                                                      */
+            /************************************************************************/
+            // #include <WiFiShieldOrPmodWiFi.h>                       // This is for the MRF24WBxx on a pmodWiFi or WiFiShield
+            #include <WiFiShieldOrPmodWiFi_G.h>                     // This is for the MRF24WGxx on a pmodWiFi or WiFiShield
+
+1.  This is exactly like the WiFiTCPEchoServer demo except that the MRF24WB0WA is plugged into the JE
+    connector on the MX7cK rather than the JF connect. Since connector JE conflicts with UART1, the serial
+    monitor can not be used in this demo; do not start the serial monitor! Instead, LED1 should be observed
+    on the MX7cK for information about the status of the server. Please note that this example ONLY overrides
+    JF on the MX7cK, it does not affect the operation of any other board.
+
+2.  Note the file MX7cK-MRF24WB0MA.x in the sketch directory. You can find files like this under the
+    .../libraries/DWIFIcK directory. By copying the appropriate board file to the 
+    sketch directory and modifying it, you can create per-sketch overrides on the SPI configuration for the
+    MRF24WB0MA. You should not delete the orginal board file as that would affect other sketches.
+    
+3.  Make sure that the TCP Server address of 192.168.1.190:44300 will work on 
+    your network. If not then modify the server address in the sketch to 
+    one that will.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              SET THESE VALUES FOR YOUR NETWORK                       */
+            /*                                                                      */
+            /************************************************************************/
+
+            IPv4 ipServer = {192,168,1,190};
+            unsigned short portServer = DNETcK::iPersonalPorts44 + 300;     // port 44300 
+
+
+4.  Then modify the szSsid to the SSID of your WiFi network.
+
+            // Specify the SSID
+            const char * szSsid = "chipKIT";
+
+5.  Also uncomment the security type that you are using on your WiFi network.
+    If you are using OPEN security, then comment all of the secruity types out.
+
+            // select 1 for the security you want, or none for no security
+            #define USE_WPA2_PASSPHRASE
+            //#define USE_WPA2_KEY
+            //#define USE_WEP40
+            //#define USE_WEP104
+            //#define USE_WF_CONFIG_H
+
+6.  Scroll down to the security type that you are using, and provide the appropriate
+    Key information. You only need to update the section for the security type that you
+    are using. If you are using WEP, you only have to provide the key for the index
+    you are using, make sure you also change the key index (iWEPkey)
+    
+    If you are using WPA or WPA2 with a pass phrase, understand that it will take
+    about 30 seconds for the MRF24WB0MA to calculate the key before the WiFi
+    connection can be made. What this means is, your sketch will appear to hang for
+    about 30 seconds, so give your sketch a good 40-50 seconds to start before thinking
+    anything is wrong. 
+
+            // modify the security key to what you have.
+            #if defined(USE_WPA2_PASSPHRASE)
+
+                const char * szPassPhrase = "Digilent";
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, szPassPhrase, &status)
+
+            #elif defined(USE_WPA2_KEY)
+
+                DWIFIcK::WPA2KEY key = { 0x27, 0x2C, 0x89, 0xCC, 0xE9, 0x56, 0x31, 0x1E, 
+                                        0x3B, 0xAD, 0x79, 0xF7, 0x1D, 0xC4, 0xB9, 0x05, 
+                                        0x7A, 0x34, 0x4C, 0x3E, 0xB5, 0xFA, 0x38, 0xC2, 
+                                        0x0F, 0x0A, 0xB0, 0x90, 0xDC, 0x62, 0xAD, 0x58 };
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, key, &status)
+
+            #elif defined(USE_WEP40)
+
+                const int iWEPKey = 0;
+                DWIFIcK::WEP40KEY keySet = {    0xBE, 0xC9, 0x58, 0x06, 0x97,     // Key 0
+                                                0x00, 0x00, 0x00, 0x00, 0x00,     // Key 1
+                                                0x00, 0x00, 0x00, 0x00, 0x00,     // Key 2
+                                                0x00, 0x00, 0x00, 0x00, 0x00 };   // Key 3
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
+
+            #elif defined(USE_WEP104)
+
+                const int iWEPKey = 0;
+                DWIFIcK::WEP104KEY keySet = {   0x3E, 0xCD, 0x30, 0xB2, 0x55, 0x2D, 0x3C, 0x50, 0x52, 0x71, 0xE8, 0x83, 0x91,   // Key 0
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 1
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 2
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Key 3
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
+
+            #elif defined(USE_WF_CONFIG_H)
+
+                #define WiFiConnectMacro() DWIFIcK::connect(0, &status)
+
+            #else   // no security - OPEN
+
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, &status)
+
+            #endif
+   
+        //******************************************************************************************
+        //******************************************************************************************
+        //***************************** END OF CONFIGURATION ***************************************
+        //******************************************************************************************
+        //******************************************************************************************
+
+7.  Compile and upload WiFiSPIOverride from MPIDE. Once WiFiSPIOverride is uploaded DO NOT OPEN THE SERIAL MONITOR, as
+    that will conflict with the operation of the SPI signals to connector JE. 
+
+8.  Once WiFiSPIOverride is uploaded and running, observe LED1 on the MX7cK.
+
+    LED1 will go out while the WiFi network is being identified and connected to. This could take
+    up to 50 seconds depending on the WiFi security used.
+
+    LED1 will start blinking at a rate of 1 blink per second (ON for 1/2 sec, OFF for 1/2 sec) indicating
+    that the server is up and ready for input. Do not attempt to communicate to the sketch until you see the
+    1 second heartbeat on LED1.
+
+9.  Under the ...\libraries\DNETcK\examples\TCPEchoServer\PCCode directory start TCPEchoClient.exe; this is a windows Forms application 
+    so a window will automatically open.
+
+10. In TCPEchoClient it defaults to the same hostname IP and port as the sketch was originally coded to. However, if you 
+    changed those values, change them in TCPEchoClient before proceeding.
+
+11. The default "Send Text" in TCPEchoClient is "Text to Echo", you may leave this as is, or change it. This documentation is 
+    assuming you left it as is.
+
+12. The Log in TCPEchoClient should look something like:
+
+            TCPEchoClient Version 1.0.4414.23621
+            Digilent, Copyright 2011
+
+13. Click the Send button in TCPEchoClient and you should see LED1
+    momentarily stay ON, and then start blinking again. While LED1 was
+    on, WiFiSPIOverride was processing the echo command.
+
+14. And in the TCPEchoClient you should see something like:
+
+            TCPEchoClient Version 1.0.4414.23621
+            Digilent, Copyright 2011
+            Info: Please wait, attempting to connect to: 192.168.1.190:44300
+            TX: Text to Echo
+            Starting to listen
+            RX: Text to Echo
+            Ending listening
+
+15. If you hit the Send button repeatedly quickly (within a second or so; actually less than 5 seconds).  
+    You will see a repetition of the TX and RX without Start/End listening as the connection is not dropped 
+    between sends. Likewise LED1 on the MX7cK will stay steady ON as it is holding the connection.
+    Once the connection is release (after 5 seconds) LED1 will start blinking again.
+
+16. To close TCPEchoClient, hit the RED X.

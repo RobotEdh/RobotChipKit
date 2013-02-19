@@ -1,0 +1,71 @@
+WiFiScan 1.0
+
+0.  Select the hardware library that matches the network adaptor you are using. Make sure to look in the hardware library
+    header file to see exactly how to configure your board; for example there may be some jumpers to set. If you have
+    a network adaptor physically mounted on the chipKIT board, then comment out ALL hardware libraries as the correct software
+    will be included with the MPIDE selection of the chipKIT board. For example, the MX7cK has an SMSC-8720 phy on the board
+    and uses the MX7 internal network MAC, no hardware library is needed for the MX7cK.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              Include ONLY 1 hardware library that matches            */
+            /*              the network hardware you are using                      */
+            /*                                                                      */
+            /*              Refer to the hardware library header file               */
+            /*              for supported boards and hardware configurations        */
+            /*                                                                      */
+            /************************************************************************/
+            // #include <WiFiShieldOrPmodWiFi.h>                       // This is for the MRF24WBxx on a pmodWiFi or WiFiShield
+            #include <WiFiShieldOrPmodWiFi_G.h>                     // This is for the MRF24WGxx on a pmodWiFi or WiFiShield
+
+1. 	Compile WiFiScan, upload, and start the serial monitor at 9600 baud and after
+	a few seconds a list of broadcasting WiFi routers should be displayed along
+	with any parameters they are broadcasting. Below is an example of 2 broadcasting
+	routers.
+
+            Start of Sketch
+            WiFiScan 1.0
+            Digilent, Copyright 2012
+
+            Scan Done
+
+            Scan info for index: 0
+            SSID: chipKIT
+            Secuity type: 5
+            Channel: 2
+            Signal Strength: 158
+            Count of supported bit rates: 8
+	            Supported Rate: 1000000 bps
+	            Supported Rate: 2000000 bps
+	            Supported Rate: 5500000 bps
+	            Supported Rate: 11000000 bps
+	            Supported Rate: 6000000 bps
+	            Supported Rate: 9000000 bps
+	            Supported Rate: 12000000 bps
+	            Supported Rate: 18000000 bps
+            SSID MAC: 08863B842B9A
+            Beacon Period: 100
+            dtimPeriod: 32
+            atimWindow: 16252
+
+            Scan info for index: 1
+            SSID: BrinkNet
+            Secuity type: 7
+            Channel: 2
+            Signal Strength: 136
+            Count of supported bit rates: 8
+	            Supported Rate: 1000000 bps
+	            Supported Rate: 2000000 bps
+	            Supported Rate: 5500000 bps
+	            Supported Rate: 11000000 bps
+	            Supported Rate: 18000000 bps
+	            Supported Rate: 24000000 bps
+	            Supported Rate: 36000000 bps
+	            Supported Rate: 54000000 bps
+            SSID MAC: 00236964A5E2
+            Beacon Period: 100
+            dtimPeriod: 32
+            atimWindow: 8224
+            End of Sketch
+
+2. Close the sketch.

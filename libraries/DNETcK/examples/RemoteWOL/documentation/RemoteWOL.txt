@@ -1,0 +1,115 @@
+RemoteWOL 3.0
+
+0.  Select the hardware library that matches the network adaptor you are using. Make sure to look in the hardware library
+    header file to see exactly how to configure your board; for example there may be some jumpers to set. If you have
+    a network adaptor physically mounted on the chipKIT board, then comment out ALL hardware libraries as the correct software
+    will be included with the MPIDE selection of the chipKIT board. For example, the MX7cK has an SMSC-8720 phy on the board
+    and uses the MX7 internal network MAC, no hardware library is needed for the MX7cK.
+
+        /************************************************************************/
+        /*                                                                      */
+        /*              Include ONLY 1 hardware library that matches            */
+        /*              the network hardware you are using                      */
+        /*                                                                      */
+        /*              If your base chipKIT board has a network adaptor        */
+        /*              manufactured on the board, such as the MX7cK,           */
+        /*              then you do not need to specify any hardware library    */
+        /*              for that network hardware on the board.                 */
+        /*              However, if you are using alternate network hardware,   */
+        /*              then you will need to specify the hardware library      */
+        /*              for the hardware you are using.                         */
+        /*                                                                      */
+        /*              Refer to the hardware library header file               */
+        /*              for supported boards and hardware configurations        */
+        /*                                                                      */
+        /************************************************************************/
+        #include <NetworkShield.h>
+        // #include <PmodNIC.h>
+        // #include <PmodNIC100.h>
+
+1.  Make sure that the TCP Server address of GatewayIP.190:44200 will work on your network. For example if your 
+    Gateway IP is 192.168.1.1, the default Remote WOL server IP will be 192.168.1.190:44200. If either the IP or 
+    port will not work on your network, modify them in the sketch to one that will.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              SET THESE VALUES FOR YOUR NETWORK                       */
+            /*                                                                      */
+            /************************************************************************/
+
+            // Set the static IP and listening port
+            byte localStaticIP = 190;                                       // this will be the gateway IP with the last byte being 190
+            unsigned short listeningPort = DNETcK::iPersonalPorts44 + 200;  // 44000 + 200 = 44200
+
+
+2.  Compile, upload, and start the serial monitor at 9600 baud. The sketch will go through a sequence of connecting via DHCP
+    to obtain your local network parameters such as your Gateway IP, DNS services, submasks and then like. Then it will disconnect
+    from the network, calculate the appropriate IP based off of you Gateway IP appending the localStaticIP address, and restart
+    the server with the calculated static IP but applying all of your other network parameters as obtained during the DHCP discovery.
+    The serial monitor should display something like:
+
+            RemoteWOL 3.0
+            Digilent, Copyright 2012
+
+            Dynamic begin
+            Network Initialized
+            Static begin
+            Network Initialized
+            Current Day and UTC time: Mar 27, 2012  22:33:40
+
+            My IP: 192.168.1.190
+            Gateway IP: 192.168.1.129
+            Subnet mask: 255.255.255.128
+            Dns1 IP: 192.168.1.129
+            Dns2 IP: 24.113.32.29
+
+            Listening on Port: 44200
+
+3.  Under the ...\libraries\DNETcK\examples\RemoteWOL directory, open a command window and instruct the commandline RemoteWOL application 
+    to "wake-up" MAC address 010203040506. While this MAC address is a dummy address, it will tell the RemoteWOL sketch to apply this WOL reqest
+    to the local network. Because it is a dummy MAC, no machine will wake up. 
+
+            RemoteWol 192.168.1.190 44200 010203040506
+
+4.  And in the PC command window you should see something like:
+
+            RemoteWol Version 3.0.4370.23263
+            Keith Vogel, Copyright 2011
+
+            Magic Packet Sent.
+
+5.  You should see in the serial monitor window the following additional information:
+
+            Got a client
+            Current Day and UTC time: Mar 27, 2012  22:39:38
+            Broadcast Request Detected
+            Request to Wake MAC: 01:02:03:04:05:06 from IP: 192.168.1.180:55200.
+            WOL Broadcast Succeeded
+            Request Succeeded
+ 
+            Listening on Port: 44200
+
+6.  From the PC you can ask the RomoteWOL sketch to return a history of all requests that it has processed with a command line of:
+
+            RemoteWol 192.168.1.190 44200 -h
+
+7.  In the PC command window you should get something like:
+
+            RemoteWol Version 3.0.4370.23263
+            Keith Vogel, Copyright 2011
+
+            Got the broadcast history.
+            Local Time: 3/27/2012 3:39:38 PM, MAC: 010203040506 from IP: 192.168.1.180.
+
+8.  In the Serial Monitor window you should get addition output something like:
+
+            Got a client
+            Current Day and UTC time: Mar 27, 2012  22:44:02
+            History Request Detected
+ 
+            Listening on Port: 44200
+
+9.  You can have the RemoteWOL sketch post as many WOL requests for any MAC by specifying the MAC address as in step 3 above, and 
+    get a history of all posted WOL requests by using the command as in step 6 above.
+
+

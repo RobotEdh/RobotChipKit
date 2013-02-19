@@ -1,0 +1,164 @@
+#######################################
+# Syntax Coloring Map For DNETcK
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+STATUS	KEYWORD1
+WPA2KEY	KEYWORD1
+WEP40KEY	KEYWORD1
+WEP104KEY	KEYWORD1
+SCANINFO	KEYWORD1
+SECINFO	KEYWORD1
+WFSCAN	KEYWORD1
+SECURITY	KEYWORD1
+CONNECTSTATE	KEYWORD1
+NETWKTYPE	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+isInitialized	KEYWORD2
+periodicTasks	KEYWORD2
+secondsSinceEpoch	KEYWORD2
+getMyMac	KEYWORD2
+getMyIP	KEYWORD2
+getGateway	KEYWORD2
+getSubnetMask	KEYWORD2
+getDns1	KEYWORD2
+getDns2	KEYWORD2
+requestARPIpMacResolution	KEYWORD2
+isARPIpMacResolved	KEYWORD2
+isDNSResolved	KEYWORD2
+terminateDNS	KEYWORD2
+setDefaultBlockTime	KEYWORD2
+isStatusAnError	KEYWORD2
+close	KEYWORD2
+connect	KEYWORD2
+isConnected	KEYWORD2
+discardReadBuffer	KEYWORD2
+available	KEYWORD2
+peekByte	KEYWORD2
+peekStream	KEYWORD2
+readByte	KEYWORD2
+readStream	KEYWORD2
+writeStream	KEYWORD2
+getRemoteEndPoint	KEYWORD2
+getLocalEndPoint	KEYWORD2
+getRemoteMAC	KEYWORD2
+startListening	KEYWORD2
+isListening	KEYWORD2
+stopListening	KEYWORD2
+resumeListening	KEYWORD2
+availableClients	KEYWORD2
+acceptClient	KEYWORD2
+getAvailableClientsRemoteEndPoint	KEYWORD2
+getListeningEndPoint	KEYWORD2
+setEndPoint	KEYWORD2
+isEndPointResolved	KEYWORD2
+discardDatagram	KEYWORD2
+peekDatagram	KEYWORD2
+readDatagram	KEYWORD2
+writeDatagram	KEYWORD2
+disconnect	KEYWORD2
+getSecurityInfo	KEYWORD2
+beginScan	KEYWORD2
+isScanDone	KEYWORD2
+getScanInfo	KEYWORD2
+
+#######################################
+# Classes (KEYWORD3)
+#######################################
+DNETcK	KEYWORD3
+TcpClient	KEYWORD3
+TcpServer	KEYWORD3
+UdpClient	KEYWORD3
+UdpServer	KEYWORD3
+DWIFIcK	KEYWORD3
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+msInfinite	LITERAL1
+msImmediate	LITERAL1
+iReservedPort	LITERAL1
+iWellKnownPorts	LITERAL1
+iRebootPort	LITERAL1
+iRegisteredPorts	LITERAL1
+iEphemeralPorts	LITERAL1
+iMaxPort	LITERAL1
+iPersonalPorts35	LITERAL1
+iPersonalPorts38	LITERAL1
+iPersonalPorts39	LITERAL1
+iPersonalPorts44	LITERAL1
+iPersonalPorts45	LITERAL1
+iPersonalPorts46	LITERAL1
+zMAC	LITERAL1
+zIPv4	LITERAL1
+broadcastIP	LITERAL1
+cbDatagramCacheMin	LITERAL1
+None	LITERAL1
+Success	LITERAL1
+UDPCacheToSmall	LITERAL1
+NetworkNotInitialized	LITERAL1
+NetworkInitialized	LITERAL1
+DHCPNotBound	LITERAL1
+TimeSincePowerUp	LITERAL1
+TimeSinceEpoch	LITERAL1
+DNSIsBusy	LITERAL1
+DNSResolving	LITERAL1
+DNSLookupSuccess	LITERAL1
+DNSUninitialized	LITERAL1
+DNSResolutionFailed	LITERAL1
+DNSHostNameIsNULL	LITERAL1
+DNSRecursiveExit	LITERAL1
+NotConnected	LITERAL1
+WaitingConnect	LITERAL1
+Connected	LITERAL1
+LostConnect	LITERAL1
+ConnectionAlreadyDefined	LITERAL1
+SocketError	LITERAL1
+WriteTimeout	LITERAL1
+NoDataToRead	LITERAL1
+NeedToCallStartListening	LITERAL1
+NeedToResumeListening	LITERAL1
+AlreadyStarted	LITERAL1
+AlreadyListening	LITERAL1
+Listening	LITERAL1
+ExceededMaxPendingAllowed	LITERAL1
+MoreCurrentlyPendingThanAllowed	LITERAL1
+ClientPointerIsNULL	LITERAL1
+SocketAlreadyAssignedToClient	LITERAL1
+NoPendingClients	LITERAL1
+IndexOutOfBounds	LITERAL1
+EndPointNotSet	LITERAL1
+ARPResolving	LITERAL1
+AcquiringSocket	LITERAL1
+Finalizing	LITERAL1
+EndPointResolved	LITERAL1
+INVALID_CONNECTION_ID	LITERAL1
+WF_MAX_SSID_LENGTH	LITERAL1
+WF_BSSID_LENGTH	LITERAL1
+WF_MAX_NUM_RATES	LITERAL1
+WF_SCAN_ALL	LITERAL1
+WF_INFRASTRUCTURE	LITERAL1
+WF_ADHOC	LITERAL1
+WF_ACTIVE_SCAN	LITERAL1
+WF_PASSIVE_SCAN	LITERAL1
+WF_SECURITY_OPEN	LITERAL1
+WF_SECURITY_WEP_40	LITERAL1
+WF_SECURITY_WEP_104	LITERAL1
+WF_SECURITY_WPA_WITH_KEY	LITERAL1
+WF_SECURITY_WPA_WITH_PASS_PHRASE	LITERAL1
+WF_SECURITY_WPA2_WITH_KEY	LITERAL1
+WF_SECURITY_WPA2_WITH_PASS_PHRASE	LITERAL1
+WF_SECURITY_WPA_AUTO_WITH_KEY	LITERAL1
+WF_SECURITY_WPA_AUTO_WITH_PASS_PHRASE	LITERAL1
+WF_CSTATE_NOT_CONNECTED	LITERAL1
+WF_CSTATE_CONNECTION_IN_PROGRESS	LITERAL1
+WF_CSTATE_CONNECTED_INFRASTRUCTURE	LITERAL1
+WF_CSTATE_CONNECTED_ADHOC	LITERAL1
+WF_CSTATE_RECONNECTION_IN_PROGRESS	LITERAL1
+WF_CSTATE_CONNECTION_PERMANENTLY_LOST	LITERAL1

@@ -1,0 +1,42 @@
+WiFiConfigOverride 1.0
+
+1.  WiFiConfigOverride is almost exactly WiFiTCPEchoServer with the exception that the secruity parameters are taken
+    from the WF_Config.x secrity override file located in the sketch (WiFiConfigOverrided) directory. Reading WF_Config.x is
+    specified in the code by "conID = DWIFIcK::connect(0, &status)" with a connection ID of 0. While this may seem like an SSID
+    of NULL, in fact there is an overloaded method where the first parameter is a connection ID and the value of 0
+    should be used, NOT NULL. This method signature is provided for future support of hardware stored connection IDs 
+    (configurations other than 0) which will have meaning.
+
+2.  Modify WF_Config.x to contain the security parameters for your network. 
+
+            #define MY_DEFAULT_SSID_NAME                "chipKIT"
+            #define MY_DEFAULT_WIFI_SECURITY_MODE        WF_SECURITY_WPA2_WITH_KEY
+            #define MY_DEFAULT_PSK_PHRASE               "Digilent"
+    
+    And then the Key information at the bottom of the file must be updated. Only the Key that you plan to use needs 
+    to be updated. If you are using WEP, make sure to also set:
+
+            /* Valid Key Index: 0, 1, 2, 3  */
+            #define MY_DEFAULT_WEP_KEY_INDEX        (0u)
+
+    Appropriate MY_DEFAULT_WIFI_SECURITY_MODEs are:
+
+                WF_SECURITY_OPEN                     
+                WF_SECURITY_WEP_40                   
+                WF_SECURITY_WEP_104                  
+                WF_SECURITY_WPA_WITH_KEY             
+                WF_SECURITY_WPA_WITH_PASS_PHRASE     
+                WF_SECURITY_WPA2_WITH_KEY            
+                WF_SECURITY_WPA2_WITH_PASS_PHRASE    
+                WF_SECURITY_WPA_AUTO_WITH_KEY                                                
+                WF_SECURITY_WPA_AUTO_WITH_PASS_PHRASE
+
+    This file format is exactly as taken from the Microchip MAL implementation and the Microchip TCPIP configuration Wizard
+    may be used to modify this file. The Wizard can be found at .../libraries/DNETcK/TCPIP Wizard/TCPIPConfig.exe. When running 
+    the Wizard deselect the TCPIPConfig.h options, select the WF_Config.h option and browse to your WF_Config.x file. You do not 
+    need to select the advanced options. You will need to select "show all files" as you will be modifying/browsing for a .x file and 
+    by default the wizard only looks for .h files.
+
+3.  After you have setup your WF_Config.x file, follow the readme for ...\libraries\DWIFIcK\examples\WiFiTCPEchoServer\documentation\WiFiTCPEchoServer.txt;
+    however you will not need to modify any WiFi security information in the sketch as that will be taken from the WF_Config.x file you just modified.
+

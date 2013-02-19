@@ -1,0 +1,217 @@
+WiFiRemoteWOL 3.0
+
+0.  Select the hardware library that matches the network adaptor you are using. Make sure to look in the hardware library
+    header file to see exactly how to configure your board; for example there may be some jumpers to set. If you have
+    a network adaptor physically mounted on the chipKIT board, then comment out ALL hardware libraries as the correct software
+    will be included with the MPIDE selection of the chipKIT board. For example, the MX7cK has an SMSC-8720 phy on the board
+    and uses the MX7 internal network MAC, no hardware library is needed for the MX7cK.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              Include ONLY 1 hardware library that matches            */
+            /*              the network hardware you are using                      */
+            /*                                                                      */
+            /*              Refer to the hardware library header file               */
+            /*              for supported boards and hardware configurations        */
+            /*                                                                      */
+            /************************************************************************/
+            // #include <WiFiShieldOrPmodWiFi.h>                       // This is for the MRF24WBxx on a pmodWiFi or WiFiShield
+            #include <WiFiShieldOrPmodWiFi_G.h>                     // This is for the MRF24WGxx on a pmodWiFi or WiFiShield
+
+1.  Make sure that the TCP Server address of GatewayIP.190:44200 will work on 
+    your network. If not then modify the server port in the sketch to 
+    one that will.
+
+            /************************************************************************/
+            /*                                                                      */
+            /*              SET THESE VALUES FOR YOUR NETWORK                       */
+            /*                                                                      */
+            /************************************************************************/
+
+            // Set the static IP and listening port
+            byte localStaticIP = 190;                                       // this will be the gateway IP with the last byte being 190
+            unsigned short listeningPort = DNETcK::iPersonalPorts44 + 200;  // 44000 + 200 = 44200
+
+2.  Then modify the szSsid to the SSID of your WiFi network.
+
+            // Specify the SSID
+            const char * szSsid = "chipKIT";
+
+3.  Also uncomment the security type that you are using on your WiFi network.
+    If you are using OPEN security, then comment all of the secruity types out.
+
+            // select 1 for the security you want, or none for no security
+            #define USE_WPA2_PASSPHRASE
+            //#define USE_WPA2_KEY
+            //#define USE_WEP40
+            //#define USE_WEP104
+            //#define USE_WF_CONFIG_H
+
+4.  Scroll down to the security type that you are using, and provide the appropriate
+    Key information. You only need to update the section for the security type that you
+    are using. If you are using WEP, you only have to provide the key for the index
+    you are using, make sure you also change the key index (iWEPkey)
+    
+    If you are using WPA or WPA2 with a pass phrase, understand that it will take
+    about 30 seconds for the MRF24WB0MA to calculate the key before the WiFi
+    connection can be made. What this means is, your sketch will appear to hang for
+    about 30 seconds, so give your sketch a good 40-50 seconds to start before thinking
+    anything is wrong. 
+
+            // modify the security key to what you have.
+            #if defined(USE_WPA2_PASSPHRASE)
+
+                const char * szPassPhrase = "Digilent";
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, szPassPhrase, &status)
+
+            #elif defined(USE_WPA2_KEY)
+
+                DWIFIcK::WPA2KEY key = { 0x27, 0x2C, 0x89, 0xCC, 0xE9, 0x56, 0x31, 0x1E, 
+                                        0x3B, 0xAD, 0x79, 0xF7, 0x1D, 0xC4, 0xB9, 0x05, 
+                                        0x7A, 0x34, 0x4C, 0x3E, 0xB5, 0xFA, 0x38, 0xC2, 
+                                        0x0F, 0x0A, 0xB0, 0x90, 0xDC, 0x62, 0xAD, 0x58 };
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, key, &status)
+
+            #elif defined(USE_WEP40)
+
+                const int iWEPKey = 0;
+                DWIFIcK::WEP40KEY keySet = {    0xBE, 0xC9, 0x58, 0x06, 0x97,     // Key 0
+                                                0x00, 0x00, 0x00, 0x00, 0x00,     // Key 1
+                                                0x00, 0x00, 0x00, 0x00, 0x00,     // Key 2
+                                                0x00, 0x00, 0x00, 0x00, 0x00 };   // Key 3
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
+
+            #elif defined(USE_WEP104)
+
+                const int iWEPKey = 0;
+                DWIFIcK::WEP104KEY keySet = {   0x3E, 0xCD, 0x30, 0xB2, 0x55, 0x2D, 0x3C, 0x50, 0x52, 0x71, 0xE8, 0x83, 0x91,   // Key 0
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 1
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 2
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Key 3
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
+
+            #elif defined(USE_WF_CONFIG_H)
+
+                #define WiFiConnectMacro() DWIFIcK::connect(0, &status)
+
+            #else   // no security - OPEN
+
+                #define WiFiConnectMacro() DWIFIcK::connect(szSsid, &status)
+
+            #endif
+   
+        //******************************************************************************************
+        //******************************************************************************************
+        //***************************** END OF CONFIGURATION ***************************************
+        //******************************************************************************************
+        //******************************************************************************************
+
+5. 	Compile WiFiRemoteWOL, upload, and start the serial monitor at 9600 baud and after
+    10-50 seconds (depending on whether you are using a pass phrase or not) the serial monitor window should display
+    something like the following, allowing for your network parameters.
+
+            WiFiRemoteWOL 3.0
+            Digilent, Copyright 2012
+
+            Start WiFi Scan
+            Scan Done
+
+            Scan info for index: 0
+            SSID: chipKIT
+            Secuity type: 5
+            Channel: 1
+            Signal Strength: 158
+            Count of support bit rates: 8
+	            Supported Rate: 1000000 bps
+	            Supported Rate: 2000000 bps
+	            Supported Rate: 5500000 bps
+	            Supported Rate: 11000000 bps
+	            Supported Rate: 6000000 bps
+	            Supported Rate: 9000000 bps
+	            Supported Rate: 12000000 bps
+	            Supported Rate: 18000000 bps
+            SSID MAC: 08863B842B9A
+            Beacon Period: 100
+            dtimPeriod: 48
+            atimWindow: 2768
+
+            About To Connect
+            Connection Created, ConID = 1
+            Is Connected
+            connection status: 18
+            Dynamic begin
+            Network Initialized
+            Getting Key
+            Key Type: 5
+            Key Lenght: 32
+            Key value: 27:2C:89:CC:E9:56:31:1E:3B:AD:79:F7:1D:C4:B9:05:7A:34:4C:3E:B5:FA:38:C2:0F:0A:B0:90:DC:62:AD:58
+            Static begin
+            Network Initialized
+            Current Day and UTC time: Mar 28, 2012  0:05:25
+
+            My IP: 192.168.1.190
+            Gateway IP: 192.168.1.129
+            Subnet mask: 255.255.255.128
+            Dns1 IP: 192.168.1.129
+            Dns2 IP: 24.113.32.29
+
+            WiFi config information
+            Scan Type: 2
+            Beacon Timeout: 40
+            Connect Retry Count: 5
+            Scan Count: 1
+            Minimum Signal Strength: 255
+            Minimum Channel Time: 200
+            Maximum Channel Time: 400
+            Probe Delay: 20
+            Polling Interval: 0
+
+            Listening on Port: 44200
+
+6.  Under the ...\libraries\DNETcK\examples\RemoteWOL\PCCode directory, open a command window and instruct the commandline 
+    RemoteWOL application to "wake-up" MAC address 010203040506. While this MAC address is a dummy address, it will tell the RemoteWOL 
+    sketch to apply this WOL reqest to the local network. Because it is a dummy MAC, no machine will wake up. 
+
+		    RemoteWol 192.168.1.190 44200 010203040506
+
+7.  And in the PC command window you should see something like:
+
+            RemoteWol Version 3.0.4370.23263
+            Keith Vogel, Copyright 2011
+
+            Magic Packet Sent.
+
+8.  You should see in the serial monitor window the following additional information:
+
+            Got a client
+            Current Day and UTC time: Mar 27, 2012  22:39:38
+            Broadcast Request Detected
+            Request to Wake MAC: 01:02:03:04:05:06 from IP: 192.168.1.180:55200.
+            WOL Broadcast Succeeded
+            Request Succeeded
+ 
+            Listening on Port: 44200
+
+9.  From the PC you can ask the RomoteWOL sketch to return a history of all requests that it has processed with a command line of:
+
+		    RemoteWol 192.168.1.190 44200 -h
+
+10. In the PC command window you should get something like:
+
+            RemoteWol Version 3.0.4370.23263
+            Keith Vogel, Copyright 2011
+
+            Got the broadcast history.
+            Local Time: 3/27/2012 3:39:38 PM, MAC: 010203040506 from IP: 192.168.1.180.
+
+11. In the Serial Monitor window you should get addition output something like:
+
+            Got a client
+            Current Day and UTC time: Mar 27, 2012  22:44:02
+            History Request Detected
+ 
+            Listening on Port: 44200
+
+12. You can have the RemoteWOL sketch post as many WOL requests for any MAC by specifying the MAC address as in step 3 above, and 
+    get a history of all posted WOL requests by using the command as in step 6 above.
+
