@@ -2,10 +2,7 @@
 /*																		*/
 /*	NetworkProfile.x                                                    */
 /*																		*/
-/*	Default Network Hardware for specific WiFI board configurations.   	*/
-/*	This will only include WiFi hardware that physically is mounted		*/
-/*	on the board. If the board has no WiFi network hardware, the		*/
-/*	board will not be specified in this file							*/
+/*	Network Hardware vector file for the MRF24WB0MA PmodWiFi            */
 /*																		*/
 /************************************************************************/
 /*	Author: 	Keith Vogel 											*/
@@ -29,14 +26,56 @@
 /************************************************************************/
 /*  Revision History:													*/
 /*																		*/
-/*	4/26/2012(KeithV): Created											*/
+/*	5/2/2012(KeithV): Created											*/
 /*																		*/
 /************************************************************************/
 
-#ifndef DEFAULT_WIFI_NETWORK_PROFILE_X
-#define DEFAULT_WIFI_NETWORK_PROFILE_X
+#ifndef PMODWIFI_NETWORK_PROFILE_X
+#define PMODWIFI_NETWORK_PROFILE_X
+
+#define DWIFIcK_WiFi_Hardware
+#define DNETcK_MRF24WB0MA
 
 // board specific stuff
-#error No default WiFi network hardware for this board; include a WiFi network hardware libarary.
+#if defined(_BOARD_UNO_)
 
-#endif // DEFAULT_WIFI_NETWORK_PROFILE_X
+    #include <Uno32-MRF24WB0MA.x>
+
+#elif defined(_BOARD_UC32_) || defined(_BOARD_CEREBOT_MX3CK_512_)
+
+    #include <uC32-MRF24WB0MA.x>
+
+#elif defined (_BOARD_MEGA_)
+
+    #include <Max32-MRF24WB0MA.x>
+
+#elif defined (_BOARD_CEREBOT_MX3CK_)
+
+    #include <MX3cK-MRF24WB0MA.x>
+
+#elif defined (_BOARD_CEREBOT_MX4CK_)
+
+    #include <MX4cK-MRF24WB0MA.x>
+
+#elif defined (_BOARD_CEREBOT_MX7CK_)
+
+    #include <MX7cK-MRF24WB0MA.x>
+
+#elif defined (_BOARD_FUBARINO_SD_)
+
+    #include <FubarSD-MRF24WB0MA.x>
+
+#elif defined (_BOARD_CMOD_CK1_)
+
+    #include <CmodCK1-MRF24WB0MA.x>
+
+#else
+
+    #error Neither the WiFi Shield nor PmodWiFi is supported by this board.
+
+#endif
+
+// set up the WiFi INT and SPI port
+#include <WiFiCommonNetworkProfile.x>
+
+#endif // PMODWIFI_NETWORK_PROFILE_X

@@ -11,16 +11,15 @@
 #include <wiring.h> // used for analogic read function (core lib)
 #include <PID.h>
 
-
+#define SUCCESS 0
 #define SPEED_ERROR -1
 #define OBSTACLE -2
 #define TIMEOUT -3
 #define BAD_ANGLE -4
 #define COMPASS_ERROR -5
 #define CAMERA_ERROR -6
-#define XBEE_ERROR -7
-#define FILE_OPEN_ERROR -1000
-#define FILE_CLOSE_ERROR -1001
+#define SDCARD_ERROR -7
+
 
 
 #define CMD_START         0x01
@@ -68,8 +67,8 @@
 #define In2MotorLeft2Pin  33      // In2 pin of L293D #2 for motor left #2 connected to digital pin J6-16(PMD7/RE7)
 #define EnableMotorLeft2Pin 9     // Enable pin of L293D #2 for motor left #2 connected to PWM pin J5-03(OC4/RD3)    Use TIMER_OC4
     
-#define EncodeurTickRightINT  1  // INT used by the encodeur for motor right connected to interrupt pin INT1 J6-05(INT1) Use INT1
-#define EncodeurTickLeftINT   2  // INT used by the encodeur for motor left  connected to interrupt pin INT2 J6-15(INT2)  Use INT2
+#define EncodeurTickRightINT  2  // INT used by the encodeur for motor right connected to interrupt pin INT2 J6-15(INT2) Use INT2
+#define EncodeurTickLeftINT   3  // INT used by the encodeur for motor left  connected to interrupt pin INT3 J5-01(INT3) Use INT3
 
 
 #define GP2Y0A21YK_Pin 14   // IR sensor GP2Y0A21YK analogic pin J7-01 A0 (C2IN-/AN2/SS1/CN4/RB2)   Use ADC module channel 2
@@ -77,13 +76,13 @@
 /* Power +3V is set on pin VCC              */
 /* Ground    is set on pin GND              */
 
-#define IRSERVO_Pin 34   // IR Servo pin connected to digital pin J5-02 (PMRD/CN14/RD5)
+#define IRSERVO_Pin 37   // IR Servo pin connected to digital pin J5-08 (CN16/RD7)
 /* Power +5V */
 /* Ground    */
-#define HSERVO_Pin  36   // Horizontal Servo pin connected to digital pin J5-06 (CN15/RD6)
+#define HSERVO_Pin  38   // Horizontal Servo pin connected to digital pin J5-10 (U1RTS/BCLK1/SCK1/INT0/RF6)
 /* Power +5V */
 /* Ground    */
-#define VSERVO_Pin  37   // Vertical Servo pin connected to digital pin J5-08 (CN16/RD7)
+#define VSERVO_Pin  41   // Vertical Servo pin connected to digital pin J5-16 (PGC1/AN1/VREF-/CVREF-/CN3/RB1)
 /* Power +5V */
 /* Ground    */
 
@@ -95,22 +94,26 @@
 /*         9 = Ground                                               */
 
 
-#define SS_CS_Pin  4   // Serial Select pin connected to digital pin J6-09 (RF1)
-/* SD-Card                                                                                          */
-/* SPI interface is provided on pins:                                                               */                    
-/*         SPI/SD-Card Master Output (MOSI) connected to J5-07(SDO2/PMA3/CN10/RG8) selected by JP5  */
-/*         SPI/SD-Card Master Input  (MISO) connected to J5-09(SDI2/PMA5/CN8/RG7) selected by JP7   */
-/*         SPI/SD-Card Serial Clock  (SCLK) connected to J5-11 (SCK2/PMA5/CN8/RG6)                  */                                            
-
-
-int motor_init();     // initialize everything
-int mainRobot ();
-
-
 void IntrTickRight();  // interrupt handler encodeur right
 void IntrTickLeft();   // interrupt handler encodeur right
 
-
+int motor_begin();     
+/* Description: initialize everything, must be called during setup            */                                            
+/* input:       none                                                          */
+/* output:      return                                                        */                             
+/*                  = SUCCESS always even if error during initialization      */ 
+/* lib:         pinMode                                                       */                                
+/*              GP2Y0A21YK_init                                               */                                
+/*              Servo.attach                                                  */
+/*              Servo.write                                                   */                                
+/*              Servo.detach                                                  */ 
+/*              delay                                                         */ 
+/*              TiltPan_begin                                                 */                               
+/*              CMPS03.CMPS03_begin                                           */
+/*              JPEGCamera.begin                                              */ 
+/*              infoSDCard                                                    */                            
+/*              attachInterrupt                                               */ 
+/*              interrupts                                                    */ 
 
 void forward();     
 /* Description: set IN1 and IN2 of the 4 motors in order to run clockwise     */                                            
@@ -141,7 +144,7 @@ void start_forward();
                                    
 void start_forward_test(int num);
 /* Description: call forward +                                                */ 
-/*              set enable pin of the 4 motors to SPEEDNOMINAL                */                                           
+/*              set enable pin of the motor num to SPEEDNOMINAL               */                                           
 /*              (refer truth table LM293D)                                    */
 /*              used for testing                                              */
 /* input:       num                                                           */ 
@@ -245,11 +248,10 @@ int adjustMotor (int motor, int pid);
                                                                       
                                      
 int go(int d, int pid_ind); 
-/* Description: go during d ticks using PID adjustement if pid_ind = 1,       */
-/*              control motors speed between left and right                   */
-/*              using a tick counter provided by an encoder                   */
-/*              adjust (calling adjustMotor) the motor speed if necessary     */
-/*              using a PID method                                            */
+/* Description: go during d encoder ticks or before in case of obstacle       */
+/*              detected by IR sensor.                                        */
+/*              if pid_ind = 1 then use a PID method (calling adjustMotor)    */
+/*              to control motors speed between left and right                */                  
 /* input:       d                                                             */ 
 /*                  = number of right+left ticks to go                        */ 
 /* input:       pid_ind                                                       */
@@ -298,52 +300,6 @@ int turn(double alpha, unsigned long timeout);
 /*              millis                                                        */                                
 
 
-void move_Tilt_Pan(uint8_t HPos, uint8_t VPos);
-/* Description: move the Tilt&Pan depending on the                            */
-/*              Horizontal and Vertical position                              */
-/* input:       HPos                                                          */ 
-/*                  = Horizontal position to move the Tilt&Pan (0< HPos <180) */
-/*              VPos                                                          */ 
-/*                  = Vertical position to move the Tilt&Pan  (0< VPos <180)  */      
-/* output:      none                                                          */                            
-/* lib:         IRServo.attach                                                */                                
-/*              IRServo.write                                                 */                                
-/*              delay                                                         */
-
-
-int makePicture (int n);
-/* Description: make a picture using the JPEGCamera lib                       */
-/*              and save it on a SD card in a file PICTxx.jpg                 */
-/* input:       n                                                             */ 
-/*                  = picture number xx                                       */     
-/* output:      return                                                        */                            
-/*                  = FILE_OPEN_ERROR if an error occurs during file opening  */
-/*                  = FILE_CLOSE_ERROR if an error occurs during file closing */
-/*                  = CAMERA_ERROR if an error occurs with the camera         */
-/*                  = SUCCESS otherwise                                       */  
-/* lib:         sprintf                                                       */                                
-/*              open (file)                                                   */
-/*              write (file)                                                  */
-/*              close (file)                                                  */                                  
-/*              JPEGCamera.takePicture                                        */
-/*              JPEGCamera.getSize                                            */  
-/*              JPEGCamera.readData                                           */
-/*              JPEGCamera.stopPictures                                       */
-
-int sendPicture (int n);
-/* Description: send using XBee interface a picture stored                    */
-/*              in a file PICTxx.jpg on a SD card                             */
-/* input:       n                                                             */ 
-/*                  = picture number xx                                       */     
-/* output:      return                                                        */                            
-/*                  = FILE_OPEN_ERROR if an error occurs during file opening  */
-/*                  = FILE_CLOSE_ERROR if an error occurs during file closing */
-/*                  = XBEE_ERROR if an error occurs with the XBee interface   */
-/*                  = SUCCESS otherwise                                       */ 
-/* lib:         sprintf                                                       */                                
-/*              open (file)                                                   */
-/*              read (file)                                                   */
-/*              close (file)                                                  */                                  
-/*              xBTsendXbee                                                   */
+int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
 
 #endif

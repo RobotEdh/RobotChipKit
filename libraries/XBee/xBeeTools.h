@@ -1,5 +1,5 @@
 /*
-  xBeeTools.h - Tools class fro Xbee
+  XBeeTools.h - Tools class fro Xbee
   Copyright (c) 2013 EDH.  All right reserved.
 
   This library is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef xBeeTools_h
-#define xBeeTools_h
+#ifndef XBeeTools_h
+#define XBeeTools_h
 
 #ifndef _SYS_INTTYPES_H_
 	#include <inttypes.h>
@@ -53,7 +53,7 @@
 #define PAYLOAD_SIZE 100
 
 
-class xBeeTools
+class XBeeTools
 {
     public:
 	char s_buffer[BUFFER_SIZE];	//buffer used to send data

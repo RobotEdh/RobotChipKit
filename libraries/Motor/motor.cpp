@@ -3,10 +3,10 @@
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
 #include <Servo.h>      // Servo
+#include <TiltPan.h>   // Tilt&Pan
 #include <LSY201.h>     // Camera
-#include <SD.h>         // SD-Card
-#include <XBee.h>       // XBee
-#include <xBeeTools.h>  //XBee tools
+#include <sdcard.h>     // SD-Card
+
 
 int SpeedMotorRight = 0;      // Duty cycle PWM motor right between 0 and SPEEDMAX( 255)
 int SpeedMotorLeft = 0;       // Duty cycle PWM motor left between 0 and SPEEDMAX (255)
@@ -19,21 +19,14 @@ volatile int DirLeft = 0;
 
 CMPS03Class CMPS03;          // The Compass class
 Servo IRServo;               // The Servo class used for IR sensor
-Servo HServo;                // The Servo class used for Horizontal Tilt & Pan
-Servo VServo;                // The Servo class used for Vertical Tilt & Pan
+
+
 JPEGCameraClass JPEGCamera;  // The Camera class
-
-Sd2Card card;       // SD Card       
-SdVolume volume;    // SD Volume
-SdFile root;        // SD Root
-SdFile FilePicture; // SD File
-
-int no_picture = 0;
+int no_picture = 0;          // Picture number
  
-xBeeTools xBT;           // The Xbee tools class
 
 
-int motor_init()
+int motor_begin()
 {
   int ret = SUCCESS;
    
@@ -64,139 +57,17 @@ int motor_init()
   delay(15);          // waits 15ms for the servo to reach the position 
   // reset the Timer interrupt associate to the Timer interrupt
   IRServo.detach(); 
-  
-  // initialize the PWM pin connected to the servo used for the Horizontal Tilt&Pan and initialize the associate Timer interrupt
-  HServo.attach(HSERVO_Pin);   
-  // reset the servo position
-  HServo.write(90);    // reset servo position
-  delay(15);           // waits 15ms for the servo to reach the position 
-  // reset the Timer interrupt associate to the Timer interrupt
-  HServo.detach();
-  
-  // initialize the PWM pin connected to the servo used for the Vertical Tilt&Pan and initialize the associate Timer interrupt
-  VServo.attach(VSERVO_Pin);   
-  // reset the servo position
-  VServo.write(90);    // reset servo position
-  delay(15);           // waits 15ms for the servo to reach the position 
-  // reset the Timer interrupt associate to the Timer interrupt
-  VServo.detach(); 
-  Serial.println("\nInit servos OK");   
+  Serial.println("\nInit IR servo OK");  
  
-  // Initialize the SD-Card
-  if (!card.init(SPI_HALF_SPEED, SS_CS_Pin))  //Set SCK rate to F_CPU/4 (mode 1)
-  {
-  	Serial.println("\nError Init SD-Card");
-  }
-  else
-  {	 
-  	// initialize a FAT volume
-  	if (!volume.init(&card))
-  	{
-  	  	Serial.println("\nError Init Volume in SD-Card");
-	}  	  	
-  	else
-  	{ 
-  		// Open volume
-  		if (!root.openRoot(&volume))
-  		{
-  			Serial.println("\nError Open Volume in SD-Card");
-		}  	  	
-  		else
-  		{   
-    			Serial.print("\nSD-Card type is ");
-    			switch(card.type()) {
-    			case SD_CARD_TYPE_SD1:
-      				Serial.print("SD1");
-      			break;
-    			case SD_CARD_TYPE_SD2:
-      				Serial.print("SD2");
-      			break;
-    			case SD_CARD_TYPE_SDHC:
-      				Serial.print("SDHC");
-      			break;
-    			default:
-      				Serial.println("Unknown");
-  			}
-
-  			cid_t cid;
-  			if (!card.readCID(&cid))
-   			{
-   				Serial.print("\nError Open read CID of SD-Card");
-			}  	  	
-  			else
-  			{  
-  				Serial.print("\nManufacturer ID: ");
-  				Serial.print(cid.mid, HEX);
-
-  				Serial.print("\nOEM/Application ID: ");
-  				Serial.print(cid.oid[0]);
-  				Serial.print(cid.oid[1]);
-  
-  				Serial.print("\nProduct name: ");
-  				for (uint8_t i = 0; i < 5; i++) {
-    					Serial.print(cid.pnm[i]);
-  				}
- 
-  				Serial.print("\nProduct revision: ");
-  				Serial.print(cid.prv_m, DEC);
-  				Serial.print(".");
-  				Serial.print(cid.prv_n, DEC);
-
-  				Serial.print("\nProduct serial number: ");
-  				Serial.print(cid.psn);
- 
-  				Serial.print("\nManufacturing date: ");
-  				Serial.print(cid.mdt_month);
-  				Serial.print('/');
-  				Serial.print(2000 + (10*cid.mdt_year_high) + cid.mdt_year_low);
-
-  				// print the type and size of the first FAT-type volume
-				Serial.print("\nVolume type is FAT");
-				Serial.print(volume.fatType(), DEC);
-				  				
-  				uint32_t volumesize, volume_free;
-				volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
-				volume_free = volume.blocksPerCluster();  
-				Serial.print("\nNb blocks per cluster: ");
-				Serial.print(volumesize);
-				volumesize *= volume.clusterCount();       // we'll have a lot of clusters
-			    volume_free *= volume.freeClusterCount();
-				Serial.print("\nClusters count: ");
-				Serial.print(volume.clusterCount());  
-				volumesize *= 512;
-				volume_free *= 512;
-				Serial.print("\nBlock size: 512");        // SD card blocks are always 512 bytes
-				Serial.print("\nVolume size (bytes): ");
-				Serial.print(volumesize);
-				Serial.print(" / Volume free (bytes): ");
-				Serial.print(volume_free);	
-				Serial.print(" / % free: ");
-				Serial.print(100.0*(double)(volume_free)/(double)(volumesize));			
-				Serial.print("\nVolume size (Kbytes): ");
-				volumesize /= 1024;
-				Serial.print(volumesize);
-				Serial.print(" / Volume free (Kbytes): ");
-				volume_free /= 1024;
-				Serial.print(volume_free);				
-				Serial.print("\nVolume size (Mbytes): ");
-				volumesize /= 1024;
-				Serial.print(volumesize);
-				Serial.print(" / Volume free (Mbytes): ");
-				volume_free /= 1024;
-				Serial.print(volume_free);
-				
-				// list all files in the card with date and size			    
-			    Serial.println("\nFiles found on the card (name, date and size in bytes): ");
-				root.ls(LS_R | LS_DATE | LS_SIZE);
-			}				
-		}
-	}
-  }			
+  // initialize the Tilt&Pan servos  
+  TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
+  Serial.println("\nInit Tilt&Pan servos OK");
+   	
   // initialize the compas  
   CMPS03.CMPS03_begin();
   Serial.println("\nInit compas OK");
 
-  // Initialize the camera
+  // initialize the camera
   ret=JPEGCamera.begin();
   if (ret != SUCCESS)
   {  
@@ -207,11 +78,18 @@ int motor_init()
         Serial.println("\nInit Camera OK");
   } 
       
+  // get infos from SD-Card   
+  ret=infoSDCard();
+  if (ret != SUCCESS)
+  {  
+        Serial.println("\nError Infos SD-Card");
+  }
+      
   // interrupts setup
   attachInterrupt(EncodeurTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
   attachInterrupt(EncodeurTickLeftINT, IntrTickLeft, FALLING);    //set left tick interrupt
   
-  interrupts();                          // enable all interrupts
+  interrupts(); // enable all interrupts
   	
   Serial.println("\nEnd Init");
   return SUCCESS;
@@ -629,143 +507,16 @@ int turn(double alpha, unsigned long timeout)
   else                     return TIMEOUT; 
 }
 
-int makePicture (int n)
-{
-  int ret=SUCCESS;
-  uint8_t buf[32];     //Create a character array to store the cameras data
-  int size=0;          //Size of the jpeg image
-  long int address=0;  //This will keep track of the data address being read from the camera
-  int eof=0;           //eof is a flag for the sketch to determine when the end of a file is detected 
-                       //while reading the file data from the camera.
-  int count=0;         // nb bytes read
-  char filename[12+1];
-  
-  
-  // Open the file
-  sprintf(filename, "PICT%02d.jpg", n);
-  if (!FilePicture.open(&root, filename, O_CREAT|O_WRITE|O_TRUNC)) return FILE_OPEN_ERROR;  
-  
-  //Take a picture
-  ret=JPEGCamera.takePicture();
-  if (ret != SUCCESS) return CAMERA_ERROR;
-     
-  //Get the size of the picture    
-  ret=JPEGCamera.getSize(&size);
-  if (ret != SUCCESS ) return CAMERA_ERROR;
- 
-  //Starting at address 0, keep reading data until we've read 'size' data
-  while(address < size)
-  {       
-        //Read the data starting at the current address
-        ret=JPEGCamera.readData(address, buf, &count, &eof);
-        if (ret != SUCCESS ) return CAMERA_ERROR;
- 
-        for(int i=0; i<count; i++)
-        {  
-                FilePicture.write(buf[i]);
-        }          
-        if(eof==1) break;   
-  
-        //Increment the current address by the number of bytes we read
-        address+=count;                     
-  }// while
 
-  //Stop taking picture
-  ret=JPEGCamera.stopPictures();
-  if (ret != SUCCESS ) return CAMERA_ERROR;
-  
-  //Close file
-  if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
-  
-  return SUCCESS;
-}
-
-  
-
-int sendPicture (int n)
-{
-  int ret=SUCCESS;
-  int16_t nbytes; 
-  char buf[PAYLOAD_SIZE-1];     //First byte is used as indicator
-  uint8_t buffer[PAYLOAD_SIZE];
-  char filename[12+1];
-  
-  
-  // Open the file
-  sprintf(filename, "PICT%02d.jpg", n);
-  if (!FilePicture.open(&root, filename, O_READ)) return FILE_OPEN_ERROR;  
-
-  // read from the file until there's nothing else in it:
-  while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 && ret == SUCCESS) {
-      
-       if (nbytes == sizeof(buf)) 
-       {
-           buffer[0] = 0;
-       }
-       else
-       {
-           buffer[0] = 1; //end file read
-       }  
-    
-       unsigned int idx = 0;
-       for (unsigned int i = 1;i<nbytes+1;i++)
-       {
-           buffer [i] = buf[idx++];
-       }
-   	
-       ret = xBT.xBTsendXbee(buffer, nbytes+1);
-       if (ret != SUCCESS ) return XBEE_ERROR;
- 
-  }// while
-  
-  //Close file
-  if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
-  
-  return SUCCESS;
-}
-
-
-
-void move_Tilt_Pan(uint8_t HPos, uint8_t VPos)
-{
- 
-    // initialize the PWM pin connected to the servo used for the Tilt&Pan and initialize the associate Timer interrupt (if not already done)
-    HServo.attach(HSERVO_Pin);  
-    VServo.attach(VSERVO_Pin);  
-
-    if (HPos > 180) HPos = 180; 
-    if (HPos < 0) HPos = 0;
-            
-    if (VPos > 180) VPos = 180; 
-    if (VPos < 45) VPos = 45; //45° minimum due to the TiltPan
-           
-    HServo.write(HPos);  // moves Horizontal servo to position HPos
-    delay(15);           // waits 15ms for the servo to reach the position 
-    
-    VServo.write(VPos);  // moves Vertical servo to position VPos
-    delay(15);           // waits 15ms for the servo to reach the position 
-        
-    return;      
-}
-
-
-
-int mainRobot ()
+int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
 {
  int ret = SUCCESS;
  int state = STATE_STOP;
  long nb_go = 0;
  long nb_obstacle = 0;
+ int resp_len = 0;
 
- uint8_t cmd[PAYLOAD_SIZE];
- uint8_t resp[RESP_SIZE];
  
- while (1) { 
-     ret = xBT.xBTreceiveXbee(cmd, 5000); // read 5 ms max
-   
-     if (ret == SUCCESS)
-     {
-           Serial.println(ret);
            if (cmd[0] == CMD_STOP)
            { 
                Serial.println("CMD_STOP"); 
@@ -776,7 +527,7 @@ int mainRobot ()
            { 
                if (cmd[1] == 0)
                {  
-                     Serial.println("CMD_START")
+                     Serial.println("CMD_START");
                      start_forward();
                }
                else
@@ -795,16 +546,14 @@ int mainRobot ()
                resp[0] = RESP_CHECK_AROUND;
                // byte 1: direction
                resp[1] = ret;
-               delay (3000);
-               ret = xBT.xBTsendXbee(resp, sizeof (resp));
-               if (ret != SUCCESS){  Serial.print("RESP_CHECK_AROUND error"); Serial.print(ret);}
+               resp_len = 2;
            }
            else if (cmd[0] == CMD_MOVE_TILT_PAN)
            { 
                Serial.print("CMD_MOVE_TILT_PAN, X Y: "); 
                Serial.print(cmd[1]);
                Serial.println(cmd[2]);
-               move_Tilt_Pan(cmd[1], cmd[2]);
+               TiltPan_move(cmd[1], cmd[2]);
            }                      
            else if (cmd[0] == CMD_TURN_RIGHT)
            { 
@@ -845,49 +594,25 @@ int mainRobot ()
                resp[6] = CMPS03.CMPS03_read();
                // byte 7: distance
                resp[7] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
-               delay (3000);
-               ret = xBT.xBTsendXbee(resp, sizeof (resp));
-               if (ret != SUCCESS){  Serial.print("RESP_INFOS error"); Serial.print(ret);}
+               resp_len = 8;
            } 
            else if (cmd[0] == CMD_PICTURE) 
            { 
                Serial.println("CMD_PICTURE");
                no_picture++;
-               ret = makePicture (no_picture);
+               ret = JPEGCamera.makePicture (no_picture);
 
                if (ret == SUCCESS)
                { 
-                   ret= sendPicture (no_picture);
-                   if (ret != SUCCESS){  Serial.print("sendPicture error"); Serial.print(ret);}
+                     resp[0] = no_picture;
+                     // byte 1: picture number
+                     resp_len = 1;
                }
                else
                {
                   Serial.print("makePicture error");
                   Serial.print(ret);
                }                 
-           }
-     }          
-     
-     if (state == STATE_GO)
-     {    
-           nb_go++;
-/*         ret = go(10,0);
-           if (ret == OBSTACLE)
-           {   
-               nb_obstacle++;
-               ret = check_around ();
-               switch (ret) {
-                     case LEFT_DIRECTION:
-                            ret = turn (-90,100);
-                            break;
-                     case RIGHT_DIRECTION:
-                            ret = turn (+90,100);
-                            break;
-                      default:
-                            stop();
-                            state = STATE_STOP;  
-               }
-           }               
-*/    } 
-  }// end while 1
+           }          
+    
 }

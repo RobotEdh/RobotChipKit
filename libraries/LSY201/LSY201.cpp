@@ -8,6 +8,7 @@
 #include <WProgram.h> // used for delay function (core lib)
 
 #include <LSY201.h>
+#include <sdcard.h>   // used to store the picture on a SD-Card
 
 
 //Commands for the LinkSprite Serial JPEG Camera LSY201
@@ -44,11 +45,15 @@ JPEGCameraClass::JPEGCameraClass()
 //Initialize the serial1 port and call reset ()
 int JPEGCameraClass::begin(void)
 {
+	//init SD-Card
+	if (initSDCard() != SUCCESS) return SDCARD_ERROR;
+	
 	//Camera baud rate is 38400
 	Serial1.begin(38400);
 	
 	//Reset the camera
 	return reset();
+	
 }
 
 
@@ -279,12 +284,6 @@ int JPEGCameraClass::imageSizeLargeSave()
 }
 
 //Compress the picture according the ratio
-//pre: ratio is the ratio for compression (must be defined between 0X00 and 0XFF, usually 36)
-//returns:
-//        0 OK
-//       -1 KO
-//       -2 invalid ratio
-//Usage: lret=camera.compress(ratio);
 int JPEGCameraClass::compress(int ratio)
 {
 	int ibuf=-1;
@@ -306,7 +305,7 @@ int JPEGCameraClass::compress(int ratio)
 	{
 		while(Serial1.available() == 0); // waiting for data in the serial buffer
 		ibuf = Serial1.read();
-		if (ibuf == -1) return -1; // serial buffer empty, should not happen as we wait before
+		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}
 
@@ -315,21 +314,7 @@ int JPEGCameraClass::compress(int ratio)
 	return 0; 	
 }
 
-
-//Get the picture data from the camera
-//pre: address is the adress of the image, must star tat 0
-//     buf is a pointer to a string
-//     count is a pointer to an integer
-//     eof is a pointer to an integer 
-//post:
-//      buf = buffer read from camera but without headers, ie true picture
-//      count = number of bytes read
-//      eof = 1 if end of picture else eof = 0    
-//returns:
-//        0 OK
-//       -1 KO
-//Usage: camera.readData(cur_address, buf, count, eof);
-//NOTE: This function must be called repeatedly until all of the data is read
+//Get the picture data from the camera 
 int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int * eof)
 {
     const int read_size=32; //We read data from the camera in chunks, this is the chunk size
@@ -356,7 +341,7 @@ int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int 
 	{
 		while(Serial1.available() == 0); // waiting for data in the serial buffer
 		ibuf = Serial1.read();
-		if (ibuf == -1) return -1; // serial buffer empty, should not happen as we wait before
+		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}
 
@@ -394,6 +379,60 @@ int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int 
 	// set count
 	*count = icount;      
 	    
-	return 0;
+	return SUCCESS;
 }
 
+
+//make a picture
+int JPEGCameraClass::makePicture (int n)
+{
+  int ret=SUCCESS;
+  uint8_t buf[32];     //Create a character array to store the cameras data
+  int size=0;          //Size of the jpeg image
+  long int address=0;  //This will keep track of the data address being read from the camera
+  int eof=0;           //eof is a flag for the sketch to determine when the end of a file is detected 
+                       //while reading the file data from the camera.
+  int count=0;         // nb bytes read
+  char filename[12+1];
+  
+  SdFile root;        // SD Root
+  SdFile FilePicture; // SD File
+  
+  // Open the file
+  sprintf(filename, "PICT%02d.jpg", n);
+  if (!FilePicture.open(&root, filename, O_CREAT|O_WRITE|O_TRUNC)) return FILE_OPEN_ERROR;  
+  
+  //Take a picture
+  ret=takePicture();
+  if (ret != SUCCESS) return CAMERA_ERROR;
+     
+  //Get the size of the picture    
+  ret=getSize(&size);
+  if (ret != SUCCESS ) return CAMERA_ERROR;
+ 
+  //Starting at address 0, keep reading data until we've read 'size' data
+  while(address < size)
+  {       
+        //Read the data starting at the current address
+        ret=readData(address, buf, &count, &eof);
+        if (ret != SUCCESS ) return CAMERA_ERROR;
+ 
+        for(int i=0; i<count; i++)
+        {  
+                FilePicture.write(buf[i]);
+        }          
+        if(eof==1) break;   
+  
+        //Increment the current address by the number of bytes we read
+        address+=count;                     
+  }// while
+
+  //Stop taking picture
+  ret=stopPictures();
+  if (ret != SUCCESS ) return CAMERA_ERROR;
+  
+  //Close file
+  if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
+  
+  return SUCCESS;
+}

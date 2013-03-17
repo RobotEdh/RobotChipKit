@@ -24,11 +24,11 @@
 #include <math.h>
 #include "wiring.h"
 
-#include "xBeeTools.h"
+#include "XBeeTools.h"
 #include <XBee.h>
 
 
-int xBeeTools::xBTprint(const char *str, int size)
+int XBeeTools::xBTprint(const char *str, int size)
 {
 unsigned int idx = 0;
 int ret = SUCCESS;
@@ -44,7 +44,7 @@ int ret = SUCCESS;
 }
 
 
-int xBeeTools::xBTprint(const uint8_t *buffer, size_t size)
+int XBeeTools::xBTprint(const uint8_t *buffer, size_t size)
 {
 unsigned int idx = 0;
 int ret = SUCCESS;
@@ -59,7 +59,7 @@ int ret = SUCCESS;
 	return ret;
 }
 //************************************************************************
-int xBeeTools::xBTprint(const String &argString)
+int XBeeTools::xBTprint(const String &argString)
 {
 unsigned int idx = 0;
 int ret = SUCCESS;
@@ -75,7 +75,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(char c, int base)
+int XBeeTools::xBTprint(char c, int base)
 {
 int ret = SUCCESS;
 	
@@ -84,7 +84,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(unsigned char b, int base)
+int XBeeTools::xBTprint(unsigned char b, int base)
 {
 int ret = SUCCESS;
     
@@ -93,7 +93,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(int n, int base)
+int XBeeTools::xBTprint(int n, int base)
 {
 int ret = SUCCESS;
 
@@ -102,7 +102,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(unsigned int n, int base)
+int XBeeTools::xBTprint(unsigned int n, int base)
 {
 int ret = SUCCESS;
 
@@ -111,7 +111,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(long n, int base)
+int XBeeTools::xBTprint(long n, int base)
 {
 int ret = SUCCESS;
 
@@ -120,7 +120,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(unsigned long n, int base)
+int XBeeTools::xBTprint(unsigned long n, int base)
 {
 int ret = SUCCESS;
 
@@ -129,7 +129,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprint(double n, int digits)
+int XBeeTools::xBTprint(double n, int digits)
 {
 int ret = SUCCESS;
 
@@ -138,7 +138,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprintNumber(long n, uint8_t base)
+int XBeeTools::xBTprintNumber(long n, uint8_t base)
 {
 
 unsigned char buf[8 * sizeof(long)]; // Assumes 8-bit chars.
@@ -178,7 +178,7 @@ int ret = SUCCESS;
 }
 
 //************************************************************************
-int xBeeTools::xBTprintFloat(double number, uint8_t digits)
+int XBeeTools::xBTprintFloat(double number, uint8_t digits)
 {
 unsigned char buf[8 * sizeof(long)]; // Assumes 8-bit chars.
 unsigned int i = 0; 
@@ -246,7 +246,7 @@ int ret = SUCCESS;
 }
 
 
-int xBeeTools::xBTsendbufferXbee(char *buf, unsigned int buf_len)
+int XBeeTools::xBTsendbufferXbee(char *buf, unsigned int buf_len)
 {
 
 int count_max = 0;
@@ -285,7 +285,7 @@ while(Endofdata == 0) {
 }
 
 
-int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
+int XBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
  {
   uint8_t payload[PAYLOAD_SIZE];
  
@@ -348,7 +348,7 @@ int xBeeTools::xBTsendXbee(uint8_t* msg, unsigned int msg_len)
 
 
 
-int xBeeTools::xBTreceiveXbee(uint8_t *msg, int timeout) {
+int XBeeTools::xBTreceiveXbee(uint8_t *msg, int timeout) {
      
   // Create an XBee object
   XBee xbee = XBee();

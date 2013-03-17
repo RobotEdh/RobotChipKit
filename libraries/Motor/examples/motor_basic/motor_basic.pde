@@ -1,7 +1,9 @@
 #include <motor.h>
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
-#include <Servo.h>     // Servo
+#include <Servo.h>      // Servo
+#include <LSY201.h>     // Camera
+#include <SD.h>         // SD-Card
 
 
 void setup()

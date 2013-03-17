@@ -1,11 +1,8 @@
 /************************************************************************/
 /*																		*/
-/*	TCPIPConfig.x                                                       */
+/*	TCPIPConfig.h.h                                                     */
 /*																		*/
-/*	Default TCPIP config for specific WiFi board configurations.   	    */
-/*	This will only include WiFi hardware that physically is mounted		*/
-/*	on the board. If the board has no WiFi network hardware, the		*/
-/*	board will not be specified in this file							*/
+/*	TCPIP Config vector file for the MRF24WB0MA PmodWiFi                */
 /*																		*/
 /************************************************************************/
 /*	Author: 	Keith Vogel 											*/
@@ -29,14 +26,50 @@
 /************************************************************************/
 /*  Revision History:													*/
 /*																		*/
-/*	5/2/2012(KeithV): Created											*/
+/*	1/25/2012(KeithV): Created											*/
+/*	4/26/2012(KeithV): Modified for network hardware specific builds	*/
 /*																		*/
 /************************************************************************/
-
-#ifndef DEFAULT_WIFI_TCPIPConfig_X
-#define DEFAULT_WIFI_TCPIPConfig_X
+#ifndef PMODWIFI_TCPIPCONFIG_X
+#define PMODWIFI_TCPIPCONFIG_X
 
 // board specific stuff
-#error No default WiFi network hardware for this board; include a WiFi network hardware libarary.
+#if defined(_BOARD_UNO_)
 
-#endif // DEFAULT_WIFI_TCPIPConfig_X
+    #include <Uno32-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined(_BOARD_UC32_) || defined(_BOARD_CEREBOT_MX3CK_512_)
+
+    #include <uC32-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined (_BOARD_MEGA_)
+
+    #include <Max32-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined (_BOARD_CEREBOT_MX3CK_)
+
+    #include <MX3cK-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined (_BOARD_CEREBOT_MX4CK_)
+
+    #include <MX4cK-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined (_BOARD_CEREBOT_MX7CK_)
+
+    #include <MX7cK-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined (_BOARD_FUBARINO_SD_)
+
+    #include <FubarSD-MRF24WB0MA-TCPIPConfig.x>
+
+#elif defined (_BOARD_CMOD_CK1_)
+
+    #include <CmodCK1-MRF24WB0MA-TCPIPConfig.x>
+
+#else
+
+    #error Neither the WiFi Shield nor PmodWiFi is supported by this board.
+
+#endif
+
+#endif // PMODWIFI_TCPIPCONFIG_X

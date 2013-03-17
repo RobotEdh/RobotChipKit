@@ -382,6 +382,7 @@ bool DNETcK::setMyMac(const MAC& mac)
 **      
 */
 bool DNETcK::getMyMac(MAC *pMAC)
+ 
 {
     // get it set up if not already
     isInitialized(msImmediate);  

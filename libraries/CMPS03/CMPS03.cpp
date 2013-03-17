@@ -16,9 +16,7 @@ CMPS03Class::CMPS03Class ()
  
 void CMPS03Class::CMPS03_begin ()
 {
-	// setup I2C
-	
-    Wire.begin(); 
+    Wire.begin(); // setup I2C
 
 	return;
 } 
@@ -26,10 +24,8 @@ void CMPS03Class::CMPS03_begin ()
     
 int CMPS03Class::CMPS03_revision ()
 {
-	// return Software Revision Number
-	
     Wire.beginTransmission(CMPS03_ADDRESS); 
-	Wire.send((int)0);                            // use register 0
+	Wire.send((int)0);                            // use register 0: revision
 	
 	int ret = Wire.endTransmission();             // 0: success
                                                   // 1: length to long for buffer
@@ -39,17 +35,16 @@ int CMPS03Class::CMPS03_revision ()
 	if (ret != 0) return (-1 * ret);
 	    
 	delay(1);
+	
 	Wire.requestFrom(CMPS03_ADDRESS, (int)1);     // request 1 byte
 	int value = Wire.receive();
 	return value;
 }
 
 int CMPS03Class::CMPS03_read ()
-{
-	// returns 0-254 for a full circle, 0: North
-    
+{   
     Wire.beginTransmission(CMPS03_ADDRESS);  
-	Wire.send((int)1);                            // use register 1
+	Wire.send((int)1);                            // use register 1 : direction
 	
 	int ret = Wire.endTransmission();             // 0: success
                                                   // 1: length to long for buffer
@@ -59,6 +54,7 @@ int CMPS03Class::CMPS03_read ()
 	if (ret != 0) return (-1 * ret);
 	
 	delay(1);
+	
 	Wire.requestFrom(CMPS03_ADDRESS, (int)1);     // request 1 byte
 	int value = Wire.receive();
 	return value;

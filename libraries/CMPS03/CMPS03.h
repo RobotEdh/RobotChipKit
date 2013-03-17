@@ -20,11 +20,45 @@ class CMPS03Class
     
   CMPS03Class();
   
-  void CMPS03_begin (void);   // must be called during setup
-  int CMPS03_revision (void); // return Software Revision Number
-  int CMPS03_read (void);     // return 0-254 for a full circle, 0: North
+  void CMPS03_begin (void); 
+ /* initialize everything, must be called during setup                         */                                            
+ /* input:       none                                                          */
+ /* output:      none                                                          */                             
+ /* lib:         Wire.begin                                                    */                                
+
+  int CMPS03_revision (void);
+ /* return Software Revision Number                                            */                                            
+ /* input:       none                                                          */
+ /* output:      return                                                        */
+ /*                  = -1: length to long for buffer                           */
+ /*                  = -2: address send, NACK received -> bad address          */
+ /*                  = -3: data send, NACK received -> bad register            */
+ /*                  = -4: other error (lost bus arbitration, bus error, ..    */
+ /*                       -> missing 1Ok pull-down resistor on SDA & SDL pins  */
+ /*                  = Software Revision Number otherwise                      */                           
+ /* lib:         Wire.beginTransmission                                        */ 
+ /*              Wire.send                                                     */ 
+ /*              Wire.endTransmission                                          */ 
+ /*              delay                                                         */ 
+ /*              Wire.requestFrom                                              */
+ /*              Wire.receive                                                  */
+  
+  int CMPS03_read (void);
+ /* return 0-254 for a full circle, 0: North                                   */                                            
+ /* input:       none                                                          */
+ /* output:      return                                                        */
+ /*                  = -1: length to long for buffer                           */
+ /*                  = -2: address send, NACK received -> bad address          */
+ /*                  = -3: data send, NACK received -> bad register            */
+ /*                  = -4: other error (lost bus arbitration, bus error, ..    */
+ /*                       -> missing 1Ok pull-down resistor on SDA & SDL pins  */
+ /*                  = 0-254 for a full circle, 0: North  otherwise            */                           
+ /* lib:         Wire.beginTransmission                                        */ 
+ /*              Wire.send                                                     */ 
+ /*              Wire.endTransmission                                          */ 
+ /*              delay                                                         */ 
+ /*              Wire.requestFrom                                              */
+ /*              Wire.receive                                                  */  
 };
-
-
 
 #endif

@@ -18,7 +18,8 @@ void GP2Y0A21YK_init(int pin);
 /* lib:         none                                                          */
 
 int GP2Y0A21YK_getDistanceCentimeter(int pin);
-/* Description: Gest distance in centimeter using the IR sensor GP2Y0A21YK    */
+/* Description: Get distance in centimeter using the IR sensor GP2Y0A21YK     */
+/*              connected to 3V                                               */
 /* input:       pin                                                           */ 
 /*                  = pin connected to the IR sensor GP2Y0A21YK               */    
 /* output:      return                                                        */                            
