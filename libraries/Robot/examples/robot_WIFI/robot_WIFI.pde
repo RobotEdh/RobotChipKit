@@ -1,3 +1,4 @@
+#include <robot.h>
 #include <WiFiShieldOrPmodWiFi.h>
 #include <DNETcK.h>
 #include <DWIFIcK.h>
@@ -19,6 +20,7 @@ void setup()
 {
   
   Serial.begin(9600); // initialize serial port
+  robot_begin(); 
   motor_begin(); 
   Server.WiFiCmdRobot_begin();
 

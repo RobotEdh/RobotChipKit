@@ -1,6 +1,6 @@
 
 #include <XBeeCmdRobot.h>
-#include <motor.h>
+#include <robot.h>
 #include <XBee.h>       // XBee
 #include <XBeeTools.h>  // XBee tools
 #include <sdcard.h>     // used to read the picture on a SD-Card

@@ -46,7 +46,7 @@ JPEGCameraClass::JPEGCameraClass()
 int JPEGCameraClass::begin(void)
 {
 	//init SD-Card
-	if (initSDCard() != SUCCESS) return SDCARD_ERROR;
+	//if (initSDCard() != SUCCESS) return SDCARD_ERROR;
 	
 	//Camera baud rate is 38400
 	Serial1.begin(38400);

@@ -1,3 +1,4 @@
+#include <robot.h>
 #include <motor.h>
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
@@ -12,7 +13,9 @@
 void setup()
 { 
   Serial.begin(9600); // initialize serial port
+  robot_begin(); 
   motor_begin(); 
+  
 }
 
 void loop()

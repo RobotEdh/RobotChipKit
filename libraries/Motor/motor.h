@@ -106,14 +106,25 @@ int motor_begin();
 /*              GP2Y0A21YK_init                                               */                                
 /*              Servo.attach                                                  */
 /*              Servo.write                                                   */                                
-/*              Servo.detach                                                  */ 
 /*              delay                                                         */ 
 /*              TiltPan_begin                                                 */                               
-/*              CMPS03.CMPS03_begin                                           */
-/*              JPEGCamera.begin                                              */ 
-/*              infoSDCard                                                    */                            
+/*              CMPS03.CMPS03_begin                                           */                           
 /*              attachInterrupt                                               */ 
 /*              interrupts                                                    */ 
+
+int get_SpeedMotorRight();
+/* Description: get SpeedMotorRight                                           */                                            
+/* input:       none                                                          */
+/* output:      return                                                        */
+/*                  = SpeedMotorRight                                         */
+/* lib:         none                                                          */
+
+int get_SpeedMotorLeft();
+/* Description: get SpeedMotorLeft                                            */                                            
+/* input:       none                                                          */
+/* output:      return                                                        */
+/*                  = SpeedMotorLeft                                          */
+/* lib:         none                                                          */
 
 void forward();     
 /* Description: set IN1 and IN2 of the 4 motors in order to run clockwise     */                                            
@@ -274,8 +285,7 @@ int check_around();
 /*                  = OBSTACLE if an obstacle is detected for both directions */
 /*                  = LEFT_DIRECTION if best direction to go                  */ 
 /*                  = RIGHT_DIRECTION if best direction to go                 */                      
-/* lib:         IRServo.attach                                                */                                
-/*              IRServo.write                                                 */                                
+/* lib:         Servo.write                                                   */                                                              
 /*              delay                                                         */
 /*              adjustMotor                                                   */                                
 /*              GP2Y0A21YK_getDistanceCentimeter                              */  
@@ -298,8 +308,5 @@ int turn(double alpha, unsigned long timeout);
 /*              accelerate_n                                                  */                                
 /*              deccelerate_n                                                 */
 /*              millis                                                        */                                
-
-
-int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
 
 #endif

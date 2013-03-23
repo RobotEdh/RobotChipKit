@@ -1,21 +1,20 @@
 #include <WiFiCmdRobot.h>
-#include <motor.h>
-#include <sdcard.h>     // used to read the picture on a SD-Card
+#include <robot.h>
+
 
 // Specify the IP+Port
-IPv4 ipServer = {192,168,0,15};
-unsigned short portServer = DNETcK::iPersonalPorts44 + 300;     // port 44300 
+extern IPv4 ipServer = {192,168,0,15};
+extern unsigned short portServer = 44300;
 
 // Specify the SSID
-const char * szSsid = "WIFICOTEAU";
+extern const char * szSsid = "WIFICOTEAU";
 
-const int iWEPKey = 0;
+extern const int iWEPKey = 0;
 //02 96 61 D7 B1 D4 81 50 D7 76 97 60 C8
 DWIFIcK::WEP104KEY keySet = {   0x02, 0x96, 0x61, 0xD7, 0xB1, 0xD4, 0x81, 0x50, 0xD7, 0x76, 0x97, 0x60, 0xC8,   // Key 0
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 1
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 2
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Key 3
-#define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
 
 typedef enum
 {
@@ -50,14 +49,6 @@ byte rgbRead[1024];
 int cbRead = 0;
 int count = 0;
 String stringRead;
-String szcmd;
-int cmdTag;
-int And;
-String szparam[10];
-int iparam[10];
-int paramTag;
-int Start;
-int Semicolumn;
 
 uint8_t cmd[3];
 uint8_t resp[10];
@@ -87,7 +78,6 @@ DNETcK::STATUS status;
  * ------------------------------------------------------------ */
 void WiFiCmdRobot::WiFiCmdRobot_begin() {
 
-    
     Serial.begin(9600);
     
     // Set my default wait time to nothing
@@ -117,6 +107,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             break;
 
         case PRINTAPINFO:
+#ifdef FULLCODE              
             if(iNetwork < cNetworks)
             {
                 DWIFIcK::SCANINFO scanInfo;
@@ -212,6 +203,9 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             {
                 state = CONNECTWIFI;
             }
+#else
+            state = CONNECTWIFI;
+#endif            
             break;
 
     case CONNECTWIFI:
@@ -246,6 +240,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             break;
         
     case PRINTADDRESSES:
+ #ifdef FULLCODE         
             Serial.println("");
             IPv4 ip;
 
@@ -275,12 +270,13 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             Serial.println("");
 
             Serial.println("");
-
+#endif 
             state = PRINTWIFICONFIG;
             break;
                
    case PRINTWIFICONFIG:
-          /*  DWIFIcK::CONFIGINFO configInfo;
+#ifdef FULLCODE     
+            DWIFIcK::CONFIGINFO configInfo;
 
             if(DWIFIcK::getConfigInfo(&configInfo))
             {
@@ -329,7 +325,10 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
                 Serial.println("Unable to get WiFi config data");
                 state = EXIT;
             }
-            break;       */
+#else
+            state = STARTLISTENING;             
+#endif             
+            break;       
 
     case STARTLISTENING:       
             tcpServer.startListening(portServer);
@@ -399,46 +398,16 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
                           if (stringRead.startsWith("GET"))  
                           {
                                 Serial.println("GET");
-                                 //GET /Robot?CMD=MOVE_TILT_PAN&PARAM=122;118; HTTP/1.1[\r][\n]
-     
-                                cmdTag = stringRead.indexOf("CMD=");
-                                if (cmdTag > 0)
-                                {  
-                                    Serial.print("CMD=");
-                                    And = stringRead.indexOf('&', cmdTag + 1);   
-                                    szcmd = stringRead.substring(cmdTag + 4, And);
-                                    Serial.println(szcmd);
-                            
-                                    paramTag = stringRead.indexOf("PARAM=");
-                                    if (paramTag > 0)
-                                    {   
-                                       Start = paramTag + 6;
-                                       Semicolumn = stringRead.indexOf(';', Start + 1);
-                                       for (int p=0; Semicolumn != -1; p++)
-                                       {
-                                            szparam[p] = stringRead.substring(Start, Semicolumn);
-                                            iparam[p] = szparam[p].toInt();
-                                            Serial.print("param");
-                                            Serial.print(p);
-                                            Serial.print("=");
-                                            Serial.print(szparam[p]);
-                                            Serial.print("/");
-                                            Serial.print(iparam[p]);
-                                            Start = Semicolumn + 1;
-                                            Semicolumn = stringRead.indexOf(';', Start + 1);
-                                            
-                                       }                                   
-                                    }                                  
-                                }
-                                else
-                                {
-                                    // no CMD
-                                    tcpClient.println("HTTP/1.1 400 Bad Request");
-                                    tcpClient.println("Content-Type: text/html");
-                                    tcpClient.println("Server: ChipkitEDH/0.1"); 
-                                    tcpClient.println();                               
-                                }
+                                ret = Cmd (stringRead);
+ 
                           }
+                          else if (stringRead.startsWith("\r"))
+                          {
+                                // empty line => end
+                                Serial.println("empty line => end");
+                                state = CLOSE;
+                                break;
+                          }                          
                           else
                           {
                                 // no GET
@@ -451,95 +420,9 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
                           stringRead += c;
                     }
                 }
-                Serial.println("HTTP/1.1 200 OK");
-                tcpClient.println("HTTP/1.1 200 OK");
             }            
-            state = CMDROBOT;
-            break;
-
-       case CMDROBOT:                                  
-            if (szcmd == "START")
-            {
-                    cmd[0] = CMD_START;
-                    cmd[1] = iparam[0];
-                    cmd[2] = 0;
-            }        
-            if (szcmd == "STOP")
-            {
-                    cmd[0] = CMD_STOP;
-                    cmd[1] = 0;
-                    cmd[2] = 0;
-            }                                 
-            if (szcmd == "INFOS")
-            {
-                    cmd[0] = CMD_INFOS;
-                    cmd[1] = 0;
-                    cmd[2] = 0;
-            }                                    
-            if (szcmd == "PICTURE")
-            {
-                    cmd[0] = CMD_PICTURE;
-                    cmd[1] = 0;
-                    cmd[2] = 0;
-            }                                    
-            if (szcmd == "TURN_RIGHT")
-            {
-                    cmd[0] = CMD_TURN_RIGHT;
-                    cmd[1] = iparam[0];
-                    cmd[2] = 0;
-            }                                    
-            if (szcmd == "TURN_LEFT")
-            {
-                    cmd[0] = CMD_TURN_LEFT;
-                    cmd[1] = iparam[0];
-                    cmd[2] = 0;
-            }                                    
-            if (szcmd == "CHECK_AROUND")
-            {
-                    cmd[0] = CMD_CHECK_AROUND;
-                    cmd[1] = iparam[0];
-                    cmd[2] = 0;
-            }                                    
-            if (szcmd == "MOVE_TILT_PAN")
-            {
-                    cmd[0] = CMD_MOVE_TILT_PAN;
-                    cmd[1] = iparam[0];
-                    cmd[2] = iparam[1];
-            }                                    
-            
-            ret = CmdRobot (cmd, resp, &resp_len);
-            if (ret == SUCCESS)
-            {           
-                    tcpClient.println("HTTP/1.1 200 OK");
-                    if (cmd[0] == CMD_PICTURE)
-                    { 
-                          ret= WiFiSendPicture (resp[0]);
-                          if (ret != SUCCESS){  Serial.print("WiFiSendPicture error"); Serial.print(ret);}
-                    }
-                    else                                           
-                    {                               
-                          for(int i=0; i<resp_len; i++)
-                          {
-                              tcpClient.print("Field ");
-                              tcpClient.print(i);
-                              tcpClient.print(":");
-                              tcpClient.println(resp[i]);
-                              tcpClient.print(";");
-                         }
-                         tcpClient.println("Content-Type: text/html");
-                         tcpClient.println("Server: ChipkitEDH/0.1");                                             
-                         tcpClient.println();
-                    }    
-            }
-            else
-            {
-                    tcpClient.println("HTTP/1.1 500 Internal Server Error");
-                    tcpClient.println("Content-Type: text/html");
-                    tcpClient.println("Server: ChipkitEDH/0.1");                                   
-                    tcpClient.println();
-            }
             state = CLOSE;
-            break; 
+            break;
 
      case CLOSE:
             tcpClient.close();
@@ -647,19 +530,183 @@ void WiFiCmdRobot::printNumb(byte * rgb, int cb, char chDelim)
     }
 }
 
+
+int WiFiCmdRobot::Cmd (String s)
+{
+   String szcmd;
+   int cmdTag;
+   int And;
+   String szparam[10];
+   int iparam[10];
+   int paramTag;
+   int Start;
+   int Semicolumn;
+   int ret=SUCCESS;
+   
+   //GET /Robot?CMD=MOVE_TILT_PAN&PARAM=122;118; HTTP/1.1[\r][\n]
+   //GET /Robot?CMD=INFOS HTTP/1.1[\r][\n]
+
+   cmdTag = s.indexOf("CMD=");
+   if (cmdTag > 0)
+   {   
+       Serial.print("CMD=");
+       And = s.indexOf('&', cmdTag + 1);
+       if (And == -1) And = s.indexOf(' ', cmdTag + 1);  
+       szcmd = s.substring(cmdTag + 4, And);
+       Serial.println(szcmd);
+
+       paramTag = s.indexOf("PARAM=");
+       if (paramTag > 0)
+       {   
+          Start = paramTag + 6;
+          Semicolumn = s.indexOf('%3B', Start + 1); // semi column is encoded in URL
+          for (int p=0; Semicolumn != -1; p++)
+          {
+               szparam[p] = s.substring(Start, Semicolumn - 2);
+               iparam[p] = szparam[p].toInt();
+               Serial.print("param");
+               Serial.print(p);
+               Serial.print("=");
+               Serial.print(szparam[p]);
+               Serial.print("/");
+               Serial.println(iparam[p]);
+               Start = Semicolumn + 1;
+               Semicolumn = s.indexOf('%3B', Start + 1);
+               
+          }                                   
+       }
+       // CMD
+       
+       if (szcmd == "START")
+       {
+               cmd[0] = CMD_START;
+               cmd[1] = iparam[0];
+               cmd[2] = 0;
+       }        
+       if (szcmd == "STOP")
+       {
+               cmd[0] = CMD_STOP;
+               cmd[1] = 0;
+               cmd[2] = 0;
+       }                                 
+       if (szcmd == "INFOS")
+       {
+               cmd[0] = CMD_INFOS;
+               cmd[1] = 0;
+               cmd[2] = 0;
+       }                                    
+       if (szcmd == "PICTURE")
+       {
+               cmd[0] = CMD_PICTURE;
+               cmd[1] = 0;
+               cmd[2] = 0;
+       }                                    
+       if (szcmd == "TURN_RIGHT")
+       {
+               cmd[0] = CMD_TURN_RIGHT;
+               cmd[1] = iparam[0];
+               cmd[2] = 0;
+       }                                    
+       if (szcmd == "TURN_LEFT")
+       {
+               cmd[0] = CMD_TURN_LEFT;
+               cmd[1] = iparam[0];
+               cmd[2] = 0;
+       }                                    
+       if (szcmd == "CHECK_AROUND")
+       {
+               cmd[0] = CMD_CHECK_AROUND;
+               cmd[1] = iparam[0];
+               cmd[2] = 0;
+       }                                    
+       if (szcmd == "MOVE_TILT_PAN")
+       {
+               cmd[0] = CMD_MOVE_TILT_PAN;
+               cmd[1] = iparam[0];
+               cmd[2] = iparam[1];
+       }                                    
+       
+       ret = CmdRobot (cmd, resp, &resp_len);
+       Serial.print("Call CmdRobot, ret: ");
+       Serial.print(ret);
+       Serial.print(" / resp_len: ");
+       Serial.println(resp_len);
+       ret = SUCCESS;
+       if (ret == SUCCESS)
+       {           
+               if (cmd[0] == CMD_PICTURE)
+               { 
+                     tcpClient.println("HTTP/1.1 200 OK");
+                     tcpClient.println("Content-Type: application/octet-stream");
+                     tcpClient.println("Server: ChipkitEDH/0.1");                                             
+                     tcpClient.println();
+
+                     ret= WiFiSendPicture (resp[0]);
+                     
+                     if (ret != SUCCESS){  Serial.print("WiFiSendPicture error"); Serial.print(ret);}
+               }
+               else                                           
+               {                               
+                     tcpClient.println("HTTP/1.1 200 OK");
+                     for(int i=0; i<resp_len; i++)
+                     {
+                         tcpClient.print("Field ");
+                         tcpClient.print(String(i));
+                         tcpClient.print(":");
+                         tcpClient.print(String((int)resp[i]));
+                         tcpClient.println(";");
+                    }
+                    tcpClient.println("Content-Type: text/html");
+                    tcpClient.println("Server: ChipkitEDH/0.1");                                             
+                    tcpClient.println();
+               }    
+       }
+       else
+       {
+               tcpClient.println("HTTP/1.1 500 Internal Server Error");
+               tcpClient.println("Content-Type: text/html");
+               tcpClient.println("Server: ChipkitEDH/0.1");                                   
+               tcpClient.println();
+       }
+                                 
+                                                                  
+   }
+   else
+   {
+       // no CMD
+       tcpClient.println("HTTP/1.1 400 Bad Request");
+       tcpClient.println("Content-Type: text/html");
+       tcpClient.println("Server: ChipkitEDH/0.1"); 
+       tcpClient.println();                               
+   }
+   
+}
+
 int WiFiCmdRobot::WiFiSendPicture (int n)
 {
   int ret=SUCCESS;
-  
-  SdFile root;        // SD Root
+  int16_t nbytes; 
+  uint8_t buf[PAYLOAD_SIZE];
+    
   SdFile FilePicture; // SD File
   char filename[12+1];
-  
-  
+
+  n = 1;
   // Open the file
   sprintf(filename, "PICT%02d.jpg", n);
   if (!FilePicture.open(&root, filename, O_READ)) return FILE_OPEN_ERROR;  
-  //*** TODO **** 
+
+  Serial.print("Open file: ");
+  Serial.println(filename);
+
+  // read from the file until there's nothing else in it:
+  while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 && ret == SUCCESS) {
+       for (unsigned int idx = 0; idx<nbytes;idx++)
+       {
+           tcpClient.print(buf[idx]);
+       }
+ 
+  }// while
   
   //Close file
   if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
