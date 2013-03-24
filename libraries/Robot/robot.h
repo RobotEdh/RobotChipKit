@@ -10,8 +10,30 @@ int robot_begin();
 /* output:      return                                                        */                             
 /*                  = SUCCESS always even if error during initialization      */                                
 /* lib:         JPEGCamera.begin                                              */ 
-/*              infoSDCard                                                    */                            
+/*              initSDCard                                                    */                            
+/*              infoSDCard  (ifdef FULLCODE because of 128K flash mem limit)  */  
 
 int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
+/* Description: command the robot                                             */                                            
+/* input:       cmd                                                           */
+/*                  = command and the related parameters                      */
+/* output:      resp                                                          */
+/*                  = response                                                */
+/*              presp_len                                                     */
+/*                  = response lenght                                         */
+/*              return                                                        */
+/*                  = SUCCESS is no error otherwise error code                */                               
+/* lib:         stop                                                          */ 
+/*              start_forward                                                 */                            
+/*              start_forward_test                                            */ 
+/*              check_around                                                  */
+/*              TiltPan_move                                                  */
+/*              turn                                                          */
+/*              get_SpeedMotorRight                                           */
+/*              get_SpeedMotorLeft                                            */
+/*              CMPS03_read                                                   */
+/*              GP2Y0A21YK_getDistanceCentimeter                              */
+/*              makePicture                                                   */   
+
 
 #endif

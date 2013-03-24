@@ -12,9 +12,9 @@
 
 #define SUCCESS 0
 #define CAMERA_ERROR -6
-#define SDCARD_ERROR -7
 #define FILE_OPEN_ERROR -1000
 #define FILE_CLOSE_ERROR -1001
+
 
 class JPEGCameraClass
 {
@@ -39,10 +39,8 @@ class JPEGCameraClass
         /* Description: Initialize the serial1 port and call reset ()                 */                                            
         /* input:       none                                                          */                      
         /* output:      return                                                        */ 
-        /*                  = SDCARD_ERROR if error during initialization SD-Card     */
         /*                  = return of the reset() function otherwise                */ 
-        /* lib:         initSDCard                                                    */
-        /*            	Serial1.begin                                                 */
+        /* lib:       	Serial1.begin                                                 */
         /*              reset                                                         */	
 			
 		int getSize(int * size);

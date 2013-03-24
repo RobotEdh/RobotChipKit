@@ -50,8 +50,8 @@ int cbRead = 0;
 int count = 0;
 String stringRead;
 
-uint8_t cmd[3];
-uint8_t resp[10];
+uint8_t cmd[CMD_SIZE];
+uint8_t resp[RESP_SIZE];
 int resp_len = 0;
 int ret = 0;
 
@@ -627,6 +627,7 @@ int WiFiCmdRobot::Cmd (String s)
        }                                    
        
        ret = CmdRobot (cmd, resp, &resp_len);
+       
        Serial.print("Call CmdRobot, ret: ");
        Serial.print(ret);
        Serial.print(" / resp_len: ");

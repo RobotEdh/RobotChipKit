@@ -58,8 +58,8 @@ int XBeeSendPicture (int n)
 
 int XBeeCmdRobot ()
 {
- uint8_t cmd[3];
- uint8_t resp[10];
+ uint8_t cmd[CMD_SIZE3];
+ uint8_t resp[RESP_SIZE];
  int resp_len = 0;
  int ret = SUCCESS;
  
@@ -81,7 +81,7 @@ int XBeeCmdRobot ()
                        }
                        else
                        {
-                             ret = xBT.xBTsendXbee(resp, sizeof (resp));
+                             ret = xBT.xBTsendXbee(resp, resp_len);
                              if (ret != SUCCESS)
                              {
                                  Serial.println("error xBTsendXbee");

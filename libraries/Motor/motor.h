@@ -20,7 +20,8 @@
 #define CAMERA_ERROR -6
 #define SDCARD_ERROR -7
 
-
+#define CMD_SIZE 3
+#define RESP_SIZE 8
 
 #define CMD_START         0x01
 #define CMD_STOP          0x02
@@ -31,9 +32,6 @@
 #define CMD_CHECK_AROUND  0x07
 #define CMD_MOVE_TILT_PAN 0x08
 
-#define RESP_SIZE 8
-#define RESP_INFOS        0x01
-#define RESP_CHECK_AROUND 0x02
 
 #define STATE_STOP 0x00
 #define STATE_GO   0x01

@@ -11,6 +11,7 @@
 #include <sdcard.h>   // used to store the picture on a SD-Card
 
 
+
 //Commands for the LinkSprite Serial JPEG Camera LSY201
 const uint8_t RESET_CAMERA[4] =        {0x56, 0x00, 0x26, 0x00};
 const uint8_t RESET_CAMERA_OK[4] =     {0x76, 0x00, 0x26, 0x00};
@@ -33,8 +34,8 @@ const uint8_t IMAGE_SIZE_S_OK[5] =     {0x76, 0x00, 0x31, 0x00, 0x00};
 const uint8_t READ_DATA[8] =           {0x56, 0x00, 0x32, 0x0C, 0x00, 0x0A, 0x00, 0x00};
 const uint8_t READ_DATA_OK[5] =        {0x76, 0x00, 0x32, 0x00, 0x00};
 
+//Message send by the camera following power on
 static const char *PWR_ON_MSG = "Init end\x0d\x0a";
-
 
 
 // Constructor
@@ -45,15 +46,11 @@ JPEGCameraClass::JPEGCameraClass()
 //Initialize the serial1 port and call reset ()
 int JPEGCameraClass::begin(void)
 {
-	//init SD-Card
-	//if (initSDCard() != SUCCESS) return SDCARD_ERROR;
-	
 	//Camera baud rate is 38400
 	Serial1.begin(38400);
 	
 	//Reset the camera
-	return reset();
-	
+	return reset();	
 }
 
 
