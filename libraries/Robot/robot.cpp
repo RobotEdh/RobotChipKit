@@ -9,9 +9,9 @@
 #include <sdcard.h>     // SD-Card
 
 
-extern CMPS03Class CMPS03;   // The Compass class
 JPEGCameraClass JPEGCamera;  // The Camera class
-int no_picture = 0;          // Picture number
+
+
 
 int robot_begin()
 {
@@ -39,14 +39,12 @@ int robot_begin()
         Serial.println("\nInit SD-Card OK");
   } 
        
-  // get infos from SD-Card 
-#ifdef FULLCODE    
+  // get infos from SD-Card  
   ret=infoSDCard();
   if (ret != SUCCESS)
   {  
         Serial.println("\nError Infos SD-Card");
   }
-#endif
   
   return SUCCESS;
   
@@ -55,18 +53,21 @@ int robot_begin()
 
 int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
 {
- int ret = SUCCESS;
- int state = STATE_STOP;
- long nb_go = 0;
- long nb_obstacle = 0;
+  CMPS03Class CMPS03;   // The Compass class   
+  int motor_state = STATE_STOP;
+  long nb_go = 0;
+  long nb_obstacle = 0;
+  int no_picture = 0;          // Picture number
+     
  int resp_len = 0;
+ int ret = SUCCESS;
 
  switch (cmd[0]) {
  
  case CMD_STOP:
      Serial.println("CMD_STOP"); 
      stop();
-     state = STATE_STOP;
+     motor_state = STATE_STOP;
      break; 
   
  case CMD_START:
@@ -76,12 +77,12 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
            start_forward();
      }
      else
-     {  
+     {       
            Serial.print("CMD_START_TEST motor: ");
            Serial.println((int)cmd[1]);
-           start_forward_test(cmd[1]);
+           start_forward_test(cmd[1]);           
      }                      
-     state = STATE_GO;
+     motor_state = STATE_GO;
      break; 
  
  case CMD_CHECK_AROUND:
@@ -100,7 +101,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      break; 
                     
  case CMD_TURN_RIGHT:
-     if (state == STATE_GO)
+     if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_RIGHT, alpha: ");
            Serial.println((int)cmd[1]);
@@ -110,7 +111,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
     break;        
 
  case CMD_TURN_LEFT:
-     if (state == STATE_GO)
+     if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_LEFT, alpha: ");
            Serial.println((int)cmd[1]);
@@ -119,10 +120,10 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      }
      break;        
      
- case CMD_INFOS:
+ case CMD_INFOS:    
      Serial.println("CMD_INFOS");
-     // byte 0: state
-     resp[0] = state;
+     // byte 0: motor_state
+     resp[0] = motor_state;
      // byte 1: SpeedMotorRight
      resp[1] = get_SpeedMotorRight();
      // byte 2: SpeedMotorLeft
@@ -137,7 +138,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      resp[6] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
      resp_len = 7;
      break; 
- 
+
  case CMD_PICTURE: 
      Serial.println("CMD_PICTURE");
      no_picture++;

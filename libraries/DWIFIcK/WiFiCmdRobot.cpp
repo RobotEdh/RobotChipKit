@@ -38,22 +38,8 @@ typedef enum
 } STATE;
 STATE state = WAITFORSCAN;
 
-
-int cNetworks = 0;
-int iNetwork = 0;
-
-TcpServer tcpServer;
-TcpClient tcpClient;
-
-byte rgbRead[1024];
-int cbRead = 0;
-int count = 0;
-String stringRead;
-
-uint8_t cmd[CMD_SIZE];
-uint8_t resp[RESP_SIZE];
-int resp_len = 0;
-int ret = 0;
+    TcpServer tcpServer;
+    TcpClient tcpClient;
 
 DNETcK::STATUS status;
 
@@ -90,6 +76,16 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
 
 void WiFiCmdRobot::WiFiCmdRobot_main() {
     int conID = DWIFIcK::INVALID_CONNECTION_ID;
+    String stringRead;
+    
+    int cNetworks = 0;
+    int iNetwork = 0;
+
+    byte rgbRead[1024];
+    int cbRead = 0;
+    int count = 0;
+
+    int ret = 0;
     
     switch(state)
     {
@@ -106,8 +102,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             }
             break;
 
-        case PRINTAPINFO:
-#ifdef FULLCODE              
+        case PRINTAPINFO:              
             if(iNetwork < cNetworks)
             {
                 DWIFIcK::SCANINFO scanInfo;
@@ -202,10 +197,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             else
             {
                 state = CONNECTWIFI;
-            }
-#else
-            state = CONNECTWIFI;
-#endif            
+            }           
             break;
 
     case CONNECTWIFI:
@@ -239,8 +231,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             }
             break;
         
-    case PRINTADDRESSES:
- #ifdef FULLCODE         
+    case PRINTADDRESSES:      
             Serial.println("");
             IPv4 ip;
 
@@ -270,12 +261,11 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             Serial.println("");
 
             Serial.println("");
-#endif 
+
             state = PRINTWIFICONFIG;
             break;
                
-   case PRINTWIFICONFIG:
-#ifdef FULLCODE     
+   case PRINTWIFICONFIG:    
             DWIFIcK::CONFIGINFO configInfo;
 
             if(DWIFIcK::getConfigInfo(&configInfo))
@@ -324,10 +314,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             {
                 Serial.println("Unable to get WiFi config data");
                 state = EXIT;
-            }
-#else
-            state = STARTLISTENING;             
-#endif             
+            }           
             break;       
 
     case STARTLISTENING:       
@@ -533,6 +520,9 @@ void WiFiCmdRobot::printNumb(byte * rgb, int cb, char chDelim)
 
 int WiFiCmdRobot::Cmd (String s)
 {
+   uint8_t cmd[CMD_SIZE];
+   uint8_t resp[RESP_SIZE];
+   int resp_len = 0;
    String szcmd;
    int cmdTag;
    int And;

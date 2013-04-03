@@ -11,7 +11,7 @@ int robot_begin();
 /*                  = SUCCESS always even if error during initialization      */                                
 /* lib:         JPEGCamera.begin                                              */ 
 /*              initSDCard                                                    */                            
-/*              infoSDCard  (ifdef FULLCODE because of 128K flash mem limit)  */  
+/*              infoSDCard                                                    */  
 
 int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
 /* Description: command the robot                                             */                                            
