@@ -6,12 +6,14 @@
 #include <Servo.h>      // Servo
 #include <TiltPan.h>   // Tilt&Pan
 #include <LSY201.h>     // Camera
-#include <sdcard.h>     // SD-Card
 
 
-JPEGCameraClass JPEGCamera;  // The Camera class
+int motor_state = STATE_STOP;
+long nb_go = 0;
+long nb_obstacle = 0;
 
-
+JPEGCameraClass JPEGCamera;  // The Camera class  
+int no_picture = 0;          // Picture number
 
 int robot_begin()
 {
@@ -21,44 +23,25 @@ int robot_begin()
   ret=JPEGCamera.begin();
   if (ret != SUCCESS)
   {  
-        Serial.println("\nError Init Camera");
+        Serial.print("Error Init Camera, error: ");
+        Serial.println(ret);
   }  	  	
   else
   {
-        Serial.println("\nInit Camera OK");
-  } 
-   
-  // initialize the SD-Card    
-  ret = initSDCard();
-  if (ret != SUCCESS)
-  {  
-        Serial.println("\nError Init SD-Card ");
-  }  	  	
-  else
-  {
-        Serial.println("\nInit SD-Card OK");
-  } 
+        Serial.println("Init Camera OK");
+  }  
        
-  // get infos from SD-Card  
-  ret=infoSDCard();
-  if (ret != SUCCESS)
-  {  
-        Serial.println("\nError Infos SD-Card");
-  }
-  
+ 
+  Serial.println("End Robot Init");
+  Serial.println("");
   return SUCCESS;
   
 } 
 
 
 int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
-{
-  CMPS03Class CMPS03;   // The Compass class   
-  int motor_state = STATE_STOP;
-  long nb_go = 0;
-  long nb_obstacle = 0;
-  int no_picture = 0;          // Picture number
-     
+{    
+ CMPS03Class CMPS03;   // The Compass class 
  int resp_len = 0;
  int ret = SUCCESS;
 
@@ -140,10 +123,10 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      break; 
 
  case CMD_PICTURE: 
-     Serial.println("CMD_PICTURE");
+     Serial.print("CMD_PICTURE,no_picture: ");
      no_picture++;
+     Serial.println(no_picture);
      ret = JPEGCamera.makePicture (no_picture);
-
      if (ret == SUCCESS)
      { 
            resp[0] = no_picture;
@@ -152,13 +135,13 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      }
      else
      {
-        Serial.print("makePicture error");
-        Serial.print(ret);
+        Serial.print("makePicture error: ");
+        Serial.println(ret);
      }
      break;
      
  default:
-    Serial.print("invalid command");
+    Serial.println("invalid command");
     break;                     
  
  } //end switch

@@ -1,15 +1,17 @@
 #include <sdcard.h>
 #include <SD.h>       
 
-Sd2Card card;       // SD Card       
-SdVolume volume;    // SD Volume
-SdFile root;        // SD Root
 
+  
+  extern Sd2Card card;       // SD Card       
+  extern SdVolume volume;    // SD Volume
+  extern SdFile root;        // SD Root
 
 int initSDCard(void){
+    
   if (!card.init(SPI_HALF_SPEED, SS_CS_Pin))  //Set SCK rate to F_CPU/4 (mode 1)
   {
-  	Serial.println("\nError Init SD-Card");
+  	Serial.println("Error Init SD-Card");
   	return SDCARD_ERROR;
   }
   else
@@ -17,7 +19,7 @@ int initSDCard(void){
   	// initialize a FAT volume
   	if (!volume.init(&card))
   	{
-  	  	Serial.println("\nError Init Volume in SD-Card");
+  	  	Serial.println("Error Init Volume in SD-Card");
   	  	return SDCARD_ERROR;
 	}  	  	
   	else
@@ -25,12 +27,12 @@ int initSDCard(void){
   		// Open volume
   		if (!root.openRoot(&volume))
   		{
-  			Serial.println("\nError Open Volume in SD-Card");
+  			Serial.println("Error Open Volume in SD-Card");
   			return SDCARD_ERROR;
 		}  	  	
   		else
   		{   
-  			Serial.println("\nInitialization SD-Card OK");
+  			Serial.println("Initialization SD-Card OK");
   			return SUCCESS;    			
         } 
     }

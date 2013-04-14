@@ -37,26 +37,26 @@ int motor_begin()
   pinMode(In2MotorLeft2Pin, OUTPUT);      // set the pin as output
   pinMode(EnableMotorLeft2Pin, OUTPUT);   // set the analogig pin as output for PWM
    
-  Serial.println("\nInit motors OK"); 
+  Serial.println("Init motors OK"); 
   
   // initialize the pin connected to the sensor 
   GP2Y0A21YK_init(GP2Y0A21YK_Pin); 
-  Serial.println("\nInit IR sensor OK");
+  Serial.println("Init IR sensor OK");
 
   // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
   IRServo.attach(IRSERVO_Pin);  
   // reset the servo position
   IRServo.write(90);  // reset servo position
   delay(15);          // waits 15ms for the servo to reach the position  
-  Serial.println("\nInit IR servo OK");  
+  Serial.println("Init IR servo OK");  
  
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
-  Serial.println("\nInit Tilt&Pan servos OK");
+  Serial.println("Init Tilt&Pan servos OK");
    	
   // initialize the compas  
   CMPS03.CMPS03_begin();
-  Serial.println("\nInit compas OK");
+  Serial.println("Init compas OK");
       
   // interrupts setup
   attachInterrupt(EncodeurTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
@@ -64,7 +64,8 @@ int motor_begin()
   
   interrupts(); // enable all interrupts
   	
-  Serial.println("\nEnd Init");
+  Serial.println("End Motor Init");
+  Serial.println("");
   return SUCCESS;
   
 }

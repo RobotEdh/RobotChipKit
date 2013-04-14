@@ -533,6 +533,7 @@ void EthernetPeriodicTasks(void)
     // keep the DNS resolving, try to get it to resolve and release the DNS engine
     if(!fIsEthernetEngineStopped)
     {
+
         if(statusDNS == DNSResolving  ||  statusDNS == DNSIsBusy)
         {
             EthernetIsDNSResolved(szDNSNameResolving, NULL, 0, NULL);

@@ -37,9 +37,10 @@ const uint8_t READ_DATA_OK[5] =        {0x76, 0x00, 0x32, 0x00, 0x00};
 //Message send by the camera following power on
 static const char *PWR_ON_MSG = "Init end\x0d\x0a";
 
-// SD Root
-extern SdFile root;       
-
+//SD card
+extern SdFile root;        // SD Root     
+extern SdFile FilePicture; // SD File
+   
 // Constructor
 JPEGCameraClass::JPEGCameraClass()
 {
@@ -393,8 +394,6 @@ int JPEGCameraClass::makePicture (int n)
                        //while reading the file data from the camera.
   int count=0;         // nb bytes read
   char filename[12+1];
-  
-  SdFile FilePicture; // SD File
   
   // Open the file
   sprintf(filename, "PICT%02d.jpg", n);

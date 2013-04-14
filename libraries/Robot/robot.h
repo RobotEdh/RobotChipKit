@@ -10,8 +10,6 @@ int robot_begin();
 /* output:      return                                                        */                             
 /*                  = SUCCESS always even if error during initialization      */                                
 /* lib:         JPEGCamera.begin                                              */ 
-/*              initSDCard                                                    */                            
-/*              infoSDCard                                                    */  
 
 int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
 /* Description: command the robot                                             */                                            

@@ -13,10 +13,6 @@
 
 #define PAYLOAD_SIZE 80
 
-extern Sd2Card card;       // SD Card       
-extern SdVolume volume;    // SD Volume
-extern SdFile root;        // SD Root
-
 #define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
 
 
@@ -28,6 +24,8 @@ class WiFiCmdRobot
   void printIP(IPv4& ip);
   int WiFiSendPicture (int n); 
   int Cmd (String s); 
+  int ReplyOK (void); 
+  int ReplyKO (void); 
      
   public:
   void WiFiCmdRobot_begin (void);   

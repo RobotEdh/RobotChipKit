@@ -30,17 +30,32 @@ typedef enum
     AVAILABLECLIENT,
     ACCEPTCLIENT,
     READ,
-    CMDROBOT,
-    WRITE,
     CLOSE,
     EXIT,
     DONE
 } STATE;
 STATE state = WAITFORSCAN;
 
-    TcpServer tcpServer;
-    TcpClient tcpClient;
+int cNetworks = 0;
+int iNetwork = 0;
 
+
+Sd2Card card;       // SD Card       
+SdVolume volume;    // SD Volume
+SdFile root;        // SD Root
+SdFile FilePicture; // SD File
+
+TcpServer tcpServer;
+TcpClient tcpClient;
+
+byte rgbRead[1024];
+int cbRead = 0;
+int count = 0;
+    
+uint8_t cmd[CMD_SIZE];
+uint8_t resp[RESP_SIZE];
+int resp_len = 0;
+   
 DNETcK::STATUS status;
 
 /***       void setup()
@@ -63,28 +78,43 @@ DNETcK::STATUS status;
  *      
  * ------------------------------------------------------------ */
 void WiFiCmdRobot::WiFiCmdRobot_begin() {
-
-    Serial.begin(9600);
+  
+    int ret=SUCCESS;
+    
+    // initialize the SD-Card    
+    ret = initSDCard();
+    if (ret != SUCCESS)
+    {  
+        Serial.print("Error Init SD-Card, error: ");
+        Serial.println(ret);
+    }  	  	
+    else
+    {
+        Serial.println("Init SD-Card OK");
+    }
+    
+    // get infos from SD-Card  
+    ret=infoSDCard();
+    if (ret != SUCCESS)
+    {  
+        Serial.print("Error Infos SD-Card, error: ");
+        Serial.println(ret);
+    }
     
     // Set my default wait time to nothing
     DNETcK::setDefaultBlockTime(DNETcK::msImmediate); 
 
     // start a scan
     DWIFIcK::beginScan();
+        
+    Serial.println("End WIFI Init");
+    Serial.println("");
 
 }
 
 void WiFiCmdRobot::WiFiCmdRobot_main() {
     int conID = DWIFIcK::INVALID_CONNECTION_ID;
     String stringRead;
-    
-    int cNetworks = 0;
-    int iNetwork = 0;
-
-    byte rgbRead[1024];
-    int cbRead = 0;
-    int count = 0;
-
     int ret = 0;
     
     switch(state)
@@ -386,6 +416,16 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
                           {
                                 Serial.println("GET");
                                 ret = Cmd (stringRead);
+                                
+                                if (ret == SUCCESS)
+                                {
+                                    ret = ReplyOK ();
+                                }
+                                else    
+                                {
+                                    ret = ReplyKO ();
+                                }
+                                break;                             
  
                           }
                           else if (stringRead.startsWith("\r"))
@@ -410,7 +450,7 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             }            
             state = CLOSE;
             break;
-
+             
      case CLOSE:
             tcpClient.close();
             Serial.println("Closing TcpClient");
@@ -520,9 +560,6 @@ void WiFiCmdRobot::printNumb(byte * rgb, int cb, char chDelim)
 
 int WiFiCmdRobot::Cmd (String s)
 {
-   uint8_t cmd[CMD_SIZE];
-   uint8_t resp[RESP_SIZE];
-   int resp_len = 0;
    String szcmd;
    int cmdTag;
    int And;
@@ -621,46 +658,9 @@ int WiFiCmdRobot::Cmd (String s)
        Serial.print("Call CmdRobot, ret: ");
        Serial.print(ret);
        Serial.print(" / resp_len: ");
-       Serial.println(resp_len);
-       ret = SUCCESS;
-       if (ret == SUCCESS)
-       {           
-               if (cmd[0] == CMD_PICTURE)
-               { 
-                     tcpClient.println("HTTP/1.1 200 OK");
-                     tcpClient.println("Content-Type: application/octet-stream");
-                     tcpClient.println("Server: ChipkitEDH/0.1");                                             
-                     tcpClient.println();
-
-                     ret= WiFiSendPicture (resp[0]);
-                     
-                     if (ret != SUCCESS){  Serial.print("WiFiSendPicture error"); Serial.print(ret);}
-               }
-               else                                           
-               {                               
-                     tcpClient.println("HTTP/1.1 200 OK");
-                     for(int i=0; i<resp_len; i++)
-                     {
-                         tcpClient.print("Field ");
-                         tcpClient.print(String(i));
-                         tcpClient.print(":");
-                         tcpClient.print(String((int)resp[i]));
-                         tcpClient.println(";");
-                    }
-                    tcpClient.println("Content-Type: text/html");
-                    tcpClient.println("Server: ChipkitEDH/0.1");                                             
-                    tcpClient.println();
-               }    
-       }
-       else
-       {
-               tcpClient.println("HTTP/1.1 500 Internal Server Error");
-               tcpClient.println("Content-Type: text/html");
-               tcpClient.println("Server: ChipkitEDH/0.1");                                   
-               tcpClient.println();
-       }
-                                 
-                                                                  
+       Serial.println(resp_len); 
+       
+       return ret;                                                                                           
    }
    else
    {
@@ -668,21 +668,74 @@ int WiFiCmdRobot::Cmd (String s)
        tcpClient.println("HTTP/1.1 400 Bad Request");
        tcpClient.println("Content-Type: text/html");
        tcpClient.println("Server: ChipkitEDH/0.1"); 
-       tcpClient.println();                               
+       tcpClient.println(); 
+       
+       return -400;                              
    }
    
 }
+
+
+int WiFiCmdRobot::ReplyOK ()
+{
+    int ret=SUCCESS; 
+    
+    if (cmd[0] == CMD_PICTURE)
+    { 
+          Serial.println("cmd[0] == CMD_PICTURE");
+          if (tcpClient.isConnected()) Serial.println("tcpClient.isConnected");
+          else Serial.println("tcpClient.is not Connected");
+          tcpClient.println("HTTP/1.1 200 OK");
+          tcpClient.println("Content-Type: application/octet-stream");
+          tcpClient.println("Server: ChipkitEDH/0.1");                                             
+          tcpClient.println();
+
+          ret= WiFiSendPicture (resp[0]);
+          
+          if (ret != SUCCESS){  Serial.print("WiFiSendPicture error"); Serial.print(ret);}
+    }
+    else                                           
+    {                               
+          tcpClient.println("HTTP/1.1 200 OK");
+          for(int i=0; i<resp_len; i++)
+          {
+              tcpClient.print("Field ");
+              tcpClient.print(String(i));
+              tcpClient.print(":");
+              tcpClient.print(String((int)resp[i]));
+              tcpClient.println(";");
+         }
+         tcpClient.println("Content-Type: text/html");
+         tcpClient.println("Server: ChipkitEDH/0.1");                                             
+         tcpClient.println();
+    }
+    
+    return ret;    
+}
+
+int WiFiCmdRobot::ReplyKO ()
+{
+     tcpClient.println("HTTP/1.1 500 Internal Server Error");
+     tcpClient.println("Content-Type: text/html");
+     tcpClient.println("Server: ChipkitEDH/0.1");                                   
+     tcpClient.println();
+     
+     return SUCCESS;
+                                  
+}
+
+
 
 int WiFiCmdRobot::WiFiSendPicture (int n)
 {
   int ret=SUCCESS;
   int16_t nbytes; 
   uint8_t buf[PAYLOAD_SIZE];
-    
-  SdFile FilePicture; // SD File
   char filename[12+1];
-
-  n = 1;
+ 
+  Serial.print("n: ");
+  Serial.println(n);
+  
   // Open the file
   sprintf(filename, "PICT%02d.jpg", n);
   if (!FilePicture.open(&root, filename, O_READ)) return FILE_OPEN_ERROR;  

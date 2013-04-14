@@ -49,38 +49,38 @@
 
 #define DISTANCE_MIN 50 // 50 cm before stopping, must be > 20cm which is lower range of IR sensor
 
-#define In1MotorRight1Pin  26     // In1 pin of L293D #1 for motor right #1 connected to digital pin J6-02(PMD0/RE0)
-#define In2MotorRight1Pin  27     // In2 pin of L293D #1 for motor right #1 connected to digital pin J6-04(PMD1/RE1)
+#define In1MotorRight1Pin  30     // In1 pin of L293D #1 for motor right #1 connected to digital pin J6-02(PMD0/RE0)
+#define In2MotorRight1Pin  31     // In2 pin of L293D #1 for motor right #1 connected to digital pin J6-04(PMD1/RE1)
 #define EnableMotorRight1Pin 3    // Enable pin of L293D #1 for motor right #1 connected to PWM pin J6-07(OC1/RD0)   Use TIMER_OC1
     
-#define In1MotorRight2Pin  28     // In1 pin of L293D #2 for motor right #2 connected to digital pin J6-06(PMD2/RE2)
-#define In2MotorRight2Pin  29     // In2 pin of L293D #2 for motor right #2 connected to digital pin J6-08(PMD3/RE3)
+#define In1MotorRight2Pin  32     // In1 pin of L293D #2 for motor right #2 connected to digital pin J6-06(PMD2/RE2)
+#define In2MotorRight2Pin  33     // In2 pin of L293D #2 for motor right #2 connected to digital pin J6-08(PMD3/RE3)
 #define EnableMotorRight2Pin 5    // Enable pin of L293D #2 for motor right #2 connected to PWM pin J6-11(OC2/RD1)   Use TIMER_OC2
     
-#define In1MotorLeft1Pin  30      // In1 pin of L293D #1 for motor left #1 connected to digital pin J6-10(PMD4/RE4)
-#define In2MotorLeft1Pin  31      // In2 pin of L293D #1 for motor left #1 connected to digital pin J6-12(PMD5/RE5)
+#define In1MotorLeft1Pin  34      // In1 pin of L293D #1 for motor left #1 connected to digital pin J6-10(PMD4/RE4)
+#define In2MotorLeft1Pin  35      // In2 pin of L293D #1 for motor left #1 connected to digital pin J6-12(PMD5/RE5)
 #define EnableMotorLeft1Pin 6     // Enable pin of L293D #1 for motor left #1 connected to PWM pin J6-13(OC3/RD2)    Use TIMER_OC3
     
-#define In1MotorLeft2Pin  32      // In1 pin of L293D #2 for motor left #2 connected to digital pin J6-14(PMD6/RE6)
-#define In2MotorLeft2Pin  33      // In2 pin of L293D #2 for motor left #2 connected to digital pin J6-16(PMD7/RE7)
+#define In1MotorLeft2Pin  36      // In1 pin of L293D #2 for motor left #2 connected to digital pin J6-14(PMD6/RE6)
+#define In2MotorLeft2Pin  37      // In2 pin of L293D #2 for motor left #2 connected to digital pin J6-16(PMD7/RE7)
 #define EnableMotorLeft2Pin 9     // Enable pin of L293D #2 for motor left #2 connected to PWM pin J5-03(OC4/RD3)    Use TIMER_OC4
     
-#define EncodeurTickRightINT  2  // INT used by the encodeur for motor right connected to interrupt pin INT2 J6-15(INT2) Use INT2
+#define EncodeurTickRightINT  4  // INT used by the encodeur for motor right connected to interrupt pin INT2 J6-15(INT2) Use INT4
 #define EncodeurTickLeftINT   3  // INT used by the encodeur for motor left  connected to interrupt pin INT3 J5-01(INT3) Use INT3
 
 
-#define GP2Y0A21YK_Pin 14   // IR sensor GP2Y0A21YK analogic pin J7-01 A0 (C2IN-/AN2/SS1/CN4/RB2)   Use ADC module channel 2
+#define GP2Y0A21YK_Pin 54   // IR sensor GP2Y0A21YK analogic pin J7-01 A0 (C2IN-/AN2/SS1/CN4/RB2)   Use ADC module channel 2
 /* Analogic interface is provided on pin V0 */
 /* Power +3V is set on pin VCC              */
 /* Ground    is set on pin GND              */
 
-#define IRSERVO_Pin 37   // IR Servo pin connected to digital pin J5-08 (CN16/RD7)
+#define IRSERVO_Pin 29   // IR Servo pin connected to digital pin J5-08 (CN16/RD7)
 /* Power +5V */
 /* Ground    */
 #define HSERVO_Pin  38   // Horizontal Servo pin connected to digital pin J5-10 (U1RTS/BCLK1/SCK1/INT0/RF6)
 /* Power +5V */
 /* Ground    */
-#define VSERVO_Pin  41   // Vertical Servo pin connected to digital pin J5-16 (PGC1/AN1/VREF-/CVREF-/CN3/RB1)
+#define VSERVO_Pin  39   // Vertical Servo pin connected to digital pin J5-16 (PGC1/AN1/VREF-/CVREF-/CN3/RB1)
 /* Power +5V */
 /* Ground    */
 
