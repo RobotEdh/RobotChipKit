@@ -4,8 +4,6 @@
 #include <CMPS03.h>     // Compas
 #include <Servo.h>      // Servo
 #include <TiltPan.h>   // Tilt&Pan
-#include <LSY201.h>     // Camera
-#include <sdcard.h>     // SD-Card
 
 
 int SpeedMotorRight = 0;      // Duty cycle PWM motor right between 0 and SPEEDMAX( 255)
@@ -49,11 +47,11 @@ int motor_begin()
   IRServo.write(90);  // reset servo position
   delay(15);          // waits 15ms for the servo to reach the position  
   Serial.println("Init IR servo OK");  
- 
+    
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
   Serial.println("Init Tilt&Pan servos OK");
-   	
+	
   // initialize the compas  
   CMPS03.CMPS03_begin();
   Serial.println("Init compas OK");

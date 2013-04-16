@@ -40,9 +40,9 @@ int cNetworks = 0;
 int iNetwork = 0;
 
 
-Sd2Card card;       // SD Card       
-SdVolume volume;    // SD Volume
-SdFile root;        // SD Root
+//Sd2Card card;       // SD Card       
+//SdVolume volume;    // SD Volume
+extern SdFile root;        // SD Root
 SdFile FilePicture; // SD File
 
 TcpServer tcpServer;

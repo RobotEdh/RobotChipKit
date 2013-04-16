@@ -290,14 +290,14 @@ bool TcpClient::isConnected(unsigned long msBlockMax, DNETcK::STATUS * pStatus)
 {
     unsigned long tStart = 0;
     bool fConnected = false;
-Serial.print ("isConnected1 ");
+
     DNETcK::STATUS statusT = DNETcK::WaitingReConnect;
-Serial.print ("isConnected2 ");
+
     // we want this to be PeriodicTasks and not StackTasks because we
     // want to run all of the applications when IsConnected is called
     // because this is a common call and we want to keep all things running
     EthernetPeriodicTasks();
-Serial.print ("isConnected3 ");
+
     // see if we ever supplied info for a connection
     if(_hTCP >= INVALID_SOCKET)
     {

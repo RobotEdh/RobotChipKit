@@ -116,7 +116,9 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      // byte 4: nb obstacle
      resp[4] = nb_obstacle;
      // byte 5: direction
-     resp[5] = CMPS03.CMPS03_read();
+     //resp[5] = CMPS03.CMPS03_read();
+          resp[5] = 0;
+
      // byte 6: distance
      resp[6] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
      resp_len = 7;

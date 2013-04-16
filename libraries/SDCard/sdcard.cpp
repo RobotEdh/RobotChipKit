@@ -1,11 +1,9 @@
 #include <sdcard.h>
 #include <SD.h>       
-
-
   
-  extern Sd2Card card;       // SD Card       
-  extern SdVolume volume;    // SD Volume
-  extern SdFile root;        // SD Root
+Sd2Card card;       // SD Card       
+SdVolume volume;    // SD Volume
+SdFile root;        // SD Root
 
 int initSDCard(void){
     
