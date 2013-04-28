@@ -22,19 +22,14 @@ Servo IRServo;               // The Servo class used for IR sensor
 int motor_begin()
 {
   // H bridge setup
-  pinMode(In1MotorRight1Pin, OUTPUT);     // set the pin as output
-  pinMode(In2MotorRight1Pin, OUTPUT);     // set the pin as output
+  pinMode(InMotorRight1Pin, OUTPUT);      // set the pin as output
   pinMode(EnableMotorRight1Pin, OUTPUT);  // set the analogig pin as output for PWM
-  pinMode(In1MotorRight2Pin, OUTPUT);     // set the pin as output
-  pinMode(In2MotorRight2Pin, OUTPUT);     // set the pin as output
+  pinMode(InMotorRight2Pin, OUTPUT);      // set the pin as output
   pinMode(EnableMotorRight2Pin, OUTPUT);  // set the analogig pin as output for PWM
-  pinMode(In1MotorLeft1Pin, OUTPUT);      // set the pin as output
-  pinMode(In2MotorLeft1Pin, OUTPUT);      // set the pin as output
+  pinMode(InMotorLeft1Pin, OUTPUT);       // set the pin as output
   pinMode(EnableMotorLeft1Pin, OUTPUT);   // set the analogig pin as output for PWM
-  pinMode(In1MotorLeft2Pin, OUTPUT);      // set the pin as output
-  pinMode(In2MotorLeft2Pin, OUTPUT);      // set the pin as output
+  pinMode(InMotorLeft2Pin, OUTPUT);       // set the pin as output
   pinMode(EnableMotorLeft2Pin, OUTPUT);   // set the analogig pin as output for PWM
-   
   Serial.println("Init motors OK"); 
   
   // initialize the pin connected to the sensor 
@@ -96,14 +91,10 @@ int get_SpeedMotorLeft()
 void forward()
 {
      
-  digitalWrite(In1MotorRight1Pin, HIGH); 
-  digitalWrite(In2MotorRight1Pin, LOW);
-  digitalWrite(In1MotorRight2Pin, HIGH); 
-  digitalWrite(In2MotorRight2Pin, LOW);  
-  digitalWrite(In1MotorLeft1Pin,  HIGH); 
-  digitalWrite(In2MotorLeft1Pin,  LOW); 
-  digitalWrite(In1MotorLeft2Pin,  HIGH); 
-  digitalWrite(In2MotorLeft2Pin,  LOW); 
+  digitalWrite(InMotorRight1Pin, HIGH); 
+  digitalWrite(InMotorRight2Pin, HIGH); 
+  digitalWrite(InMotorLeft1Pin,  HIGH); 
+  digitalWrite(InMotorLeft2Pin,  HIGH); 
    
   return;  
 }
@@ -111,16 +102,16 @@ void forward()
 void forward_test(int num) // for test only
 {
   if (num == 1) {
-        digitalWrite(In1MotorRight1Pin, HIGH); 
+        digitalWrite(InMotorRight1Pin, HIGH); 
   }
   if (num == 2) {
-        digitalWrite(In1MotorRight2Pin, HIGH); 
+        digitalWrite(InMotorRight2Pin, HIGH); 
   }
   if (num == 3) {
-        digitalWrite(In1MotorLeft1Pin,  HIGH); 
+        digitalWrite(InMotorLeft1Pin,  HIGH); 
   }      
   if (num == 4) {
-        digitalWrite(In1MotorLeft2Pin,  HIGH); 
+        digitalWrite(InMotorLeft2Pin,  HIGH); 
   } 
   return;  
 }
@@ -128,15 +119,11 @@ void forward_test(int num) // for test only
 void backward()
 {
   
-  digitalWrite(In1MotorRight1Pin, LOW); 
-  digitalWrite(In2MotorRight1Pin, HIGH); 
-  digitalWrite(In1MotorRight2Pin, LOW); 
-  digitalWrite(In2MotorRight2Pin, HIGH);   
-  digitalWrite(In1MotorLeft1Pin,  LOW); 
-  digitalWrite(In2MotorLeft1Pin,  HIGH); 
-  digitalWrite(In1MotorLeft2Pin,  LOW); 
-  digitalWrite(In2MotorLeft2Pin,  HIGH); 
- 
+  digitalWrite(InMotorRight1Pin, LOW); 
+  digitalWrite(InMotorRight2Pin, LOW);   
+  digitalWrite(InMotorLeft1Pin,  LOW); 
+  digitalWrite(InMotorLeft2Pin,  LOW); 
+   
   return;   
 }
 
@@ -203,16 +190,7 @@ void stop()
   analogWrite(EnableMotorRight2Pin, SpeedMotorRight);    
   analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
   analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);
-    
-  digitalWrite(In1MotorRight1Pin, LOW); 
-  digitalWrite(In2MotorRight1Pin, LOW);
-  digitalWrite(In1MotorRight2Pin, LOW); 
-  digitalWrite(In2MotorRight2Pin, LOW);  
-  digitalWrite(In1MotorLeft1Pin,  LOW); 
-  digitalWrite(In2MotorLeft1Pin,  LOW); 
-  digitalWrite(In1MotorLeft2Pin,  LOW); 
-  digitalWrite(In2MotorLeft2Pin,  LOW);  
-  
+      
   return;  
 }
 
