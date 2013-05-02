@@ -1,4 +1,3 @@
-
 #include <motor.h>
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
@@ -52,8 +51,8 @@ int motor_begin()
   Serial.println("Init compas OK");
       
   // interrupts setup
-  attachInterrupt(EncodeurTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
-  attachInterrupt(EncodeurTickLeftINT, IntrTickLeft, FALLING);    //set left tick interrupt
+  attachInterrupt(EncoderTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
+  attachInterrupt(EncoderTickLeftINT, IntrTickLeft, FALLING);    //set left tick interrupt
   
   interrupts(); // enable all interrupts
   	
