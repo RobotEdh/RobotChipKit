@@ -83,15 +83,6 @@
 /* Ground    is set on pin GND              */
 
 
-
-/* Compas                                                           */
-/* I2C interface is provided on pins:                               */
-/*         1 = Power +5V                                            */                     
-/*         2 = SCL connected to A5/J7-11(SCL1/RG2) selected by JP8  */
-/*         3 = SDA connected to A4/J7-09(SDA1/RG3) selected by JP6  */
-/*         9 = Ground                                               */
-
-
 void IntrTickRight();  // interrupt handler encoder right
 void IntrTickLeft();   // interrupt handler encoder right
 
