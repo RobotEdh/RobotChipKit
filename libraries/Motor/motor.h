@@ -49,35 +49,35 @@
 
 #define DISTANCE_MIN 50 // 50 cm before stopping, must be > 20cm which is lower range of IR sensor
 
-#define InMotorRight1Pin  30      // In1 pin of L293D #1 for motor right #1 connected to digital pin J6-02(PMD0/RE0)
-#define EnableMotorRight1Pin 3    // Enable pin of L293D #1 for motor right #1 connected to PWM pin J6-07(OC1/RD0)   Use TIMER_OC1
+#define InMotorRight1Pin  30      // In pin of Motor controller #1 for motor right #1 connected to digital pin J9-08(PMD7/RE7)
+#define EnableMotorRight1Pin 3    // Enable pin of Motor controller #1 for motor right #1 connected to PWM pin J14-07(SDO1/OC1/INT0/RD0)   Use TIMER_OC1
     
-#define InMotorRight2Pin  31      // In1 pin of L293D #2 for motor right #2 connected to digital pin J6-06(PMD2/RE2)
-#define EnableMotorRight2Pin 5    // Enable pin of L293D #2 for motor right #2 connected to PWM pin J6-11(OC2/RD1)   Use TIMER_OC2
+#define InMotorRight2Pin  31      // In pin of Motor controller #1 for motor right #2 connected to digital pin J9-07(PMD6/RE6)
+#define EnableMotorRight2Pin 5    // Enable pin of Motor controller #1 for motor right #2 connected to PWM pin J14-11(OC2/RD1)   Use TIMER_OC2
     
-#define InMotorLeft1Pin  32       // In1 pin of L293D #1 for motor left #1 connected to digital pin J6-10(PMD4/RE4)
-#define EnableMotorLeft1Pin 6     // Enable pin of L293D #1 for motor left #1 connected to PWM pin J6-13(OC3/RD2)    Use TIMER_OC3
+#define InMotorLeft1Pin  32       // In pin of Motor controller #2 for motor left #1 connected to digital pin J9-06(PMD5/RE5)
+#define EnableMotorLeft1Pin 6     // Enable pin of Motor controller #2 for motor left #1 connected to PWM pin J14-13(OC3/RD2)    Use TIMER_OC3
     
-#define InMotorLeft2Pin  33       // In1 pin of L293D #2 for motor left #2 connected to digital pin J6-14(PMD6/RE6)
-#define EnableMotorLeft2Pin 9     // Enable pin of L293D #2 for motor left #2 connected to PWM pin J5-03(OC4/RD3)    Use TIMER_OC4
+#define InMotorLeft2Pin  33       // In pin of Motor controller #2 for motor left #2 connected to digital pin J9-05(PMD4/RE4)
+#define EnableMotorLeft2Pin 9     // Enable pin of Motor controller #2 for motor left #2 connected to PWM pin J3-03(OC4/RD3)    Use TIMER_OC4
     
-#define EncodeurTickRightINT  4   // INT used by the encodeur for motor right connected to interrupt pin INT2 J6-15(INT2) Use INT4
-#define EncodeurTickLeftINT   3   // INT used by the encodeur for motor left  connected to interrupt pin INT3 J5-01(INT3) Use INT3
+#define EncoderTickRightINT  4   // INT used by the encoder for motor right connected to interrupt pin INT2 J4-02(AETXEN/SDA1/INT4/RA15)  Use INT4
+#define EncoderTickLeftINT   3   // INT used by the encoder for motor left  connected to interrupt pin INT3 J4-01(AETXCLK/SCL1/INT3/RA14) Use INT3
 
 
-#define HSERVO_Pin  34   // Horizontal Servo pin connected to digital pin J5-10 (U1RTS/BCLK1/SCK1/INT0/RF6)
+#define HSERVO_Pin  34   // Horizontal Servo pin connected to digital pin J9-04 (PMD3/RE3)
 /* Power +5V */
 /* Ground    */
-#define VSERVO_Pin  35   // Vertical Servo pin connected to digital pin J5-16 (PGC1/AN1/VREF-/CVREF-/CN3/RB1)
-/* Power +5V */
-/* Ground    */
-
-#define IRSERVO_Pin 36   // IR Servo pin connected to digital pin J5-08 (CN16/RD7)
+#define VSERVO_Pin  35   // Vertical Servo pin connected to digital pin J9-03 (PMD2/RE2)
 /* Power +5V */
 /* Ground    */
 
+#define IRSERVO_Pin 36   // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
+/* Power +5V */
+/* Ground    */
 
-#define GP2Y0A21YK_Pin 54   // IR sensor GP2Y0A21YK analogic pin J7-01 A0 (C2IN-/AN2/SS1/CN4/RB2)   Use ADC module channel 2
+
+#define GP2Y0A21YK_Pin 54   // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
 /* Analogic interface is provided on pin V0 */
 /* Power +3V is set on pin VCC              */
 /* Ground    is set on pin GND              */
@@ -92,8 +92,8 @@
 /*         9 = Ground                                               */
 
 
-void IntrTickRight();  // interrupt handler encodeur right
-void IntrTickLeft();   // interrupt handler encodeur right
+void IntrTickRight();  // interrupt handler encoder right
+void IntrTickLeft();   // interrupt handler encoder right
 
 int motor_begin();     
 /* Description: initialize everything, must be called during setup            */                                            
