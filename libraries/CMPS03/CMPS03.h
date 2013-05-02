@@ -9,6 +9,13 @@
 #define CMPS03_h
 
 
+/* Compas                                                               */
+/* I2C interface is provided on pins:                                   */
+/*         1 = Power +5V                                                */                     
+/*         2 = SCL connected to J4-06 (SCL3A/SDO3A/U3ATX/PMA8/CN18/RF5) */
+/*         3 = SDA connected to J4-05 (SDA3A/SDI3A/U3ARX/PMA9/CN17/RF4) */
+/*         9 = Ground                                                   */
+
 #define CMPS03_ADDRESS 0x60 //1100000: compass address 0XC0 on 7 bits for I2c protocol
 
 
