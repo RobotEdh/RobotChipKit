@@ -8,6 +8,14 @@
 #ifndef LSY201_h
 #define LSY201_h
 
+/* Camera                                                                */
+/* UART2 interface is provided on pins:                                  */
+/*        1 = Power +5V                                                  */                
+/*        2 = TX connected to J4-04 (AETXD1/SCK1A/U1BTX/U1ARTS/CN21/RD15)*/
+/*        3 = RX connected to J4-03 (AETXD0/SS1A/U1BRX/U1ACTS/CN20/RD14) */
+/*        4 = Ground                                                     */
+
+
 #include <inttypes.h>
 
 #define SUCCESS 0
