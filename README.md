@@ -12,5 +12,7 @@ It includes several libs used to control a Robot and two main examples:
 
 These 2 examples are based on a communication (WIFI or XBee) with the java program RobotJava.
 
+The functions are described in the .h files
+
 More details on http://letsmakerobots.com/node/34396 or http://artrecifrobots.blog4ever.com
 
