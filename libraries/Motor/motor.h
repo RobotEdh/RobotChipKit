@@ -101,11 +101,26 @@ int motor_begin();
 /*              attachInterrupt                                               */ 
 /*              interrupts                                                    */ 
 
+
+int get_TickRight();
+/* Description: get TickRight                                                 */                                            
+/* input:       none                                                          */
+/* output:      return                                                        */
+/*                  = TickRight                                               */
+/* lib:         non                                                           */
+
+int get_TickLeft();
+/* Description: get TickLeft                                                  */                                            
+/* input:       none                                                          */
+/* output:      return                                                        */
+/*                  = TickLeft                                                */
+/* lib:         none                                                          */
+
 int get_SpeedMotorRight();
 /* Description: get SpeedMotorRight                                           */                                            
 /* input:       none                                                          */
 /* output:      return                                                        */
-/*                  = SpeedMotorRight                                         */
+/*                  = SpeedMotorRight                                          */
 /* lib:         none                                                          */
 
 int get_SpeedMotorLeft();

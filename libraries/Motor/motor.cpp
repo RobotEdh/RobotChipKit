@@ -75,11 +75,20 @@ void IntrTickLeft()  // left tick interrupt
 }
 
 
+int get_TickRight()
+{  
+  return TickRight;  
+}
+
+int get_TickLeft()
+{
+  return TickLeft;  
+}
+
 int get_SpeedMotorRight()
 {  
   return SpeedMotorRight;  
 }
-
 
 int get_SpeedMotorLeft()
 {
