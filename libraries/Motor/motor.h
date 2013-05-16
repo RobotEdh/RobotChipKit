@@ -36,9 +36,9 @@
 #define STATE_STOP 0x00
 #define STATE_GO   0x01
 
-#define SPEEDNOMINAL 150
+#define SPEEDNOMINAL 100
 #define SPEEDMAX 255     //(255=PWM max)
-#define SPEEDDELTA 50     
+#define SPEEDDELTA 40    // used to turn 
 
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
