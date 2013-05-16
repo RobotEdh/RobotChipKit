@@ -51,6 +51,8 @@ int motor_begin()
   Serial.println("Init compas OK");
       
   // interrupts setup
+  pinMode(EncoderTickRightPin, INPUT);      // set the pin as input
+  pinMode(EncoderTickLeftPin, INPUT);      // set the pin as input
   attachInterrupt(EncoderTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
   attachInterrupt(EncoderTickLeftINT, IntrTickLeft, FALLING);    //set left tick interrupt
   

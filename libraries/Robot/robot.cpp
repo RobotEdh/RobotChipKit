@@ -1,10 +1,11 @@
 
-#include <robot.h>
-#include <motor.h>
+#include <robot.h>         
+#include <motor.h>      // Motor
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
+#include <TMP102.h>     // Temperature
 #include <Servo.h>      // Servo
-#include <TiltPan.h>   // Tilt&Pan
+#include <TiltPan.h>    // Tilt&Pan
 #include <LSY201.h>     // Camera
 
 
@@ -41,7 +42,8 @@ int robot_begin()
 
 int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
 {    
- CMPS03Class CMPS03;   // The Compass class 
+ CMPS03Class CMPS03;   // The Compass class
+ TMP102Class TMP102;   // The Temperature class  
  int resp_len = 0;
  int ret = SUCCESS;
 
@@ -73,7 +75,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      ret = check_around();
      // byte 0: direction
      resp[0] = ret;
-     resp_len = 1;
+     resp_len = 0+1;
      break; 
 
  case CMD_MOVE_TILT_PAN:
@@ -116,11 +118,12 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      // byte 4: TickLeft
      resp[4] = get_TickLeft();
      // byte 5: direction
-     //resp[5] = CMPS03.CMPS03_read();
-     resp[5] = 0;
+     resp[5] = CMPS03.CMPS03_read();
      // byte 6: distance
      resp[6] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
-     resp_len = 7;
+     // byte 7: temperature
+     resp[7] = TMP102.TMP102_read();
+     resp_len = 7+1;
      break; 
 
  case CMD_PICTURE: 
@@ -130,9 +133,9 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      ret = JPEGCamera.makePicture (no_picture);
      if (ret == SUCCESS)
      { 
+           // byte 0: picture number
            resp[0] = no_picture;
-           // byte 1: picture number
-           resp_len = 1;
+           resp_len = 0+1;
      }
      else
      {

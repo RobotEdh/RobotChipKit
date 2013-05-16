@@ -9,7 +9,7 @@
 
 
 TMP102Class TMP102;     /* The Temperature sensor class */
-double temperature; /* direction between 0-254, 0: North */
+double temperature;     /* temperature */
 
 void setup()
 {
@@ -28,10 +28,10 @@ void loop()
 
   temperature = TMP102.TMP102_read();
   
-  Serial.print("\temperature: ");
-  Serial.print(temperature); 
+  Serial.print("\ttemperature: ");
+  Serial.println(temperature); 
  
-  delay(500); //make it readable
+  delay(5000); //make it readable
   
   return;
 }
