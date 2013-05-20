@@ -61,7 +61,7 @@
 #define InMotorLeft2Pin  33       // In pin of Motor controller #2 for motor left #2 connected to digital pin J9-05(PMD4/RE4)
 #define EnableMotorLeft2Pin 9     // Enable pin of Motor controller #2 for motor left #2 connected to PWM pin J3-03(OC4/RD3)    Use TIMER_OC4
     
-#define EncoderTickRightINT  4   // INT used by the encoder for motor right connected to interrupt pin INT2 J4-02(AETXEN/SDA1/INT4/RA15)  Use INT4
+#define EncoderTickRightINT  4   // INT used by the encoder for motor right connected to interrupt pin INT4 J4-02(AETXEN/SDA1/INT4/RA15)  Use INT4
 #define EncoderTickRightPin 20
 #define EncoderTickLeftINT   3   // INT used by the encoder for motor left  connected to interrupt pin INT3 J4-01(AETXCLK/SCL1/INT3/RA14) Use INT3
 #define EncoderTickLeftPin  21

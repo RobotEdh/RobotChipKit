@@ -6,8 +6,9 @@
 #include <motor.h>
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
+#include <TMP102.h>     // Temeperature sensor
 #include <Servo.h>      // Servo
-#include <TiltPan.h>   // Tilt&Pan
+#include <TiltPan.h>    // Tilt&Pan
 #include <LSY201.h>     // Camera
 #include <SD.h>         // SD-Card
 #include <sdcard.h>     // SD-Card

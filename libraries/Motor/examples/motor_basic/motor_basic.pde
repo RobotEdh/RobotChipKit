@@ -2,8 +2,6 @@
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
 #include <Servo.h>      // Servo
-#include <TiltPan.h>    // Tilt&Pan
-
 
 
 void printTicks()
@@ -40,6 +38,11 @@ void loop()
 {
   int ret;
   
+  Serial.println(" --> stop");  
+  stop();
+  delay(5000); //make it readable 
+  printTicks();   
+
   Serial.println(" --> start_forward motor 1"); 
   start_forward_test(1);
   delay(5000); //make it readable
@@ -135,10 +138,6 @@ void loop()
   delay(5000); //make it readable
   printTicks();  
 
-  Serial.println(" --> stop");  
-  stop();
-  delay(5000); //make it readable 
-  printTicks();  
    
   return;
 }
