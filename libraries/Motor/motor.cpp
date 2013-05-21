@@ -326,8 +326,8 @@ int go(int d, int pid_ind)
 
 int check_around()
 {
- int distance_right = 0;
- int distance_left = 0; 
+    int distance_right = 0;
+    int distance_left = 0; 
    
     IRServo.write(0);    // turn servo left
     delay(15*90);        // waits the servo to reach the position 

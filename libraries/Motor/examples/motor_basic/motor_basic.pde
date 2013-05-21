@@ -167,7 +167,5 @@ void loop()
   delay(5000); //make it readable
   printDirection(); 
   printTicks();  
-   
-  return;
 }
 

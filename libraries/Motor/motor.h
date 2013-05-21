@@ -71,11 +71,6 @@
 /* Power +5V */
 /* Ground    */
 
-#define GP2Y0A21YK_Pin 54   // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
-/* Analogic interface is provided on pin V0 */
-/* Power +3V is set on pin VCC              */
-/* Ground    is set on pin GND              */
-
 
 void IntrTickRight();  // interrupt handler encoder right
 void IntrTickLeft();   // interrupt handler encoder right

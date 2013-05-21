@@ -1,22 +1,14 @@
-#include <GP2Y0A21YK.h>
 #include <wiring.h>
 
-/* Analogic interface pin A0 is provided on pin V0 */
-/* Power +3V is set on pin VCC        */
-/* Ground    is set on pin GND        */
+#include <GP2Y0A21YK.h>
 
-
-
-#define GP2Y0A21YK_Pin 14   // IR sensor GP2Y0A21YK analogic pin J7-01 A0 (C2IN-/AN2/SS1/CN4/RB2)   Use ADC module channel 2
-/* Analogic interface is provided on pin V0 */
-/* Power +3V is set on pin VCC              */
-/* Ground    is set on pin GND              */
 
 void setup()
 {
   
   Serial.begin(9600); // initialize serial port
-  GP2Y0A21YK_init(GP2Y0A21YK_Pin); // initialize the pin connecter to the sensor
+  
+  GP2Y0A21YK_init(GP2Y0A21YK_Pin); // initialize the pin connected to the sensor
  
 }
 
@@ -51,5 +43,4 @@ void loop()
   }
   delay(500); //make it readable
   
-  return;
 }

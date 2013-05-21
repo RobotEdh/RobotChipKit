@@ -28,7 +28,11 @@ void TiltPan_move(uint8_t HPos, uint8_t VPos)
     if (HPos < 0) HPos = 0;
             
     if (VPos > 180) VPos = 180; 
-    if (VPos < 45) VPos = 45; //45° minimum due to the TiltPan
+    if (VPos < 0) VPos = 0; 
+        
+    // Vertical limits due to the Tilt Pan
+    if ((HPos < 60)  && (VPos < 70)) VPos = 70;
+    if ((HPos > 120) && (VPos < 70)) VPos = 70;     
            
     HServo.write(HPos);  // moves Horizontal servo to position HPos
     delay(15);           // waits 15ms for the servo to reach the position 
