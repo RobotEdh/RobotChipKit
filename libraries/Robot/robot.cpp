@@ -19,6 +19,10 @@ int no_picture = 0;          // Picture number
 int robot_begin()
 {
   int ret = SUCCESS;
+  
+  // initialize the Tilt&Pan servos  
+  TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
+  Serial.println("Init Tilt&Pan servos OK");
 
   // initialize the camera
   ret=JPEGCamera.begin();

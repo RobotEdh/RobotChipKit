@@ -3,6 +3,13 @@
 
 #include <inttypes.h> // used for uint8_t type
 
+#define HSERVO_Pin  34   // Horizontal Servo pin connected to digital pin J9-04 (PMD3/RE3)
+/* Power +5V */
+/* Ground    */
+#define VSERVO_Pin  35   // Vertical Servo pin connected to digital pin J9-03 (PMD2/RE2)
+/* Power +5V */
+/* Ground    */
+
 void TiltPan_begin(int Hpin, int Vpin);    
 /* Description: initialize everything, must be called during setup            */                                            
 /* input:       Hpin                                                          */

@@ -9,9 +9,9 @@
 #define CMPS03_h
 
 
-/* Compas                                                               */
+/* Compass                                                              */
 /* I2C interface is provided on pins:                                   */
-/*         1 = Power +5V                                                */                     
+/*         1 = Power +5V                                                */
 /*         2 = SCL connected to J3-09 (SCL2/RA2)                        */
 /*         3 = SDA connected to J3-11 (SDA2/RA3)                        */
 /*         9 = Ground                                                   */

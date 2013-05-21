@@ -1,10 +1,12 @@
+#include <Wire.h>       // I2C protocol for Compass
+
 #include <CMPS03.h>
  
-/* I2C interface is provided on pins                                */
-/*         2 = SCL connected to A5/J7-11(SCL1/RG2) selected by JP8  */
-/*         3 = SDA connected to A4/J7-09(SDA1/RG3) selected by JP6  */
-/* Power +5V is set on pin 1                                        */
-/* Ground    is set on pin 9                                        */
+/* I2C interface is provided on pins:                                   */
+/*         1 = Power +5V                                                */
+/*         2 = SCL connected to J3-09 (SCL2/RA2)                        */
+/*         3 = SDA connected to J3-11 (SDA2/RA3)                        */
+/*         9 = Ground                                                   */
 
 
 

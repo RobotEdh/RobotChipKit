@@ -2,8 +2,6 @@
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
 #include <Servo.h>      // Servo
-#include <TiltPan.h>   // Tilt&Pan
-
 
 int SpeedMotorRight = 0;      // Duty cycle PWM motor right between 0 and SPEEDMAX( 255)
 int SpeedMotorLeft = 0;       // Duty cycle PWM motor left between 0 and SPEEDMAX (255)
@@ -42,19 +40,15 @@ int motor_begin()
   delay(15);          // waits 15ms for the servo to reach the position  
   Serial.println("Init IR servo OK");  
     
-  // initialize the Tilt&Pan servos  
-  TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
-  Serial.println("Init Tilt&Pan servos OK");
-	
   // initialize the compas  
   CMPS03.CMPS03_begin();
   Serial.println("Init compas OK");
       
   // interrupts setup
   pinMode(EncoderTickRightPin, INPUT);      // set the pin as input
-  pinMode(EncoderTickLeftPin, INPUT);      // set the pin as input
-  attachInterrupt(EncoderTickRightINT, IntrTickRight, FALLING);  //set right tick interrupt
-  attachInterrupt(EncoderTickLeftINT, IntrTickLeft, FALLING);    //set left tick interrupt
+  pinMode(EncoderTickLeftPin, INPUT);       // set the pin as input
+  attachInterrupt(EncoderTickRightINT, IntrTickRight, FALLING);  // set right tick interrupt
+  attachInterrupt(EncoderTickLeftINT, IntrTickLeft, FALLING);    // set left tick interrupt
   
   interrupts(); // enable all interrupts
   	
