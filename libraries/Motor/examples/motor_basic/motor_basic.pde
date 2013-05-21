@@ -3,18 +3,23 @@
 #include <CMPS03.h>     // Compas
 #include <Servo.h>      // Servo
 
+int tickRprev = 0;  // used to print delta tick
+int tickLprev = 0;
 
 void printTicks()
 {
-  int tickR=-1;
-  int tickL=-1;
+  int tickR = -1;
+  int tickL = -1;
   
   tickR = get_TickRight();
   tickL = get_TickLeft();
   Serial.print("TickRight=");
-  Serial.print(tickR);
+  Serial.print(tickR-tickRprev);   // print delta tick right
   Serial.print("\tTickLeft=");
-  Serial.println(tickL);
+  Serial.println(tickL-tickLprev); // print delta tick left
+  
+  tickRprev = tickR;
+  tickLprev = tickL;
 }
 
 void printDirection()
@@ -119,25 +124,47 @@ void loop()
   delay(5000); //make it readable 
   printTicks();
   
+  Serial.println(" --> stop");  
+  stop();
+  delay(5000); //make it readable 
+  printTicks();
+  
   Serial.println(" --> start_forward"); 
   start_forward();
   delay(5000); //make it readable
   printTicks();
   
-  Serial.println(" --> turn +45°, 10s max");
+  Serial.println(" --> turn +45 10s max");
   printDirection(); 
   ret =  turn(45, 10*1000);
   Serial.println(ret); 
   delay(5000); //make it readable
+  printDirection(); 
   printTicks(); 
   
-  Serial.println(" --> turn -45°, 10s max");
+  Serial.println(" --> turn -45 10s max");
   printDirection(); 
   ret =  turn(-45, 10*1000);
   Serial.println(ret); 
   delay(5000); //make it readable
+  printDirection(); 
   printTicks();  
 
+  Serial.println(" --> turn +45 30s max");
+  printDirection(); 
+  ret =  turn(45, 30*1000);
+  Serial.println(ret); 
+  delay(5000); //make it readable
+  printDirection(); 
+  printTicks(); 
+  
+  Serial.println(" --> turn -45 30s max");
+  printDirection(); 
+  ret =  turn(-45, 30*1000);
+  Serial.println(ret); 
+  delay(5000); //make it readable
+  printDirection(); 
+  printTicks();  
    
   return;
 }
