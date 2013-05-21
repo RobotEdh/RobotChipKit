@@ -1,7 +1,9 @@
+#include <Servo.h>      // Servo
+#include <Wire.h>       // I2C protocol for Compass
+
 #include <motor.h>
 #include <GP2Y0A21YK.h> // IR sensor
-#include <CMPS03.h>     // Compas
-#include <Servo.h>      // Servo
+#include <CMPS03.h>     // Compass
 
 int tickRprev = 0;  // used to print delta tick
 int tickLprev = 0;

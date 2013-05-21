@@ -1,17 +1,20 @@
-#include <robot.h>
+#include <Wire.h>       // I2C protocol for Compass
+#include <Servo.h>      // Servo
+#include <SD.h>         // SD-Card
+#include <sdcard.h>     // SD-Card
 #include <WiFiShieldOrPmodWiFi.h>
 #include <DNETcK.h>
 #include <DWIFIcK.h>
+
+#include <robot.h>
 #include <WiFiCmdRobot.h>
 #include <motor.h>
 #include <GP2Y0A21YK.h> // IR sensor
-#include <CMPS03.h>     // Compas
-#include <TMP102.h>     // Temeperature sensor
-#include <Servo.h>      // Servo
+#include <CMPS03.h>     // Compass
+#include <TMP102.h>     // Temperature sensor
 #include <TiltPan.h>    // Tilt&Pan
 #include <LSY201.h>     // Camera
-#include <SD.h>         // SD-Card
-#include <sdcard.h>     // SD-Card
+
  
 
 WiFiCmdRobot Server;    
