@@ -28,6 +28,7 @@
 #include <pins_arduino.h>
 #include "twi.h"
 
+
 static volatile uint8_t twi_state;
 static uint8_t twi_slarw;
 
@@ -240,7 +241,7 @@ uint8_t twi_writeTo(uint8_t address, uint8_t* data, uint8_t length, uint8_t wait
   {
 	asm volatile("nop");
   }
-
+  
   if (twi_error == 0xFF)
   {
     return 0;	// success
