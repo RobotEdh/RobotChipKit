@@ -96,13 +96,25 @@ int get_TickRight();
 /* input:       none                                                          */
 /* output:      return                                                        */
 /*                  = TickRight                                               */
-/* lib:         non                                                           */
+/* lib:         none                                                          */
 
 int get_TickLeft();
 /* Description: get TickLeft                                                  */                                            
 /* input:       none                                                          */
 /* output:      return                                                        */
 /*                  = TickLeft                                                */
+/* lib:         none                                                          */
+
+void reset_TickRight();
+/* Description: reset TickRight                                               */                                            
+/* input:       none                                                          */
+/* output:      none                                                          */
+/* lib:         none                                                          */
+
+void reset_TickLeft();
+/* Description: reset TickLeft                                                */                                            
+/* input:       none                                                          */
+/* output:      none                                                          */
 /* lib:         none                                                          */
 
 int get_SpeedMotorRight();
