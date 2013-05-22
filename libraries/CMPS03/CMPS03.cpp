@@ -14,11 +14,11 @@ CMPS03Class::CMPS03Class ()
 {
 }
  
-void CMPS03Class::CMPS03_begin ()
+int CMPS03Class::CMPS03_begin ()
 {
     Wire.begin(); // setup I2C
 
-	return;
+	return CMPS03_revision();
 } 
  
     

@@ -40,9 +40,19 @@ int motor_begin()
   delay(15);          // waits 15ms for the servo to reach the position  
   Serial.println("Init IR servo OK");  
     
-  // initialize the compas  
-  CMPS03.CMPS03_begin();
-  Serial.println("Init compas OK");
+  // initialize the compass  
+  int revision = CMPS03.CMPS03_begin();
+  if (revision < 0) {
+     Serial.print("Init compas K0 ->Error I2C: ");
+     Serial.print(revision);    
+  }
+  else
+  {  
+     Serial.print("Revision: ");
+     Serial.println(revision);
+     Serial.println("Init compas OK");
+  }
+
       
   // interrupts setup
   pinMode(EncoderTickRightPin, INPUT);      // set the pin as input

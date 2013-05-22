@@ -18,17 +18,17 @@ void setup()
 {
   
   Serial.begin(9600); // initialize serial port
-  CMPS03.CMPS03_begin();
   
-  revision = CMPS03.CMPS03_revision();
+  revision = CMPS03.CMPS03_begin();
+  
   if (revision < 0) {
-     Serial.print("\nError I2c: ");
-     Serial.print(revision);    
+     Serial.print("Error I2c: ");
+     Serial.println(revision);    
   }
   else
   {  
-     Serial.print("\nRevision: ");
-     Serial.print(revision);
+     Serial.print("Revision: ");
+     Serial.println(revision);
   }  
   delay(500); //make it readable 
 }
