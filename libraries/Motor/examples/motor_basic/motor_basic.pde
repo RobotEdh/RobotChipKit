@@ -1,4 +1,9 @@
+#include <Servo.h>      // Servo
+#include <Wire.h>       // I2C protocol for Compass
+
 #include <motor.h>
+#include <GP2Y0A21YK.h> // IR sensor
+#include <CMPS03.h>     // Compass
 
 
 void printTicks()
@@ -18,6 +23,7 @@ void printTicks()
 void resetTicks()
 {
   
+  delay(1000); //wait end command 
   reset_TickRight();
   reset_TickLeft();
 }

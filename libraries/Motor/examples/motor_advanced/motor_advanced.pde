@@ -62,7 +62,6 @@ void loop()
   printDirection();
   ret =  turn(45, 10*1000);
   Serial.println(ret); 
-  delay(5000); //make it readable
   printDirection(); 
  
   
@@ -70,21 +69,17 @@ void loop()
   printDirection(); 
   ret =  turn(-45, 10*1000);
   Serial.println(ret); 
-  delay(5000); //make it readable
   printDirection(); 
 
   Serial.println(" --> turn +45 30s max");
   printDirection(); 
   ret =  turn(45, 30*1000);
   Serial.println(ret); 
-  delay(5000); //make it readable
   printDirection(); 
   
   Serial.println(" --> turn -45 30s max");
   printDirection(); 
   ret =  turn(-45, 30*1000);
   Serial.println(ret); 
-  delay(5000); //make it readable
   printDirection(); 
 }
-
