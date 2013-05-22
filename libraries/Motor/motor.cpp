@@ -81,6 +81,16 @@ int get_TickLeft()
   return TickLeft;  
 }
 
+void reset_TickRight()
+{  
+  TickRight = 0;  
+}
+
+void reset_TickLeft()
+{
+  TickLeft = 0;  
+}
+
 int get_SpeedMotorRight()
 {  
   return SpeedMotorRight;  
