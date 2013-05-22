@@ -452,7 +452,7 @@ int turn(double alpha, unsigned long timeout)
   }
   
   unsigned long start = millis();
-  while ((millis() - start < timeout) || end_turn == 1) {  // turn during maximum timeout milliseconds   
+  while ((millis() - start < timeout) && end_turn == 0) {  // turn during maximum timeout milliseconds   
         direction = CMPS03.CMPS03_read(); // get current direction
       
         if ( ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) end_turn = 1;
