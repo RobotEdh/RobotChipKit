@@ -75,10 +75,9 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      break; 
  
  case CMD_CHECK_AROUND:
-     Serial.println("CMD_CHECK_AROUND"); 
-     ret = check_around();
+     Serial.println("CMD_CHECK_AROUND");
      // byte 0: direction
-     resp[0] = ret;
+     resp[0] = check_around();
      resp_len = 0+1;
      break; 
 

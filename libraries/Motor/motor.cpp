@@ -41,14 +41,14 @@ int motor_begin()
   // initialize the compass  
   int revision = CMPS03.CMPS03_begin();
   if (revision < 0) {
-     Serial.print("Init compas K0 ->Error I2C: ");
+     Serial.print("Init compass K0 ->Error I2C: ");
      Serial.print(revision);    
   }
   else
   {  
-     Serial.print("Revision: ");
+     Serial.print("Compass Revision: ");
      Serial.println(revision);
-     Serial.println("Init compas OK");
+     Serial.println("Init compass OK");
   }
 
       
