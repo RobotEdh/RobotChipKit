@@ -49,7 +49,11 @@ void loop()
   Serial.println(" --> check around"); 
   ret = check_around();
   Serial.print("ret: "); 
-  Serial.println(ret);  
+  if (ret ==  LEFT_DIRECTION) Serial.println("Left");  
+  else if (ret ==  RIGHT_DIRECTION) Serial.println("Right");  
+  else if (ret ==  OBSTACLE) Serial.println("Obstacle");  
+  else  Serial.println("Error"); 
+  
   delay(5000); //make it readable
   
   
