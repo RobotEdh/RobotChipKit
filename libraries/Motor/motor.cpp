@@ -8,9 +8,7 @@ int SpeedMotorLeft = 0;       // Duty cycle PWM motor left between 0 and SPEEDMA
 
 // data updated during interrupts
 volatile int TickRight = 0;   
-volatile int DirRight = 0;
 volatile int TickLeft = 0;
-volatile int DirLeft = 0;
 
 CMPS03Class CMPS03;          // The Compass class
 Servo IRServo;               // The Servo class used for IR sensor
