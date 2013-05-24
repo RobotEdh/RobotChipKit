@@ -31,7 +31,7 @@
 #define CMD_TURN_LEFT     0x06
 #define CMD_CHECK_AROUND  0x07
 #define CMD_MOVE_TILT_PAN 0x08
-
+#define CMD_GO            0x09
 
 #define STATE_STOP 0x00
 #define STATE_GO   0x01
