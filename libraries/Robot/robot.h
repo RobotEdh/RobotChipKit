@@ -32,6 +32,6 @@ int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
 /*              CMPS03_read                                                   */
 /*              GP2Y0A21YK_getDistanceCentimeter                              */
 /*              makePicture                                                   */   
-
+/*              go                                                            */  
 
 #endif
