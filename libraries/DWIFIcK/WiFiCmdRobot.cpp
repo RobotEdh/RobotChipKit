@@ -652,6 +652,12 @@ int WiFiCmdRobot::Cmd (String s)
                cmd[1] = iparam[0];
                cmd[2] = iparam[1];
        }                                    
+       if (szcmd == "GO")
+       {
+               cmd[0] = CMD_GO;
+               cmd[1] = iparam[0];
+               cmd[2] = iparam[1];
+       } 
        
        ret = CmdRobot (cmd, resp, &resp_len);
        
