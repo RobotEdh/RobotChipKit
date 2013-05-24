@@ -1,4 +1,3 @@
-
 #include <robot.h>         
 #include <motor.h>      // Motor
 #include <GP2Y0A21YK.h> // IR sensor
@@ -10,8 +9,6 @@
 
 
 int motor_state = STATE_STOP;
-long nb_go = 0;
-long nb_obstacle = 0;
 
 JPEGCameraClass JPEGCamera;  // The Camera class  
 int no_picture = 0;          // Picture number
@@ -30,7 +27,7 @@ int robot_begin()
   {  
         Serial.print("Error Init Camera, error: ");
         Serial.println(ret);
-  }  	  	
+  }      	
   else
   {
         Serial.println("Init Camera OK");
@@ -93,8 +90,8 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      { 
            Serial.print("CMD_TURN_RIGHT, alpha: ");
            Serial.println((int)cmd[1]);
-           ret = turn ((double)cmd[1], 100);
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.print(ret);}
+           ret = turn ((double)cmd[1], 5*1000);  // 5s max
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.println(ret);}
     }
     break;        
 
@@ -103,8 +100,8 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      { 
            Serial.print("CMD_TURN_LEFT, alpha: ");
            Serial.println((int)cmd[1]);
-           ret = turn (-(double)cmd[1], 100);
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.print(ret);}
+           ret = turn (-(double)cmd[1], 5*1000);  // 5s max
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.prinln(ret);}
      }
      break;        
      
@@ -130,7 +127,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      break; 
 
  case CMD_PICTURE: 
-     Serial.print("CMD_PICTURE,no_picture: ");
+     Serial.print("CMD_PICTURE, no_picture: ");
      no_picture++;
      Serial.println(no_picture);
      ret = JPEGCamera.makePicture (no_picture);
@@ -144,6 +141,34 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      {
         Serial.print("makePicture error: ");
         Serial.println(ret);
+     }
+     break;
+
+ case CMD_GO: 
+     Serial.print("CMD_GO, tick: ");
+     Serial.print((int)cmd[1]);
+     Serial.print("\tPID: ");
+     Serial.println((int)cmd[2]);
+     
+     ret = go((int)cmd[1],(int)cmd[2]);  
+     
+     if ((ret != SUCCESS) && (ret != OBSTACLE)){  Serial.print("CMD_GO error"); Serial.println(ret);}
+     else if (ret == OBSTACLE) {
+         ret == SUCCESS;
+         Serial.println("CMD_GO Obstacle")
+         int dir = check_around();
+         
+         Serial.print("check_around, direction: ");
+         Serial.println(dir);
+         
+         if (dir == LEFT_DIRECTION) {
+              ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
+              if (ret != SUCCESS){  Serial.print("turn error"); Serial.prinln(ret);}
+         }
+         else if (dir == RIGHT_DIRECTION) {
+              ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
+              if (ret != SUCCESS){  Serial.print("turn error"); Serial.prinln(ret);}
+         }          
      }
      break;
      
