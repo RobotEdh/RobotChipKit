@@ -88,7 +88,13 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      break; 
                     
  case CMD_TURN_RIGHT:
-     if (motor_state == STATE_GO)
+     if (cmd[1] == 180)
+     {       
+           Serial.print("CMD_TURN_BACK");
+           ret = turnback (20*1000);  // 20s max
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);}
+     }       
+     else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_RIGHT, alpha: ");
            Serial.println((int)cmd[1]);
@@ -98,14 +104,20 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
     break;        
 
  case CMD_TURN_LEFT:
-     if (motor_state == STATE_GO)
+     if (cmd[1] == 180)
+     {       
+           Serial.print("CMD_TURN_BACK");
+           ret = turnback (20*1000);  // 20s max
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);}
+     }    
+     else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_LEFT, alpha: ");
            Serial.println((int)cmd[1]);
            ret = turn (-(double)cmd[1], 5*1000);  // 5s max
            if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret);}
      }
-     break;        
+     break;            
      
  case CMD_INFOS:    
      Serial.println("CMD_INFOS");

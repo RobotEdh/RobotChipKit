@@ -639,7 +639,7 @@ int WiFiCmdRobot::Cmd (String s)
                cmd[0] = CMD_TURN_LEFT;
                cmd[1] = iparam[0];
                cmd[2] = 0;
-       }                                    
+       }                                           
        if (szcmd == "CHECK_AROUND")
        {
                cmd[0] = CMD_CHECK_AROUND;
