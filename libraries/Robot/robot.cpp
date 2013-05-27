@@ -190,7 +190,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
               }
               else 
               {
-              	   ret = turnback (+45,  5*1000); // turn back  during 5s max
+              	   ret = turnback (20*1000); // turn back  during 20s max
                    if (ret != SUCCESS)
                    {
                       Serial.print("turnback error");
