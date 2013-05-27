@@ -314,4 +314,15 @@ int turn(double alpha, unsigned long timeout);
 /*              deccelerate_n                                                 */
 /*              millis                                                        */                                
 
+int turnback(unsigned long timeout);
+/* Description: turns back before a delay (timeout)                           */
+/* input:       timeout                                                       */ 
+/*                  = timeout in ms                                           */      
+/* output:      return                                                        */ 
+/*                  = turn function error on case of error returned by turn() */
+/*                  = TIMEOUT if turn back is not completed before the delay  */
+/*                  = SUCCESS otherwise                                       */  
+/* lib:         backward()                                                    */
+/*              turn()                                                        */
+/*              millis                                                        */ 
 #endif
