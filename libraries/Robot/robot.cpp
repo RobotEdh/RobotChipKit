@@ -27,7 +27,7 @@ int robot_begin()
   {  
         Serial.print("Error Init Camera, error: ");
         Serial.println(ret);
-  }      	
+  }        
   else
   {
         Serial.println("Init Camera OK");
@@ -46,6 +46,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
  CMPS03Class CMPS03;   // The Compass class
  TMP102Class TMP102;   // The Temperature class  
  int resp_len = 0;
+ int tick = 0;
  int ret = SUCCESS;
 
  switch (cmd[0]) {
@@ -150,25 +151,66 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      Serial.print("\tPID: ");
      Serial.println((int)cmd[2]);
      
-     ret = go((int)cmd[1],(int)cmd[2]);  
+     tick = (int)cmd[1];
      
-     if ((ret != SUCCESS) && (ret != OBSTACLE)){  Serial.print("CMD_GO error"); Serial.println(ret);}
-     else if (ret == OBSTACLE) {
-         ret == SUCCESS;
-         Serial.println("CMD_GO Obstacle")
-         int dir = check_around();
+     while(1) {
+          ret = go(tick,(int)cmd[2]);  
+     
+          if ((ret != SUCCESS) && (ret != OBSTACLE))
+          {
+    	      Serial.print("CMD_GO error");
+    	      Serial.println(ret);
+    	      break;
+          }
+          else if (ret == OBSTACLE) {
+              ret = SUCCESS;
+              Serial.println("CMD_GO Obstacle")
+              int dir = check_around();
          
-         Serial.print("check_around, direction: ");
-         Serial.println(dir);
+              Serial.print("check_around, direction: ");
+              Serial.println(dir);
          
-         if (dir == LEFT_DIRECTION) {
-              ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
-              if (ret != SUCCESS){  Serial.print("turn error"); Serial.prinln(ret);}
-         }
-         else if (dir == RIGHT_DIRECTION) {
-              ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
-              if (ret != SUCCESS){  Serial.print("turn error"); Serial.prinln(ret);}
-         }          
+              if (dir == LEFT_DIRECTION) {
+                   ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
+                   if (ret != SUCCESS)
+                   {
+                   	  Serial.print("turn error");
+                   	  Serial.prinln(ret);
+                   	  break;
+                   }
+              }
+              else if (dir == RIGHT_DIRECTION) {
+                   ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
+                   if (ret != SUCCESS)
+                   {
+                   	  Serial.print("turn error");
+                   	  Serial.prinln(ret);
+                   	  break;
+                   }
+              }
+              else 
+              {
+              	   ret = turnback (+45,  5*1000); // turn back  during 5s max
+                   if (ret != SUCCESS)
+                   {
+                      Serial.print("turnback error");
+                   	  Serial.prinln(ret);
+                   	  break;
+                   }
+              }
+              
+              tick = tick - (get_TickRight() +  get_TickLeft())/2;    // compute remaining tick
+              if (tick < 0) 
+              {
+                   Serial.println("tick done");
+                   break;
+              }    
+          }
+          else
+          {
+             	  Serial.println("tick done");
+               	break;
+          }
      }
      break;
      
