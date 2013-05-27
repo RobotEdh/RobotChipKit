@@ -486,3 +486,43 @@ int turn(double alpha, unsigned long timeout)
   else if (direction < 0)  return COMPASS_ERROR;
   else                     return TIMEOUT; 
 }
+
+
+int turnback(unsigned long timeout)
+{
+  int dir = 0;
+  int end_turn = 0;
+  
+  start_backward();
+   
+  unsigned long start = millis();
+  while ((millis() - start < timeout) && end_turn == 0) {  // turn back during maximum timeout milliseconds   
+          dir = check_around();
+         
+          Serial.print("check_around, direction: ");
+          Serial.println(dir);
+         
+          if (dir == LEFT_DIRECTION) {
+               ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
+               if (ret != SUCCESS)
+               {
+               	  Serial.print("turn error");
+               	  Serial.prinln(ret);
+               }
+               end_turn = 1;
+           }
+           else if (dir == RIGHT_DIRECTION) {
+               ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
+               if (ret != SUCCESS
+               {
+               	  Serial.print("turn error");
+               	  Serial.prinln(ret);
+               }
+               end_turn = 1;
+          }     
+
+  }
+   
+  if(end_turn == 1)        return ret;
+  else                     return TIMEOUT; 
+}
