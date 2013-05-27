@@ -47,6 +47,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
  TMP102Class TMP102;   // The Temperature class  
  int resp_len = 0;
  int tick = 0;
+ int dir;
  int ret = SUCCESS;
 
  switch (cmd[0]) {
@@ -102,7 +103,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
            Serial.print("CMD_TURN_LEFT, alpha: ");
            Serial.println((int)cmd[1]);
            ret = turn (-(double)cmd[1], 5*1000);  // 5s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.prinln(ret);}
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret);}
      }
      break;        
      
@@ -164,8 +165,8 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
           }
           else if (ret == OBSTACLE) {
               ret = SUCCESS;
-              Serial.println("CMD_GO Obstacle")
-              int dir = check_around();
+              Serial.println("CMD_GO Obstacle");
+              dir = check_around();
          
               Serial.print("check_around, direction: ");
               Serial.println(dir);
@@ -175,7 +176,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
                    if (ret != SUCCESS)
                    {
                    	  Serial.print("turn error");
-                   	  Serial.prinln(ret);
+                   	  Serial.println(ret);
                    	  break;
                    }
               }
@@ -184,7 +185,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
                    if (ret != SUCCESS)
                    {
                    	  Serial.print("turn error");
-                   	  Serial.prinln(ret);
+                   	  Serial.println(ret);
                    	  break;
                    }
               }
@@ -194,7 +195,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
                    if (ret != SUCCESS)
                    {
                       Serial.print("turnback error");
-                   	  Serial.prinln(ret);
+                   	  Serial.println(ret);
                    	  break;
                    }
               }

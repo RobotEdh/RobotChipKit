@@ -492,6 +492,7 @@ int turnback(unsigned long timeout)
 {
   int dir = 0;
   int end_turn = 0;
+  int ret = SUCCESS;
   
   start_backward();
    
@@ -502,21 +503,23 @@ int turnback(unsigned long timeout)
           Serial.print("check_around, direction: ");
           Serial.println(dir);
          
-          if (dir == LEFT_DIRECTION) {
+          if (dir == LEFT_DIRECTION)
+          {
                ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
                if (ret != SUCCESS)
                {
                	  Serial.print("turn error");
-               	  Serial.prinln(ret);
+               	  Serial.println(ret);
                }
                end_turn = 1;
            }
-           else if (dir == RIGHT_DIRECTION) {
+           else if (dir == RIGHT_DIRECTION)
+           {
                ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
-               if (ret != SUCCESS
+               if (ret != SUCCESS)
                {
                	  Serial.print("turn error");
-               	  Serial.prinln(ret);
+               	  Serial.println(ret);
                }
                end_turn = 1;
           }     
