@@ -110,16 +110,25 @@ int get_SpeedMotorLeft()
 }
 
 
-void forward()
+void forward(int motor)
 {
-     
-  digitalWrite(InMotorRight1Pin, HIGH); 
-  digitalWrite(InMotorRight2Pin, HIGH); 
-  digitalWrite(InMotorLeft1Pin,  HIGH); 
-  digitalWrite(InMotorLeft2Pin,  HIGH); 
-   
-  return;  
+  if (motor == LEFT_MOTOR) {
+       digitalWrite(InMotorLeft1Pin,  HIGH); 
+       digitalWrite(InMotorLeft2Pin,  HIGH);       
+  }
+  else if (motor == RIGHT_MOTOR) {
+       digitalWrite(InMotorRight1Pin, HIGH); 
+       digitalWrite(InMotorRight2Pin, HIGH);    
+  }
+  else
+  {    
+       digitalWrite(InMotorLeft1Pin,  HIGH); 
+       digitalWrite(InMotorLeft2Pin,  HIGH);   
+       digitalWrite(InMotorRight1Pin, HIGH); 
+       digitalWrite(InMotorRight2Pin, HIGH); 
+  }  
 }
+
 
 void forward_test(int num) // for test only
 {
@@ -135,24 +144,31 @@ void forward_test(int num) // for test only
   if (num == 4) {
         digitalWrite(InMotorLeft2Pin,  HIGH); 
   } 
-  return;  
 }
 
-void backward()
+void backward(int motor)
 {
-  
-  digitalWrite(InMotorRight1Pin, LOW); 
-  digitalWrite(InMotorRight2Pin, LOW);   
-  digitalWrite(InMotorLeft1Pin,  LOW); 
-  digitalWrite(InMotorLeft2Pin,  LOW); 
-   
-  return;   
+  if (motor == LEFT_MOTOR) {
+       digitalWrite(InMotorLeft1Pin,  LOW); 
+       digitalWrite(InMotorLeft2Pin,  LOW);       
+  }
+  else if (motor == RIGHT_MOTOR) {
+       digitalWrite(InMotorRight1Pin, LOW); 
+       digitalWrite(InMotorRight2Pin, LOW);    
+  }
+  else
+  {    
+       digitalWrite(InMotorLeft1Pin,  LOW); 
+       digitalWrite(InMotorLeft2Pin,  LOW);   
+       digitalWrite(InMotorRight1Pin, LOW); 
+       digitalWrite(InMotorRight2Pin, LOW); 
+  }  
 }
 
 void start_forward()
 {
      
-  forward();
+  forward(BOTH_MOTOR);
   
   SpeedMotorRight = SPEEDNOMINAL;
   SpeedMotorLeft  = SPEEDNOMINAL;
@@ -190,7 +206,7 @@ void start_forward_test(int num) // for test only
 void start_backward()
 {
      
-  backward();
+  backward(BOTH_MOTOR);
   
   SpeedMotorRight = SPEEDNOMINAL;
   SpeedMotorLeft  = SPEEDNOMINAL;
@@ -438,9 +454,7 @@ int turn(double alpha, unsigned long timeout)
 {
   int direction = 0; /* direction between 0-254, 0: North */
   int direction_target = 0; /* direction between 0-254, 0: North */
-  int delta1 = 0;
-  int delta2 = 0;
-  int end_turn =0;
+  int end_turn = 0;
   
   if ((alpha == 0) || (alpha < -180) || (alpha > 180)) return BAD_ANGLE; // alpha between -180 and +180 and <> 0
   
@@ -450,41 +464,32 @@ int turn(double alpha, unsigned long timeout)
   direction_target = direction + (int)(254.0*alpha/360.0); // compute target direction 
   
   if (alpha > 0 ) {
-        delta1 = accelerate_n(LEFT_MOTOR, SPEEDDELTA); // turns right
-  	    delta2 = deccelerate_n(RIGHT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
+        backward (RIGHT_MOTOR);
   }
   else
   {
-        delta1 = accelerate_n(RIGHT_MOTOR, SPEEDDELTA); // turns left
-  	    delta2 = deccelerate_n(LEFT_MOTOR, SPEEDDELTA + SPEEDDELTA - delta1);  
+        backward (LEFT_MOTOR);  
   }
   
   unsigned long start = millis();
   while ((millis() - start < timeout) && end_turn == 0) {  // turn during maximum timeout milliseconds   
         direction = CMPS03.CMPS03_read(); // get current direction
-      
+        if (direction < 0) end_turn = 1;
         if ( ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) end_turn = 1;
-   
-        if ( (direction < 0)  || ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) {
-
-
-        }
   } 
   
   if (alpha > 0)
   {
-          deccelerate_n(LEFT_MOTOR, delta1); // stop turns right
-          accelerate_n(RIGHT_MOTOR, delta2);  
+          forward (RIGHT_MOTOR); // stop turns right  
   }
   else
   {
-          deccelerate_n(RIGHT_MOTOR, delta1); // stop turns left
-          accelerate_n(LEFT_MOTOR, delta2);  
+          forward (LEFT_MOTOR); // stop turns left 
   }
    
-  if(end_turn == 1)        return SUCCESS;
-  else if (direction < 0)  return COMPASS_ERROR;
-  else                     return TIMEOUT; 
+  if     (direction < 0)  return COMPASS_ERROR;
+  else if(end_turn == 1)  return SUCCESS;
+  else                    return TIMEOUT; 
 }
 
 
