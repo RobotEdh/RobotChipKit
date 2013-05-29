@@ -317,6 +317,18 @@ int deccelerate_n(int motor, int n)
  return n; 
 }
 
+void change_speed(int speed)
+{
+ SpeedMotorRight = speed;
+ SpeedMotorLeft  = speed;
+  
+ analogWrite(EnableMotorRight1Pin, SpeedMotorRight);
+ analogWrite(EnableMotorRight2Pin, SpeedMotorRight);  
+ analogWrite(EnableMotorLeft1Pin,  SpeedMotorLeft);
+ analogWrite(EnableMotorLeft2Pin,  SpeedMotorLeft);
+ 
+ return; 
+}
 
 int go(int d, int pid_ind)
 {
@@ -458,6 +470,8 @@ int turn(double alpha, unsigned long timeout)
   
   if ((alpha == 0) || (alpha < -180) || (alpha > 180)) return BAD_ANGLE; // alpha between -180 and +180 and <> 0
   
+  change_speed(SPEEDTURN);
+  
   direction = CMPS03.CMPS03_read(); // get initial direction
   if (direction < 0)  return COMPASS_ERROR;
   
@@ -487,9 +501,18 @@ int turn(double alpha, unsigned long timeout)
           forward (LEFT_MOTOR); // stop turns left 
   }
    
-  if     (direction < 0)  return COMPASS_ERROR;
-  else if(end_turn == 1)  return SUCCESS;
-  else                    return TIMEOUT; 
+  if (direction < 0)
+  {  
+      return COMPASS_ERROR;
+  }    
+  else if(end_turn == 1)
+  {
+      change_speed(SPEEDNOMINAL);
+      return SUCCESS;
+  }   
+  else
+  {   return TIMEOUT;
+  }   
 }
 
 
@@ -500,6 +523,7 @@ int turnback(unsigned long timeout)
   int ret = SUCCESS;
   
   start_backward();
+  change_speed(SPEEDTURN);
    
   unsigned long start = millis();
   while ((millis() - start < timeout) && end_turn == 0) {  // turn back during maximum timeout milliseconds   
@@ -513,7 +537,7 @@ int turnback(unsigned long timeout)
                ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
                if (ret != SUCCESS)
                {
-               	  Serial.print("turn error");
+               	  Serial.print("turn error: ");
                	  Serial.println(ret);
                }
                end_turn = 1;
@@ -523,7 +547,7 @@ int turnback(unsigned long timeout)
                ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
                if (ret != SUCCESS)
                {
-               	  Serial.print("turn error");
+               	  Serial.print("turn error: ");
                	  Serial.println(ret);
                }
                end_turn = 1;

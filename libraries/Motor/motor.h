@@ -36,9 +36,9 @@
 #define STATE_STOP 0x00
 #define STATE_GO   0x01
 
-#define SPEEDNOMINAL 100
-#define SPEEDMAX 255     //(255=PWM max)
-#define SPEEDDELTA 40    // used to turn 
+#define SPEEDMAX 255     // 255=PWM max
+#define SPEEDNOMINAL 100 // speed at start
+#define SPEEDTURN 50     // speed at turn 
 
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
@@ -256,7 +256,12 @@ int deccelerate_n(int motor, int n);
 /*                  = return number of decrements done                        */                                     
 /* lib:         deccelerate                                                   */
 
- 
+void change_speed(int speed);
+/* Description: change the speed of the 4 motors to the corresponding value   */
+/* input:       speed                                                         */  
+/* output:      return                                                        */                            
+/*                  = return number of decrements done                        */                                     
+/* lib:         analogWrite                                                   */ 
  
 int adjustMotor (int motor, int pid);
 /* Description: Adjust the speed of the motor according the PID value         */
@@ -265,9 +270,7 @@ int adjustMotor (int motor, int pid);
 /*                  = RIGHT_MOTOR                                             */ 
 /* input:       pid                                                           */
 /*                  = pid value to adjust                                     */  
-/* output:      return                                                        */                            
-/*                  = SPEED_ERROR if speed computed > SPEEDMAX                */ 
-/*                  = SUCCESS otherwise                                       */                                        
+/* output:      none                                                          */                                       
 /* lib:         analogWrite                                                   */                                        
                                                                       
                                      
