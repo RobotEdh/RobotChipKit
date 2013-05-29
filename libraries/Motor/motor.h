@@ -131,10 +131,14 @@ int get_SpeedMotorLeft();
 /*                  = SpeedMotorLeft                                          */
 /* lib:         none                                                          */
 
-void forward();     
-/* Description: set IN1 and IN2 of the 4 motors in order to run clockwise     */                                            
+void forward(int motor);     
+/* Description: set IN1 and IN2 of the corresponding motors                   */
+/* in order to run clockwise                                                  */                                            
 /*              (refer truth table LM293D)                                    */
-/* input:       none                                                          */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/*                  = BOTH_MOTOR                                              */ 
 /* output:      none                                                          */
 /* lib:         digitalWrite                                                  */
 
@@ -172,10 +176,14 @@ void start_forward_test(int num);
 /* lib:         forward                                                       */
 /*              analogWrite                                                   */
 
-void backward();
-/* Description: set IN1 and IN2 of the 4 motors in order to run anti-clockwise*/                                            
+void backward(int motor);
+/* Description: set IN1 and IN2 of the corresponding motors                   */
+/* in order to run anti-clockwise                                             */                                            
 /*              (refer truth table LM293D)                                    */
-/* input:       none                                                          */
+/* input:       motor                                                         */ 
+/*                  = LEFT_MOTOR                                              */ 
+/*                  = RIGHT_MOTOR                                             */ 
+/*                  = BOTH_MOTOR                                              */ 
 /* output:      none                                                          */
 /* lib:         digitalWrite                                                  */
 
