@@ -52,8 +52,8 @@ byte rgbRead[1024];
 int cbRead = 0;
 int count = 0;
     
-uint8_t cmd[CMD_SIZE];
-uint8_t resp[RESP_SIZE];
+uint16_t cmd[CMD_SIZE];
+uint16_t resp[RESP_SIZE];
 int resp_len = 0;
    
 DNETcK::STATUS status;
@@ -732,7 +732,7 @@ int WiFiCmdRobot::ReplyKO ()
 
 
 
-int WiFiCmdRobot::WiFiSendPicture (int n)
+int WiFiCmdRobot::WiFiSendPicture (int16_t n)
 {
   int ret=SUCCESS;
   int16_t nbytes; 

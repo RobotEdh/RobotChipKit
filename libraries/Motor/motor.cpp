@@ -25,6 +25,8 @@ int motor_begin()
   pinMode(EnableMotorLeft1Pin, OUTPUT);   // set the analogig pin as output for PWM
   pinMode(InMotorLeft2Pin, OUTPUT);       // set the pin as output
   pinMode(EnableMotorLeft2Pin, OUTPUT);   // set the analogig pin as output for PWM
+  
+  stop();
   Serial.println("Init motors OK"); 
   
   // initialize the pin connected to the sensor 
@@ -334,6 +336,7 @@ int go(int d, int pid_ind)
 {
  int ret = 0;
  int Tick = 0;
+ int wtick = 0;
  int pid;
  int distance = 0;
  int direction = 0; /* direction between 0-254, 0: North */
@@ -343,7 +346,7 @@ int go(int d, int pid_ind)
  
  while (Tick < d) {
      
-       Tick = TickLeft + TickRight;
+       Tick = (TickLeft + TickRight)/2;
        if (pid_ind == 1) {
              if (TickLeft > TickRight) {
                    pid = computePID (TickLeft - TickRight); // compute PID
@@ -357,12 +360,17 @@ int go(int d, int pid_ind)
              }
        } // end PID
        
-       distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
+       if (Tick-wtick > TICKMIN) {
+             wtick = Tick;
+             distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
+             Serial.print("-->distance: ");
+             Serial.println(distance);
 
-       if ((distance > 0) && (distance < DISTANCE_MIN))
-       {
-           return OBSTACLE;       
-       }
+             if ((distance > 0) && (distance < DISTANCE_MIN))
+             {
+                   return OBSTACLE;       
+             }
+        }     
        
  }  // end while Tick < d
  

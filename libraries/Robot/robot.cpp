@@ -41,12 +41,12 @@ int robot_begin()
 } 
 
 
-int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
+int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
 {    
  CMPS03Class CMPS03;   // The Compass class
  TMP102Class TMP102;   // The Temperature class  
  int resp_len = 0;
- int tick = 0;
+ int timeout = 0;
  int dir;
  int ret = SUCCESS;
 
@@ -159,15 +159,18 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
      break;
 
  case CMD_GO: 
-     Serial.print("CMD_GO, tick: ");
+     Serial.print("CMD_GO, nb seconds: ");
      Serial.print((int)cmd[1]);
      Serial.print("\tPID: ");
      Serial.println((int)cmd[2]);
+         
+     start_forward();
+     motor_state = STATE_GO;
      
-     tick = (int)cmd[1];
-     
-     while(1) {
-          ret = go(tick,(int)cmd[2]);  
+     timeout = (int)cmd[1]*1000;
+     unsigned long start = millis();
+     while(millis() - start < timeout) {
+          ret = go(timeout,(int)cmd[2]);  
      
           if ((ret != SUCCESS) && (ret != OBSTACLE))
           {
@@ -178,12 +181,17 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
           else if (ret == OBSTACLE) {
               ret = SUCCESS;
               Serial.println("CMD_GO Obstacle");
+              stop();
+              motor_state = STATE_STOP;
+              
               dir = check_around();
          
               Serial.print("check_around, direction: ");
               Serial.println(dir);
          
               if (dir == LEFT_DIRECTION) {
+                   start_forward();
+                   motor_state = STATE_GO;
                    ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
                    if (ret != SUCCESS)
                    {
@@ -193,6 +201,8 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
                    }
               }
               else if (dir == RIGHT_DIRECTION) {
+                   start_forward();
+                   motor_state = STATE_GO;
                    ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
                    if (ret != SUCCESS)
                    {
@@ -203,7 +213,7 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
               }
               else 
               {
-              	   ret = turnback (20*1000); // turn back  during 20s max
+              	   ret = turnback (10*1000); // turn back  during 10s max
                    if (ret != SUCCESS)
                    {
                       Serial.print("turnback error");
@@ -212,19 +222,22 @@ int CmdRobot (uint8_t cmd [3], uint8_t *resp, int *presp_len)
                    }
               }
               
-              tick = tick - (get_TickRight() +  get_TickLeft())/2;    // compute remaining tick
-              if (tick < 0) 
+              timeout = timeout - (millis() - start);    // compute remaining timeout
+              if (timeout < 0) 
               {
-                   Serial.println("tick done");
+                   Serial.println("timeout done");
                    break;
               }    
           }
           else
           {
-             	  Serial.println("tick done");
-               	break;
+            	   Serial.println("timeout done");
+                   break;
           }
      }
+     
+     stop();
+     motor_state = STATE_STOP;
      break;
      
  default:

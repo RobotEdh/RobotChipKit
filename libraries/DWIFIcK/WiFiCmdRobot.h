@@ -22,7 +22,7 @@ class WiFiCmdRobot
   void printNumb(byte * rgb, int cb, char chDelim);
   void printMAC(MAC& mac);
   void printIP(IPv4& ip);
-  int WiFiSendPicture (int n); 
+  int WiFiSendPicture (int16_t n); 
   int Cmd (String s); 
   int ReplyOK (void); 
   int ReplyKO (void); 

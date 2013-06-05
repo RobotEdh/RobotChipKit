@@ -11,7 +11,7 @@ int robot_begin();
 /*                  = SUCCESS always even if error during initialization      */                                
 /* lib:         JPEGCamera.begin                                              */ 
 
-int CmdRobot (uint8_t cmd[3], uint8_t *resp, int *presp_len);
+int CmdRobot (uint16_t cmd[3], uint16_t *resp, int *presp_len);
 /* Description: command the robot                                             */                                            
 /* input:       cmd                                                           */
 /*                  = command and the related parameters                      */

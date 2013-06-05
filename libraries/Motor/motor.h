@@ -38,7 +38,8 @@
 
 #define SPEEDMAX 255     // 255=PWM max
 #define SPEEDNOMINAL 100 // speed at start
-#define SPEEDTURN 50     // speed at turn 
+#define SPEEDTURN 70     // speed at turn 
+#define TICKMIN 50       // nb tick minimum before checking obstacle
 
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
@@ -89,6 +90,7 @@ int motor_begin();
 /*              CMPS03.CMPS03_begin                                           */                           
 /*              attachInterrupt                                               */ 
 /*              interrupts                                                    */ 
+/*              stop                                                          */
 
 
 int get_TickRight();
