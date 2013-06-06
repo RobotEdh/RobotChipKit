@@ -47,6 +47,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  TMP102Class TMP102;   // The Temperature class  
  int resp_len = 0;
  unsigned long timeout = 0;
+ unsigned long start = 0;
  int dir;
  int ret = SUCCESS;
 
@@ -168,7 +169,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      motor_state = STATE_GO;
      
      timeout = (unsigned long)cmd[1];
-     unsigned long start = millis();
+     start = millis();
      while(millis() - start < timeout*1000) {
           ret = go(timeout,(int)cmd[2]);  
      
@@ -178,7 +179,8 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
     	      Serial.println(ret);
     	      break;
           }
-          else if (ret == OBSTACLE) {
+          else if (ret == OBSTACLE)
+          {
               ret = SUCCESS;
               Serial.println("CMD_GO Obstacle");
               stop();
@@ -220,8 +222,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    	  Serial.println(ret);
                    	  break;
                    }
-              }
-                  
+              }                 
           }
      } // end while (millis() - start < timeout*1000)
      
