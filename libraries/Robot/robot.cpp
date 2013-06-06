@@ -46,7 +46,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  CMPS03Class CMPS03;   // The Compass class
  TMP102Class TMP102;   // The Temperature class  
  int resp_len = 0;
- int timeout = 0;
+ unsigned long timeout = 0;
  int dir;
  int ret = SUCCESS;
 
@@ -91,14 +91,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      if (cmd[1] == 180)
      {       
            Serial.print("CMD_TURN_BACK");
-           ret = turnback (20*1000);  // 20s max
+           ret = turnback (10);  // 10s max
            if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);}
      }       
      else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_RIGHT, alpha: ");
            Serial.println((int)cmd[1]);
-           ret = turn ((double)cmd[1], 5*1000);  // 5s max
+           ret = turn ((double)cmd[1], 5);  // 5s max
            if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.println(ret);}
     }
     break;        
@@ -107,14 +107,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      if (cmd[1] == 180)
      {       
            Serial.print("CMD_TURN_BACK");
-           ret = turnback (20*1000);  // 20s max
+           ret = turnback (10);  // 10s max
            if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);}
      }    
      else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_LEFT, alpha: ");
            Serial.println((int)cmd[1]);
-           ret = turn (-(double)cmd[1], 5*1000);  // 5s max
+           ret = turn (-(double)cmd[1], 5);  // 5s max
            if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret);}
      }
      break;            
@@ -167,9 +167,9 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      start_forward();
      motor_state = STATE_GO;
      
-     timeout = (int)cmd[1]*1000;
+     timeout = (unsigned long)cmd[1];
      unsigned long start = millis();
-     while(millis() - start < timeout) {
+     while(millis() - start < timeout*1000) {
           ret = go(timeout,(int)cmd[2]);  
      
           if ((ret != SUCCESS) && (ret != OBSTACLE))
@@ -192,7 +192,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               if (dir == LEFT_DIRECTION) {
                    start_forward();
                    motor_state = STATE_GO;
-                   ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
+                   ret = turn (-45,  5); // turn  -45 degrees during 5s max
                    if (ret != SUCCESS)
                    {
                    	  Serial.print("turn error");
@@ -203,7 +203,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               else if (dir == RIGHT_DIRECTION) {
                    start_forward();
                    motor_state = STATE_GO;
-                   ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
+                   ret = turn (+45,  5); // turn  +45 degrees during 5s max
                    if (ret != SUCCESS)
                    {
                    	  Serial.print("turn error");
@@ -213,7 +213,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               }
               else 
               {
-              	   ret = turnback (10*1000); // turn back  during 10s max
+              	   ret = turnback (10); // turn back during 10s max
                    if (ret != SUCCESS)
                    {
                       Serial.print("turnback error");
@@ -221,20 +221,9 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    	  break;
                    }
               }
-              
-              timeout = timeout - (millis() - start);    // compute remaining timeout
-              if (timeout < 0) 
-              {
-                   Serial.println("timeout done");
-                   break;
-              }    
+                  
           }
-          else
-          {
-            	   Serial.println("timeout done");
-                   break;
-          }
-     }
+     } // end while (millis() - start < timeout*1000)
      
      stop();
      motor_state = STATE_STOP;
