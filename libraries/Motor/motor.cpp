@@ -332,11 +332,9 @@ void change_speed(int speed)
  return; 
 }
 
-int go(int d, int pid_ind)
+int go(unsigned long timeout, int pid_ind)
 {
- int ret = 0;
- int Tick = 0;
- int wtick = 0;
+ int ret = SUCCESS;
  int pid;
  int distance = 0;
  int direction = 0; /* direction between 0-254, 0: North */
@@ -344,9 +342,10 @@ int go(int d, int pid_ind)
  TickLeft = 0;  // reset ticks
  TickRight = 0;
  
- while (Tick < d) {
-     
-       Tick = (TickLeft + TickRight)/2;
+ unsigned long start = millis();
+ unsigned long current = millis();
+ while (millis() - start < timeout) {  // go during maximum timeout milliseconds  
+    
        if (pid_ind == 1) {
              if (TickLeft > TickRight) {
                    pid = computePID (TickLeft - TickRight); // compute PID
@@ -360,8 +359,8 @@ int go(int d, int pid_ind)
              }
        } // end PID
        
-       if (Tick-wtick > TICKMIN) {
-             wtick = Tick;
+       if (millis() - current > 5*1000) { // check every 5 second
+             current = millis();
              distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
              Serial.print("-->distance: ");
              Serial.println(distance);
@@ -372,7 +371,7 @@ int go(int d, int pid_ind)
              }
         }     
        
- }  // end while Tick < d
+ }  // end while (millis() - start < timeout)
  
  return SUCCESS; 
 }
@@ -472,7 +471,7 @@ int adjustMotor (int motor, int pid)
  
 int turn(double alpha, unsigned long timeout)
 {
-  int direction = 0; /* direction between 0-254, 0: North */
+  int direction = 0;        /* direction between 0-254, 0: North */
   int direction_target = 0; /* direction between 0-254, 0: North */
   int end_turn = 0;
   
