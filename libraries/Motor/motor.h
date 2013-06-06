@@ -39,7 +39,6 @@
 #define SPEEDMAX 255     // 255=PWM max
 #define SPEEDNOMINAL 100 // speed at start
 #define SPEEDTURN 70     // speed at turn 
-#define TICKMIN 50       // nb tick minimum before checking obstacle
 
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
@@ -276,13 +275,13 @@ int adjustMotor (int motor, int pid);
 /* lib:         analogWrite                                                   */                                        
                                                                       
                                      
-int go(int d, int pid_ind); 
-/* Description: go during d encoder ticks or before in case of obstacle       */
+int go(unsigned long timeout, int pid_ind); 
+/* Description: go during timeout seconds or before in case of obstacle       */
 /*              detected by IR sensor.                                        */
 /*              if pid_ind = 1 then use a PID method (calling adjustMotor)    */
 /*              to control motors speed between left and right                */                  
-/* input:       d                                                             */ 
-/*                  = number of right+left ticks to go                        */ 
+/* input:       timeout                                                       */ 
+/*                  = timeout in seconds                                      */   
 /* input:       pid_ind                                                       */
 /*                  = 0: disable PID adjustement                              */
 /*                  = 1: enable PID adjustement                               */    
@@ -316,7 +315,7 @@ int turn(double alpha, unsigned long timeout);
 /* input:       alpha                                                         */ 
 /*                  = angle to turn (-180 < alplha < +180) and alpha <> 0     */
 /*              timeout                                                       */ 
-/*                  = timeout in ms                                           */      
+/*                  = timeout in seconds                                      */      
 /* output:      return                                                        */                            
 /*                  = BAD_ANGLE if not (-180 < alplha < +180) and alpha <> 0  */
 /*                  = COMPASS_ERROR if an error occurs with the compass       */
@@ -330,7 +329,7 @@ int turn(double alpha, unsigned long timeout);
 int turnback(unsigned long timeout);
 /* Description: turns back before a delay (timeout)                           */
 /* input:       timeout                                                       */ 
-/*                  = timeout in ms                                           */      
+/*                  = timeout in seconds                                      */      
 /* output:      return                                                        */ 
 /*                  = turn function error on case of error returned by turn() */
 /*                  = TIMEOUT if turn back is not completed before the delay  */
