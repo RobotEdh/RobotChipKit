@@ -344,7 +344,7 @@ int go(unsigned long timeout, int pid_ind)
  
  unsigned long start = millis();
  unsigned long current = millis();
- while (millis() - start < timeout) {  // go during maximum timeout milliseconds  
+ while (millis() - start < timeout*1000) {  // go during maximum timeout seconds  
     
        if (pid_ind == 1) {
              if (TickLeft > TickRight) {
@@ -493,7 +493,7 @@ int turn(double alpha, unsigned long timeout)
   }
   
   unsigned long start = millis();
-  while ((millis() - start < timeout) && end_turn == 0) {  // turn during maximum timeout milliseconds   
+  while ((millis() - start < timeout*1000) && end_turn == 0) {  // turn during maximum timeout milliseconds   
         direction = CMPS03.CMPS03_read(); // get current direction
         if (direction < 0) end_turn = 1;
         if ( ((alpha > 0) && (direction > direction_target)) || ((alpha < 0) && (direction < direction_target)) ) end_turn = 1;
@@ -533,7 +533,7 @@ int turnback(unsigned long timeout)
   change_speed(SPEEDTURN);
    
   unsigned long start = millis();
-  while ((millis() - start < timeout) && end_turn == 0) {  // turn back during maximum timeout milliseconds   
+  while ((millis() - start < timeout*1000) && end_turn == 0) {  // turn back during maximum timeout milliseconds   
           dir = check_around();
          
           Serial.print("check_around, direction: ");
@@ -541,7 +541,7 @@ int turnback(unsigned long timeout)
          
           if (dir == LEFT_DIRECTION)
           {
-               ret = turn (-45,  5*1000); // turn  -45 degrees during 5s max
+               ret = turn (-45,  5); // turn  -45 degrees during 5s max
                if (ret != SUCCESS)
                {
                	  Serial.print("turn error: ");
@@ -551,7 +551,7 @@ int turnback(unsigned long timeout)
            }
            else if (dir == RIGHT_DIRECTION)
            {
-               ret = turn (+45,  5*1000); // turn  +45 degrees during 5s max
+               ret = turn (+45,  5); // turn  +45 degrees during 5s max
                if (ret != SUCCESS)
                {
                	  Serial.print("turn error: ");
