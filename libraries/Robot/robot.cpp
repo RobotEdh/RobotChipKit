@@ -49,6 +49,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  unsigned long timeout = 0;
  unsigned long start = 0;
  int dir;
+ int error = 0;
  int ret = SUCCESS;
 
  switch (cmd[0]) {
@@ -169,15 +170,16 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      motor_state = STATE_GO;
      
      timeout = (unsigned long)cmd[1];
+     error = 0;
      start = millis();
-     while(millis() - start < timeout*1000) {
+     while((millis() - start < timeout*1000) && (error == 0)) {
           ret = go(timeout,(int)cmd[2]);  
      
           if ((ret != SUCCESS) && (ret != OBSTACLE))
           {
     	      Serial.print("CMD_GO error");
     	      Serial.println(ret);
-    	      break;
+    	      error = 1;
           }
           else if (ret == OBSTACLE)
           {
@@ -199,7 +201,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    {
                    	  Serial.print("turn error");
                    	  Serial.println(ret);
-                   	  break;
+                   	  error = 1;
                    }
               }
               else if (dir == RIGHT_DIRECTION) {
@@ -210,21 +212,22 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    {
                    	  Serial.print("turn error");
                    	  Serial.println(ret);
-                   	  break;
+                   	  error = 1;
                    }
               }
               else 
               {
+              	   motor_state = STATE_GO;
               	   ret = turnback (10); // turn back during 10s max
                    if (ret != SUCCESS)
                    {
                       Serial.print("turnback error");
                    	  Serial.println(ret);
-                   	  break;
+                   	  error = 1;
                    }
               }                 
           }
-     } // end while (millis() - start < timeout*1000)
+     } // end while
      
      stop();
      motor_state = STATE_STOP;

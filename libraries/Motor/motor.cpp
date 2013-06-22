@@ -359,7 +359,7 @@ int go(unsigned long timeout, int pid_ind)
              }
        } // end PID
        
-       if (millis() - current > 5*1000) { // check every 5 second
+       if (millis() - current > 2*1000) { // check every 2 seconds
              current = millis();
              distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
              Serial.print("-->distance: ");
@@ -530,7 +530,7 @@ int turnback(unsigned long timeout)
   int ret = SUCCESS;
   
   start_backward();
-  change_speed(SPEEDTURN);
+  change_speed(SPEEDBACK);
    
   unsigned long start = millis();
   while ((millis() - start < timeout*1000) && end_turn == 0) {  // turn back during maximum timeout milliseconds   
@@ -541,6 +541,7 @@ int turnback(unsigned long timeout)
          
           if (dir == LEFT_DIRECTION)
           {
+               start_forward();
                ret = turn (-45,  5); // turn  -45 degrees during 5s max
                if (ret != SUCCESS)
                {
@@ -551,6 +552,7 @@ int turnback(unsigned long timeout)
            }
            else if (dir == RIGHT_DIRECTION)
            {
+               start_forward();
                ret = turn (+45,  5); // turn  +45 degrees during 5s max
                if (ret != SUCCESS)
                {

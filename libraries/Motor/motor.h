@@ -36,9 +36,10 @@
 #define STATE_STOP 0x00
 #define STATE_GO   0x01
 
-#define SPEEDMAX 255     // 255=PWM max
-#define SPEEDNOMINAL 100 // speed at start
-#define SPEEDTURN 70     // speed at turn 
+#define SPEEDMAX     255     // 255=PWM max
+#define SPEEDNOMINAL 100     // speed at start
+#define SPEEDTURN    100     // speed at turn 
+#define SPEEDBACK     50     // speed at turn back
 
 #define LEFT_DIRECTION 1
 #define RIGHT_DIRECTION 2
