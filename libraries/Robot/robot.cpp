@@ -13,9 +13,23 @@ int motor_state = STATE_STOP;
 JPEGCameraClass JPEGCamera;  // The Camera class  
 int no_picture = 0;          // Picture number
 
+void blink(int led)
+{
+  for (int i=0;i<5;i++){
+        digitalWrite(led, HIGH);  // turn on led
+        delay(1000);
+        digitalWrite(led, LOW);  // turn off led  
+  }          
+}
+
 int robot_begin()
 {
   int ret = SUCCESS;
+  
+  pinMode(Led_Yellow, OUTPUT);     // set the pin as output
+  digitalWrite(Led_Yellow, HIGH);  // turn on led yellow
+  pinMode(Led_Red, OUTPUT);        // set the pin as output
+  digitalWrite(Led_Red, HIGH);     // turn on led red
   
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
@@ -31,11 +45,14 @@ int robot_begin()
   else
   {
         Serial.println("Init Camera OK");
-  }  
-       
+  }      
  
+  digitalWrite(Led_Yellow, LOW);  // turn off led yellow
+  digitalWrite(Led_Red, LOW);     // turn off led red
+  
   Serial.println("End Robot Init");
   Serial.println("");
+  
   return SUCCESS;
   
 } 
@@ -51,7 +68,10 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  int dir;
  int error = 0;
  int ret = SUCCESS;
-
+ 
+ digitalWrite(Led_Yellow, HIGH);  // turn on led yellow
+ digitalWrite(Led_Red, LOW);      // turn off led red
+ 
  switch (cmd[0]) {
  
  case CMD_STOP:
@@ -94,14 +114,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      {       
            Serial.print("CMD_TURN_BACK");
            ret = turnback (10);  // 10s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);}
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret); error = 1;}
      }       
      else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_RIGHT, alpha: ");
            Serial.println((int)cmd[1]);
            ret = turn ((double)cmd[1], 5);  // 5s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.println(ret);}
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.println(ret); error = 1;}
     }
     break;        
 
@@ -110,14 +130,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      {       
            Serial.print("CMD_TURN_BACK");
            ret = turnback (10);  // 10s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);}
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret); error = 1;}
      }    
      else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_LEFT, alpha: ");
            Serial.println((int)cmd[1]);
            ret = turn (-(double)cmd[1], 5);  // 5s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret);}
+           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret); error = 1;}
      }
      break;            
      
@@ -157,6 +177,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      {
         Serial.print("makePicture error: ");
         Serial.println(ret);
+        error = 1;
      }
      break;
 
@@ -170,7 +191,6 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      motor_state = STATE_GO;
      
      timeout = (unsigned long)cmd[1];
-     error = 0;
      start = millis();
      while((millis() - start < timeout*1000) && (error == 0)) {
           ret = go(timeout,(int)cmd[2]);  
@@ -187,6 +207,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               Serial.println("CMD_GO Obstacle");
               stop();
               motor_state = STATE_STOP;
+              blink(Led_Red);
               
               dir = check_around();
          
@@ -217,6 +238,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               }
               else 
               {
+              	   blink(Led_Red);
               	   motor_state = STATE_GO;
               	   ret = turnback (10); // turn back during 10s max
                    if (ret != SUCCESS)
@@ -239,6 +261,10 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  
  } //end switch
     
-    *presp_len = resp_len;                 
-    return ret;
+ *presp_len = resp_len;
+    
+ if (error == 1) digitalWrite(Led_Red, HIGH);      // turn on led red
+ digitalWrite(Led_Yellow, LOW);  // turn off led yellow
+                     
+ return ret;
 }

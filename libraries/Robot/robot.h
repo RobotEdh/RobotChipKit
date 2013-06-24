@@ -4,12 +4,24 @@
 #include <inttypes.h> // used for uint8_t type
 #include <motor.h>
 
+#define Led_Yellow 16   // Led Yellow connected to digital pin J4-06(SCL3A/SDO3A/U3ATX/PMA8/CN18/RF5)
+#define Led_Red    17   // Led Red connected to digital pin J4-05(SDA3A/SDI3A/U3ARX/PMA9/CN17/RF4)
+
+void blink(int led);
+/* Description: blink a led                                                   */                                            
+/* input:       led                                                           */
+/* output:      none                                                          */
+/* lib:         digitalWrite                                                  */
+/*              delay                                                         */ 
+
 int robot_begin();     
 /* Description: initialize everything, must be called during setup            */                                            
 /* input:       none                                                          */
 /* output:      return                                                        */                             
 /*                  = SUCCESS always even if error during initialization      */                                
 /* lib:         JPEGCamera.begin                                              */ 
+/*              pinMode                                                       */
+/*              digitalWrite                                                  */
 
 int CmdRobot (uint16_t cmd[3], uint16_t *resp, int *presp_len);
 /* Description: command the robot                                             */                                            
