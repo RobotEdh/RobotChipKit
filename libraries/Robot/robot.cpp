@@ -17,19 +17,21 @@ void blink(int led)
 {
   for (int i=0;i<5;i++){
         digitalWrite(led, HIGH);  // turn on led
-        delay(1000);
-        digitalWrite(led, LOW);  // turn off led  
+        delay(500);
+        digitalWrite(led, LOW);  // turn off led
+        delay(500);  
   }          
 }
 
 int robot_begin()
 {
   int ret = SUCCESS;
-  
+ 
+  Serial.println("Start Robot Init"); 
   pinMode(Led_Yellow, OUTPUT);     // set the pin as output
-  digitalWrite(Led_Yellow, HIGH);  // turn on led yellow
+  blink(Led_Yellow);  
   pinMode(Led_Red, OUTPUT);        // set the pin as output
-  digitalWrite(Led_Red, HIGH);     // turn on led red
+  blink(Led_Red);     
   
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
