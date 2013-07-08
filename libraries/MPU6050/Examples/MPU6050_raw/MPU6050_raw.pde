@@ -45,18 +45,14 @@ MPU6050 accelgyro;
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
-
-#define LED_PIN 13
-bool blinkState = false;
+int16_t temperature;
 
 void setup() {
     // join I2C bus (I2Cdev library doesn't do this automatically)
     Wire.begin();
 
     // initialize serial communication
-    // (38400 chosen because it works as well at 8MHz as it does at 16MHz, but
-    // it's really up to you depending on your project)
-    Serial.begin(38400);
+    Serial.begin(9600);
 
     // initialize device
     Serial.println("Initializing I2C devices...");
@@ -65,12 +61,15 @@ void setup() {
     // verify connection
     Serial.println("Testing device connections...");
     Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+    
+    // get temperature
+    accelgyro.getTemperature(&temperature);
+    Serial.print("Temperature: "); Serial.println(temperature);
 
-    // configure Arduino LED for
-    pinMode(LED_PIN, OUTPUT);
 }
 
 void loop() {
+    
     // read raw accel/gyro measurements from device
     accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
@@ -86,8 +85,4 @@ void loop() {
     Serial.print(gx); Serial.print("\t");
     Serial.print(gy); Serial.print("\t");
     Serial.println(gz);
-
-    // blink LED to indicate activity
-    blinkState = !blinkState;
-    digitalWrite(LED_PIN, blinkState);
 }
