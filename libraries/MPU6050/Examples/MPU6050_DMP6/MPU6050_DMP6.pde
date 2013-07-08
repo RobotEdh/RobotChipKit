@@ -87,7 +87,7 @@ MPU6050 mpu;
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-uint8_t ret      ;      // return status after each device operation (0 = success, !0 = error)
+uint8_t ret;            // return status after each device operation (0 = success, !0 = error)
 uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
 uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[64]; // FIFO storage buffer
@@ -99,6 +99,7 @@ VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measur
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+double temperature;
 
 
 // ================================================================
@@ -132,7 +133,7 @@ void setup() {
     Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
     
     // get temperature
-    accelgyro.getTemperature(&temperature);
+    temperature = ( (double) mpu.getTemperature() + 12412.0) / 340.0;
     Serial.print("Temperature: "); Serial.println(temperature);
 
     // load and configure the DMP
@@ -140,7 +141,7 @@ void setup() {
     ret = mpu.dmpInitialize();
     
     // make sure it worked (returns 0 if so)
-    if (devStatus == 0) {
+    if (ret == 0) {
         // turn on the DMP, now that it's ready
         Serial.println("Enabling DMP...");
         mpu.setDMPEnabled(true);

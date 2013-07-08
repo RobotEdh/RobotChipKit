@@ -45,7 +45,7 @@ MPU6050 accelgyro;
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
-int16_t temperature;
+double temperature;
 
 void setup() {
     // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -63,9 +63,8 @@ void setup() {
     Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
     
     // get temperature
-    accelgyro.getTemperature(&temperature);
+    temperature = ( (double) accelgyro.getTemperature() + 12412.0) / 340.0;
     Serial.print("Temperature: "); Serial.println(temperature);
-
 }
 
 void loop() {
