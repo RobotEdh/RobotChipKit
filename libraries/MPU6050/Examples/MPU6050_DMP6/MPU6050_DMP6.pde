@@ -85,7 +85,7 @@ MPU6050 mpu;
 #define OUTPUT_READABLE_REALACCEL
 
 // MPU control/status vars
-bool dmpReady = false;  // set true if DMP init was successful
+int dmpReady = 0;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
 uint8_t ret;            // return status after each device operation (0 = success, !0 = error)
 uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
@@ -106,9 +106,9 @@ double temperature;
 // ===               INTERRUPT DETECTION ROUTINE                ===
 // ================================================================
 
-volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+volatile int mpuInterrupt = 0;     // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
-    mpuInterrupt = true;
+    mpuInterrupt = 1;
 }
 
 
@@ -147,16 +147,18 @@ void setup() {
         mpu.setDMPEnabled(true);
 
         // enable Arduino interrupt detection
-        Serial.println(("Enabling interrupt detection (Arduino external interrupt 0)..."));
-        attachInterrupt(0, dmpDataReady, RISING);
+        Serial.println("Enabling interrupt detection (Arduino external interrupt 3)...");
+        attachInterrupt(3, dmpDataReady, FALLING);
         mpuIntStatus = mpu.getIntStatus();
-
+        Serial.print("mpuIntStatus: ");Serial.println((int)mpuIntStatus);
+        
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
         Serial.println("DMP ready! Waiting for first interrupt...");
-        dmpReady = true;
+        dmpReady = 1;
 
         // get expected DMP packet size for later comparison
         packetSize = mpu.dmpGetFIFOPacketSize();
+        Serial.print("packetSize: ");Serial.println((int)packetSize);
     } else {
         // ERROR!
         // 1 = initial memory load failed
@@ -174,10 +176,10 @@ void setup() {
 
 void loop() {
     // if programming failed, don't try to do anything
-    if (!dmpReady) return;
+    if (dmpReady==0) return;
 
     // wait for MPU interrupt or extra packet(s) available
-    while (!mpuInterrupt && fifoCount < packetSize) {
+    while (mpuInterrupt==0 && fifoCount < packetSize) {
         // other program behavior stuff here
         // .
         // .
@@ -191,12 +193,12 @@ void loop() {
     }
 
     // reset interrupt flag and get INT_STATUS byte
-    mpuInterrupt = false;
+    mpuInterrupt = 0;
     mpuIntStatus = mpu.getIntStatus();
 
     // get current FIFO count
     fifoCount = mpu.getFIFOCount();
-
+ 
     // check for overflow (this should never happen unless our code is too inefficient)
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
@@ -210,6 +212,9 @@ void loop() {
 
         // read a packet from FIFO
         mpu.getFIFOBytes(fifoBuffer, packetSize);
+        Serial.print("packetSize: ");Serial.println((int)packetSize);
+        Serial.print("fifoCount: ");Serial.println((int)fifoCount);
+        Serial.print("mpuIntStatus: ");Serial.println((int)mpuIntStatus);
         
         // track FIFO count here in case there is > 1 packet available
         // (this lets us immediately read more without waiting for an interrupt)
@@ -266,6 +271,7 @@ void loop() {
             Serial.print("\t");
             Serial.println(aaReal.z);
         #endif
+        delay(1000);
 
     }
 }
