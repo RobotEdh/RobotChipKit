@@ -16,28 +16,7 @@ DWIFIcK::WEP104KEY keySet = {   0x02, 0x96, 0x61, 0xD7, 0xB1, 0xD4, 0x81, 0x50, 
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // Key 2
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Key 3
 
-typedef enum
-{
-    NONE = 0,
-    WAITFORSCAN,
-    PRINTAPINFO,
-    CONNECTWIFI,
-    INITIALIZE,
-    PRINTADDRESSES,
-    PRINTWIFICONFIG,
-    STARTLISTENING,
-    ISLISTENING,
-    AVAILABLECLIENT,
-    ACCEPTCLIENT,
-    READ,
-    CLOSE,
-    EXIT,
-    DONE
-} STATE;
-STATE state = WAITFORSCAN;
 
-int cNetworks = 0;
-int iNetwork = 0;
 
 
 //Sd2Card card;       // SD Card       
@@ -79,6 +58,9 @@ DNETcK::STATUS status;
  * ------------------------------------------------------------ */
 void WiFiCmdRobot::WiFiCmdRobot_begin() {
   
+    int conID = DWIFIcK::INVALID_CONNECTION_ID;
+    int cNetworks = 0;
+    int iNetwork = 0; 
     int ret=SUCCESS;
     
     // initialize the SD-Card    
@@ -87,7 +69,7 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
     {  
         Serial.print("Error Init SD-Card, error: ");
         Serial.println(ret);
-    }  	  	
+    }                                    	
     else
     {
         Serial.println("Init SD-Card OK");
@@ -101,38 +83,28 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
         Serial.println(ret);
     }
     
-    // Set my default wait time to nothing
+    // set my default wait time to nothing
     DNETcK::setDefaultBlockTime(DNETcK::msImmediate); 
 
     // start a scan
     DWIFIcK::beginScan();
-        
-    Serial.println("End WIFI Init");
-    Serial.println("");
-
-}
-
-void WiFiCmdRobot::WiFiCmdRobot_main() {
-    int conID = DWIFIcK::INVALID_CONNECTION_ID;
-    String stringRead;
-    int ret = 0;
-    
-    switch(state)
+    while (1)
     {
-        case WAITFORSCAN:
             if(DWIFIcK::isScanDone(&cNetworks, &status))
             {
                 Serial.println("Scan Done");
-                state = PRINTAPINFO;
+                break;
             }
             else if(DNETcK::isStatusAnError(status))
             {
                 Serial.print("Scan Failed");
-                state = EXIT;
+                return -1;
             }
-            break;
-
-        case PRINTAPINFO:              
+            
+    }        
+    
+    while (1)
+    {            
             if(iNetwork < cNetworks)
             {
                 DWIFIcK::SCANINFO scanInfo;
@@ -140,7 +112,6 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
 
                 if(DWIFIcK::getScanInfo(iNetwork, &scanInfo))
                 {
-                    Serial.println("");
                     Serial.print("Scan info for index: ");
                     Serial.println(iNetwork, DEC);
 
@@ -205,7 +176,6 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
                         }
                         Serial.print(scanInfo.ssidMAC[j], HEX);
                     }
-                    Serial.println("");
 
                     Serial.print("Beacon Period: ");
                     Serial.println(scanInfo.beconPeriod, DEC);    
@@ -226,132 +196,137 @@ void WiFiCmdRobot::WiFiCmdRobot_main() {
             }
             else
             {
-                state = CONNECTWIFI;
+                break;
             }           
-            break;
+    }
 
-    case CONNECTWIFI:
-            if((conID = WiFiConnectMacro()) != DWIFIcK::INVALID_CONNECTION_ID)
-            {
-                  Serial.print("Connection Created, ConID = ");
-                  Serial.println(conID, DEC);
-                  state = INITIALIZE;
-            }
-            else
-            {
-                  Serial.print("Unable to connection, status: ");
-                  Serial.println(status, DEC);
-                  state = EXIT;
-            }
-            break;
-            
-    case INITIALIZE:
-            // initialize the stack with a static IP
-            DNETcK::begin(ipServer);
-            if(DNETcK::isInitialized(&status))
-            {
-                  Serial.println("IP Stack Initialized");
-                  state = PRINTADDRESSES;
-            }
-            else if(DNETcK::isStatusAnError(status))
-            {
-                  Serial.print("Error in initializing, status: ");
-                  Serial.println(status, DEC);
-                  state = EXIT;
-            }
-            break;
+    if((conID = WiFiConnectMacro()) != DWIFIcK::INVALID_CONNECTION_ID)
+    {
+          Serial.print("Connection Created, ConID = ");
+          Serial.println(conID, DEC);
+    }
+    else
+    {
+          Serial.print("Unable to connection, status: ");
+          Serial.println(status, DEC);
+          return -2;
+    }
+ 
+    while (1)
+    { 
+          // initialize the stack with a static IP
+          DNETcK::begin(ipServer);
+          if(DNETcK::isInitialized(&status))
+          {
+                Serial.println("IP Stack Initialized");
+                break;
+          }
+          else if(DNETcK::isStatusAnError(status))
+          {
+                Serial.print("Error in initializing, status: ");
+                Serial.println(status, DEC);
+                return -3;
+          }
+    }
         
-    case PRINTADDRESSES:      
-            Serial.println("");
-            IPv4 ip;
+    Serial.println("");
+    IPv4 ip;
 
-            DNETcK::getMyIP(&ip);
-            Serial.print("My ");
-            printIP(ip);
-            Serial.println("");
+    DNETcK::getMyIP(&ip);
+    Serial.print("My ");
+    printIP(ip);
+    Serial.println("");
 
-            DNETcK::getGateway(&ip);
-            Serial.print("Gateway ");
-            printIP(ip);
-            Serial.println("");
+    DNETcK::getGateway(&ip);
+    Serial.print("Gateway ");
+    printIP(ip);
+    Serial.println("");
 
-            DNETcK::getSubnetMask(&ip);
-            Serial.print("Subnet mask: ");
-            printNumb(ip.rgbIP, 4, '.');
-            Serial.println("");
+    DNETcK::getSubnetMask(&ip);
+    Serial.print("Subnet mask: ");
+    printNumb(ip.rgbIP, 4, '.');
+    Serial.println("");
 
-            DNETcK::getDns1(&ip);
-            Serial.print("Dns1 ");
-            printIP(ip);
-            Serial.println("");
+    DNETcK::getDns1(&ip);
+    Serial.print("Dns1 ");
+    printIP(ip);
+    Serial.println("");
 
-            DNETcK::getDns2(&ip);
-            Serial.print("Dns2 ");
-            printIP(ip);
-            Serial.println("");
+    DNETcK::getDns2(&ip);
+    Serial.print("Dns2 ");
+    printIP(ip);
+    Serial.println("");
+       
+    
+    DWIFIcK::CONFIGINFO configInfo;
+    if(DWIFIcK::getConfigInfo(&configInfo))
+    {
+        Serial.println("WiFi config information");
 
-            Serial.println("");
+        Serial.print("Scan Type: ");
+        switch(configInfo.scanType)
+        {
+                   case DWIFIcK::WF_ACTIVE_SCAN:
+                        Serial.println("ACTIVE SCAN");
+                        break;
+                   case DWIFIcK::WF_PASSIVE_SCAN:
+                        Serial.println("PASSIVE SCAN");
+                        break;                
+        }
 
-            state = PRINTWIFICONFIG;
-            break;
-               
-   case PRINTWIFICONFIG:    
-            DWIFIcK::CONFIGINFO configInfo;
+        Serial.print("Beacon Timeout: ");
+        Serial.println(configInfo.beaconTimeout, DEC);
 
-            if(DWIFIcK::getConfigInfo(&configInfo))
-            {
-                Serial.println("WiFi config information");
+        Serial.print("Connect Retry Count: ");
+        Serial.println(configInfo.connectRetryCount, DEC);
 
-                Serial.print("Scan Type: ");
-                switch(configInfo.scanType)
-                {
-                           case DWIFIcK::WF_ACTIVE_SCAN:
-                                Serial.println("ACTIVE SCAN");
-                                break;
-                           case DWIFIcK::WF_PASSIVE_SCAN:
-                                Serial.println("PASSIVE SCAN");
-                                break;                
-                }
+        Serial.print("Scan Count: ");
+        Serial.println(configInfo.scanCount, DEC);
 
-                Serial.print("Beacon Timeout: ");
-                Serial.println(configInfo.beaconTimeout, DEC);
+        Serial.print("Minimum Signal Strength: ");
+        Serial.println(configInfo.minSignalStrength, DEC);
 
-                Serial.print("Connect Retry Count: ");
-                Serial.println(configInfo.connectRetryCount, DEC);
+        Serial.print("Minimum Channel Time: ");
+        Serial.println(configInfo.minChannelTime, DEC);
 
-                Serial.print("Scan Count: ");
-                Serial.println(configInfo.scanCount, DEC);
+        Serial.print("Maximum Channel Time: ");
+        Serial.println(configInfo.maxChannelTime, DEC);
 
-                Serial.print("Minimum Signal Strength: ");
-                Serial.println(configInfo.minSignalStrength, DEC);
+        Serial.print("Probe Delay: ");
+        Serial.println(configInfo.probeDelay, DEC);
 
-                Serial.print("Minimum Channel Time: ");
-                Serial.println(configInfo.minChannelTime, DEC);
+        Serial.print("Polling Interval: ");
+        Serial.println(configInfo.pollingInterval, DEC);                                                 
+    }
+    else
+    {
+        Serial.println("Unable to get WiFi config data");
+        return -4; 
+    }                  
 
-                Serial.print("Maximum Channel Time: ");
-                Serial.println(configInfo.maxChannelTime, DEC);
+       
+    tcpServer.startListening(portServer);
 
-                Serial.print("Probe Delay: ");
-                Serial.println(configInfo.probeDelay, DEC);
+    Serial.println("End WIFI Init");                        
+}
 
-                Serial.print("Polling Interval: ");
-                Serial.println(configInfo.pollingInterval, DEC);
-
-                Serial.println("");
-                state = STARTLISTENING;
-            }
-            else
-            {
-                Serial.println("Unable to get WiFi config data");
-                state = EXIT;
-            }           
-            break;       
-
-    case STARTLISTENING:       
-            tcpServer.startListening(portServer);
-            state = ISLISTENING;
-            break;
-
+void WiFiCmdRobot::WiFiCmdRobot_main() {
+    String stringRead;
+    int ret = 0;
+ 
+typedef enum
+{
+    NONE = 0,
+    ISLISTENING,
+    AVAILABLECLIENT,
+    ACCEPTCLIENT,
+    READ,
+    CLOSE,
+    EXIT,
+    DONE
+} STATE;
+STATE state = ISLISTENING; 
+    
     case ISLISTENING: 
     // not specifically needed, we could go right to AVAILABLECLIENT
     // but this is a nice way to print to the serial monitor that we are 
