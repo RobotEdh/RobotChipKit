@@ -28,8 +28,8 @@ class WiFiCmdRobot
   int ReplyKO (void); 
      
   public:
-  void WiFiCmdRobot_begin (void);   
-  void WiFiCmdRobot_main (void);
+  int WiFiCmdRobot_begin (void);   
+  int WiFiCmdRobot_main (void);
   
 };
 

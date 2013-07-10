@@ -17,12 +17,8 @@ DWIFIcK::WEP104KEY keySet = {   0x02, 0x96, 0x61, 0xD7, 0xB1, 0xD4, 0x81, 0x50, 
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Key 3
 
 
-
-
-//Sd2Card card;       // SD Card       
-//SdVolume volume;    // SD Volume
-extern SdFile root;        // SD Root
-SdFile FilePicture; // SD File
+extern SdFile root;   // SD Root
+SdFile FilePicture;   // SD File
 
 TcpServer tcpServer;
 TcpClient tcpClient;
@@ -31,7 +27,10 @@ byte rgbRead[1024];
 int cbRead = 0;
 int count = 0;
     
+String szcmd;
 uint16_t cmd[CMD_SIZE];
+uint16_t cmd_GO[CMD_SIZE];
+uint16_t t_GO = 10;     // 10s max for GO command
 uint16_t resp[RESP_SIZE];
 int resp_len = 0;
    
@@ -56,7 +55,7 @@ DNETcK::STATUS status;
  *      will all fail. But since we are only listening, who cares.
  *      
  * ------------------------------------------------------------ */
-void WiFiCmdRobot::WiFiCmdRobot_begin() {
+int WiFiCmdRobot::WiFiCmdRobot_begin() {
   
     int conID = DWIFIcK::INVALID_CONNECTION_ID;
     int cNetworks = 0;
@@ -73,6 +72,7 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
     else
     {
         Serial.println("Init SD-Card OK");
+        Serial.println("");
     }
     
     // get infos from SD-Card  
@@ -83,6 +83,7 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
         Serial.println(ret);
     }
     
+    Serial.println("Start WIFI Init");  
     // set my default wait time to nothing
     DNETcK::setDefaultBlockTime(DNETcK::msImmediate); 
 
@@ -90,6 +91,8 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
     DWIFIcK::beginScan();
     while (1)
     {
+            // every pass through loop(), keep the stack alive
+            DNETcK::periodicTasks(); 
             if(DWIFIcK::isScanDone(&cNetworks, &status))
             {
                 Serial.println("Scan Done");
@@ -105,6 +108,8 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
     
     while (1)
     {            
+            // every pass through loop(), keep the stack alive
+            DNETcK::periodicTasks();            
             if(iNetwork < cNetworks)
             {
                 DWIFIcK::SCANINFO scanInfo;
@@ -214,6 +219,9 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
  
     while (1)
     { 
+           // every pass through loop(), keep the stack alive
+           DNETcK::periodicTasks(); 
+            
           // initialize the stack with a static IP
           DNETcK::begin(ipServer);
           if(DNETcK::isInitialized(&status))
@@ -303,84 +311,65 @@ void WiFiCmdRobot::WiFiCmdRobot_begin() {
         Serial.println("Unable to get WiFi config data");
         return -4; 
     }                  
-
-       
+   
     tcpServer.startListening(portServer);
 
-    Serial.println("End WIFI Init");                        
+    Serial.println("End WIFI Init");
+    Serial.println("");
+    
+    return SUCCESS;                        
 }
 
-void WiFiCmdRobot::WiFiCmdRobot_main() {
+int WiFiCmdRobot::WiFiCmdRobot_main() {
     String stringRead;
-    int ret = 0;
- 
-typedef enum
-{
-    NONE = 0,
-    ISLISTENING,
-    AVAILABLECLIENT,
-    ACCEPTCLIENT,
-    READ,
-    CLOSE,
-    EXIT,
-    DONE
-} STATE;
-STATE state = ISLISTENING; 
-    
-    case ISLISTENING: 
+    int conx = 0;
+    unsigned long timeout = 5; // 5s
+    unsigned long start = 0;
+    int ret=SUCCESS;
+
     // not specifically needed, we could go right to AVAILABLECLIENT
     // but this is a nice way to print to the serial monitor that we are 
     // actively listening.
     // Remember, this can have non-fatal falures, so check the status
-            if(tcpServer.isListening(&status))
-            {
-                Serial.print("Listening on port: ");
-                Serial.print(portServer, DEC);
-                Serial.println("");
-                state = AVAILABLECLIENT;
-            }
-            else if(DNETcK::isStatusAnError(status))
-            {
-                state = EXIT;
-            }
+    while (1) { 
+        if(tcpServer.isListening(&status))
+        {
+            Serial.print("Listening on port: ");
+            Serial.println(portServer, DEC);
             break;
+        }  
+        else if(DNETcK::isStatusAnError(status))
+        {
+            Serial.println("Error Listening");
+            tcpClient.close();
+            tcpServer.close();
+            return -1;
+        }
+    }
 
-    // wait for a connection
-    case AVAILABLECLIENT:
-            if((count = tcpServer.availableClients()) > 0)
-            {
-                Serial.print("Got ");
-                Serial.print(count, DEC);
-                Serial.println(" clients pending");
-                state = ACCEPTCLIENT;
-            }
-            break;
-
-    // accept the connection
-    case ACCEPTCLIENT:
+    // wait for a connection untiltimeout
+    conx = 0;
+    start = millis();
+    while ((millis() - start < timeout*1000) && (conx == 0)) { 
+        if((count = tcpServer.availableClients()) > 0)
+        {
+            Serial.print("Got ");
+            Serial.print(count, DEC);
+            Serial.println(" clients pending");
+            conx = 1;
             // probably unneeded, but just to make sure we have
             // tcpClient in the  "just constructed" state
-            tcpClient.close(); 
+            tcpClient.close();             
+        }
+    }
 
-            // accept the client 
-            if(tcpServer.acceptClient(&tcpClient))
-            {
-                Serial.println("Got a Connection");
-                state = READ;
-            }
-
-            // this probably won't happen unless the connection is dropped
-            // if it is, just release our socket and go back to listening
-            else
-            {
-                state = CLOSE;
-            }
-            break;
-   
-    case READ:   
-            stringRead = "";
-            while (tcpClient.isConnected())
-            {
+    // accept the client 
+    if((conx == 1) && (tcpServer.acceptClient(&tcpClient)))
+    {
+       Serial.println("Got a Connection");
+       stringRead = "";
+       while (tcpClient.isConnected())
+       {
                 if (tcpClient.available())
                 {
                     char c = tcpClient.readByte();
@@ -407,7 +396,6 @@ STATE state = ISLISTENING;
                           {
                                 // empty line => end
                                 Serial.println("empty line => end");
-                                state = CLOSE;
                                 break;
                           }                          
                           else
@@ -422,34 +410,29 @@ STATE state = ISLISTENING;
                           stringRead += c;
                     }
                 }
-            }            
-            state = CLOSE;
-            break;
-             
-     case CLOSE:
-            tcpClient.close();
-            Serial.println("Closing TcpClient");
-            Serial.println("");
-            state = ISLISTENING;
-            break;
-
-    // something bad happen, just exit out of the program
-    case EXIT:
-            tcpClient.close();
-            tcpServer.close();
-            Serial.println("Something went wrong, sketch is done.");  
-            state = DONE;
-            break;
-
-    // do nothing in the loop
-    case DONE:
-            break;
-    default:
-            break;
+       } // end while            
     }
-
-    // every pass through loop(), keep the stack alive
-    DNETcK::periodicTasks(); 
+    else if((cmd_GO[0] == CMD_GO) && (cmd_GO[1] > t_GO+(uint16_t)timeout))
+    {
+       Serial.println("Continue command GO");
+       cmd_GO[1] = cmd_GO[1] - t_GO - (uint16_t)timeout;
+       
+       cmd[0] = cmd_GO[0];
+       cmd[1] = t_GO;
+       cmd[2] = cmd_GO[2];   
+       ret = CmdRobot (cmd, resp, &resp_len);
+       
+       Serial.print("Call CmdRobot, ret: ");
+       Serial.print(ret);
+       Serial.print(" / resp_len: ");
+       Serial.println(resp_len);        
+    }
+      
+    // Close
+    tcpClient.close();
+    Serial.println("Closing TcpClient");
+    
+    return SUCCESS;    
 }
 
 
@@ -535,7 +518,6 @@ void WiFiCmdRobot::printNumb(byte * rgb, int cb, char chDelim)
 
 int WiFiCmdRobot::Cmd (String s)
 {
-   String szcmd;
    int cmdTag;
    int And;
    String szparam[10];
@@ -629,9 +611,12 @@ int WiFiCmdRobot::Cmd (String s)
        }                                    
        if (szcmd == "GO")
        {
-               cmd[0] = CMD_GO;
-               cmd[1] = iparam[0];
-               cmd[2] = iparam[1];
+               cmd_GO[0] = CMD_GO;
+               cmd_GO[1] = iparam[0];
+               cmd_GO[2] = iparam[1];
+               cmd[0] = cmd_GO[0];
+               cmd[1] = t_GO;
+               cmd[2] = cmd_GO[2];
        } 
        
        ret = CmdRobot (cmd, resp, &resp_len);
