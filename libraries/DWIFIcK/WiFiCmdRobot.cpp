@@ -68,7 +68,7 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
     {  
         Serial.print("Error Init SD-Card, error: ");
         Serial.println(ret);
-    }                                    	
+    }                                                                    
     else
     {
         Serial.println("Init SD-Card OK");
@@ -566,12 +566,14 @@ int WiFiCmdRobot::Cmd (String s)
                cmd[0] = CMD_START;
                cmd[1] = iparam[0];
                cmd[2] = 0;
+               cmd_GO[0]= 0; //reset GO command
        }        
        if (szcmd == "STOP")
        {
                cmd[0] = CMD_STOP;
                cmd[1] = 0;
                cmd[2] = 0;
+               cmd_GO[0]= 0; //reset GO command
        }                                 
        if (szcmd == "INFOS")
        {
