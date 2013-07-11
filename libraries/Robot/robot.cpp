@@ -168,6 +168,11 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      Serial.print("CMD_PICTURE, no_picture: ");
      no_picture++;
      Serial.println(no_picture);
+     
+     Serial.println("Stop"); 
+     stop();
+     motor_state = STATE_STOP;
+     
      ret = JPEGCamera.makePicture (no_picture);
      if (ret == SUCCESS)
      { 
@@ -181,6 +186,11 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
         Serial.println(ret);
         error = 1;
      }
+                
+     Serial.println("Start");
+     start_forward();                     
+     motor_state = STATE_GO;
+     
      break;
 
  case CMD_GO: 
