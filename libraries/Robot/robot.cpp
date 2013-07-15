@@ -198,6 +198,12 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      Serial.print((int)cmd[1]);
      Serial.print("\tPID: ");
      Serial.println((int)cmd[2]);
+     
+     if (motor_state =! STATE_GO)
+     {  
+           Serial.println("start_forward");
+           start_forward();
+     }
 
      motor_state = STATE_GO;
      
