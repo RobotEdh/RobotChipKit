@@ -518,7 +518,8 @@ int turn(double alpha, unsigned long timeout)
       return SUCCESS;
   }   
   else
-  {   return TIMEOUT;
+  {
+      return TIMEOUT;
   }   
 }
 
