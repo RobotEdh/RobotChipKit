@@ -412,7 +412,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
                 }
        } // end while            
     }
-    else if((cmd_GO[0] == CMD_GO) && (cmd_GO[1] > t_GO+(uint16_t)timeout))
+    else if((cmd_GO[0] == CMD_GO) && (cmd_GO[1] > t_GO+(uint16_t)timeout))  // GO ongoing
     {
        Serial.println("Continue command GO");
        cmd_GO[1] = cmd_GO[1] - t_GO - (uint16_t)timeout;
@@ -427,6 +427,21 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
        Serial.print(" / resp_len: ");
        Serial.println(resp_len);        
     }
+    else if(cmd_GO[0] == CMD_GO) // end GO
+    {
+       Serial.println("End command GO");
+       cmd_GO[0] = 0; //reset GO command
+      
+       cmd[0] = CMD_STOP;  // Stop after GO
+       cmd[1] = 0;
+       cmd[2] = 0;   
+       ret = CmdRobot (cmd, resp, &resp_len);
+       
+       Serial.print("Call CmdRobot, ret: ");
+       Serial.print(ret);
+       Serial.print(" / resp_len: ");
+       Serial.println(resp_len);        
+    }   
       
     // Close
     tcpClient.close();

@@ -68,7 +68,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  unsigned long timeout = 0;
  unsigned long start = 0;
  int dir;
- int error = 0;
+ int error = -1;
  int ret = SUCCESS;
  
  digitalWrite(Led_Yellow, HIGH);  // turn on led yellow
@@ -198,18 +198,24 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      Serial.print((int)cmd[1]);
      Serial.print("\tPID: ");
      Serial.println((int)cmd[2]);
-         
-     start_forward();
+     
+     if (motor_state =! STATE_GO)
+     {  
+           Serial.println("start_forward");
+           start_forward();
+     }
+
      motor_state = STATE_GO;
      
+     error = -1;
      timeout = (unsigned long)cmd[1];
      start = millis();
-     while((millis() - start < timeout*1000) && (error == 0)) {
+     while((millis() - start < timeout*1000) && (error == -1)) {
           ret = go(timeout,(int)cmd[2]);  
      
           if ((ret != SUCCESS) && (ret != OBSTACLE))
           {
-    	      Serial.print("CMD_GO error");
+            Serial.print("CMD_GO error");
     	      Serial.println(ret);
     	      error = 1;
           }
@@ -261,10 +267,30 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    }
               }                 
           }
+          else
+          {
+              	   Serial.println("GO OK");
+                   error = 0;
+          }           
      } // end while
      
-     stop();
-     motor_state = STATE_STOP;
+     // byte 0: motor_state
+     resp[0] = motor_state;
+     // byte 1: SpeedMotorRight
+     resp[1] = get_SpeedMotorRight();
+     // byte 2: SpeedMotorLeft
+     resp[2] = get_SpeedMotorLeft();
+     // byte 3: TickRight
+     resp[3] = get_TickRight();
+     // byte 4: TickLeft
+     resp[4] = get_TickLeft();
+     // byte 5: direction
+     resp[5] = CMPS03.CMPS03_read();
+     // byte 6: distance
+     resp[6] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
+     // byte 7: temperature
+     resp[7] = TMP102.TMP102_read();
+     resp_len = 7+1;
      break;
      
  default:
