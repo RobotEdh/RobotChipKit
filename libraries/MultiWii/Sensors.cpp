@@ -1,5 +1,6 @@
 //#include "Arduino.h"
 #include "WProgram.h"
+#include <Wire.h> // used for I2C protocol (lib)
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -11,7 +12,7 @@
 
 void i2c_BMP085_UT_Start(void);
 
-void waitTransmissionI2C();
+//EDH void waitTransmissionI2C();
 void i2c_MS561101BA_UT_Start();
 #if BARO
 void Baro_Common();
@@ -173,24 +174,24 @@ static uint32_t neutralizeTime = 0;
 // I2C general functions
 // ************************************************************************************************************
 
-void i2c_init(void) {
-//EDH TODO                            
+void i2c_init(void) { //EDH for chipkit
+ Wire.begin(); // setup I2C                          
 }
 
 void i2c_rep_start(uint8_t address) {
-//EDH TODO  
+//EDH not used 
 }
 
 void i2c_stop(void) {
-//EDH TODO  
+//EDH not used  
 }
 
 void i2c_write(uint8_t data ) {
-//EDH TODO  
+//EDH not used 
 }
 
-uint8_t i2c_read(uint8_t ack) {
-//EDH TODO  
+uint8_t i2c_read(uint8_t ack) { 
+//EDH not used 
 }
 
 uint8_t i2c_readAck() {
@@ -201,26 +202,29 @@ uint8_t i2c_readNak(void) {
   return i2c_read(0);
 }
 
-void waitTransmissionI2C() {
-//EDH TODO  
-}
+//EDH void waitTransmissionI2C() {
+//}
 
-size_t i2c_read_to_buf(uint8_t add, void *buf, size_t size) {
-  i2c_rep_start((add<<1) | 1);  // I2C read direction
+size_t i2c_read_to_buf(uint8_t add, void *buf, size_t size) { //EDH for chipkit
   size_t bytes_read = 0;
   uint8_t *b = (uint8_t*)buf;
-  while (size--) {
-    /* acknowledge all but the final byte */
-    *b++ = i2c_read(size > 0);
-    /* TODO catch I2C errors here and abort */
-    bytes_read++;
-  }
+  
+  for (uint8_t k = 0; k < size; k += min(size, BUFFER_LENGTH)) {
+                Wire.requestFrom(add, (uint8_t)min(size - k, BUFFER_LENGTH));
+
+                for (; Wire.available(); bytes_read++) {
+                    *b++ = Wire.receive();
+                }
+    }  
+  
   return bytes_read;
 }
 
-size_t i2c_read_reg_to_buf(uint8_t add, uint8_t reg, void *buf, size_t size) {
-  i2c_rep_start(add<<1); // I2C write direction
-  i2c_write(reg);        // register selection
+size_t i2c_read_reg_to_buf(uint8_t add, uint8_t reg, void *buf, size_t size) { //EDH for chipkit
+  Wire.beginTransmission(add);
+  Wire.send(reg);
+  Wire.endTransmission();
+  delay(1);
   return i2c_read_to_buf(add, buf, size);
 }
 
@@ -245,11 +249,12 @@ void i2c_getSixRawADC(uint8_t add, uint8_t reg) {
   i2c_read_reg_to_buf(add, reg, &rawADC, 6);
 }
 
-void i2c_writeReg(uint8_t add, uint8_t reg, uint8_t val) {
-  i2c_rep_start(add<<1); // I2C write direction
-  i2c_write(reg);        // register selection
-  i2c_write(val);        // value to write in register
-  i2c_stop();
+void i2c_writeReg(uint8_t add, uint8_t reg, uint8_t val) { //EDH for Chipkit
+    Wire.beginTransmission(add);
+    Wire.send((uint8_t) reg); // send address
+    Wire.send((uint8_t) val); // send value
+ 
+    int ret = Wire.endTransmission();
 }
 
 uint8_t i2c_readReg(uint8_t add, uint8_t reg) {
@@ -981,7 +986,7 @@ void ACC_getADC() {
 #if defined(L3G4200D)
 #define L3G4200D_ADDRESS 0x69
 void Gyro_init() {
-//EDH TODO  
+//EDH not used 
 }
 
 void Gyro_getADC () {
@@ -1008,7 +1013,7 @@ void Gyro_getADC () {
 // ************************************************************************************************************
 #if defined(ITG3200)
 void Gyro_init() {
-//EDH TODO  
+//EDH not used  
 }
 
 void Gyro_getADC () {
@@ -1299,7 +1304,15 @@ void Device_Mag_getADC() {
 #if defined(MPU6050)
 
 void Gyro_init() {
-//EDH TODO  
+  i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
+  delay(5);
+  i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x03);             //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
+  i2c_writeReg(MPU6050_ADDRESS, 0x1A, MPU6050_DLPF_CFG); //CONFIG        -- EXT_SYNC_SET 0 (disable input pin for data sync) ; default DLPF_CFG = 0 => ACC bandwidth = 260Hz  GYRO bandwidth = 256Hz)
+  i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18);             //GYRO_CONFIG   -- FS_SEL = 3: Full scale set to 2000 deg/sec
+  // enable I2C bypass for AUX I2C
+  #if defined(MAG)
+    i2c_writeReg(MPU6050_ADDRESS, 0x37, 0x02);           //INT_PIN_CFG   -- INT_LEVEL=0 ; INT_OPEN=0 ; LATCH_INT_EN=0 ; INT_RD_CLEAR=0 ; FSYNC_INT_LEVEL=0 ; FSYNC_INT_EN=0 ; I2C_BYPASS_EN=1 ; CLKOUT_EN=0
+  #endif
 }
 
 void Gyro_getADC () {
@@ -1364,7 +1377,7 @@ void ACC_getADC () {
 #if defined(MPU3050)
 
 void Gyro_init() {
-//EDH TODO  
+//EDH not used  
 }
 
 void Gyro_getADC () {
@@ -1389,7 +1402,7 @@ void Gyro_getADC () {
 #define WMP_ADDRESS_2 0x52
 
 void Gyro_init() {
-//EDH TODO  
+//EDH not used  
 }
 
 void Gyro_getADC() {

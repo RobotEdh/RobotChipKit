@@ -1,6 +1,8 @@
 #ifndef SENSORS_H_
 #define SENSORS_H_
 
+#define BUFFER_LENGTH   32 // lenght max I2C
+
 #if defined(MMA7455) || defined(MMA8451Q) || defined(ADXL345) || \
     defined(BMA180) || defined(BMA020) || defined(NUNCHACK) || \
     defined(LIS3LV02) || defined(LSM303DLx_ACC) || defined(ADCACC) || \
