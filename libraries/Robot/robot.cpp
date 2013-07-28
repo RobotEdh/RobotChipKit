@@ -1,14 +1,17 @@
 #include <robot.h>         
-#include <motor.h>      // Motor
-#include <GP2Y0A21YK.h> // IR sensor
-#include <CMPS03.h>     // Compas
-#include <TMP102.h>     // Temperature
-#include <Servo.h>      // Servo
-#include <TiltPan.h>    // Tilt&Pan
-#include <LSY201.h>     // Camera
+#include <motor.h>             // Motor
+#include <GP2Y0A21YK.h>        // IR sensor
+#include <CMPS03.h>            // Compas
+#include <TMP102.h>            // Temperature
+#include <Servo.h>             // Servo
+#include <TiltPan.h>           // Tilt&Pan
+#include <LSY201.h>            // Camera
+#include <LiquidCrystal_I2C.h> // LCD
 
 
 int motor_state = STATE_STOP;
+
+LiquidCrystal_I2C lcd(0x20,16,2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
 
 JPEGCameraClass JPEGCamera;  // The Camera class  
 int no_picture = 0;          // Picture number
@@ -32,6 +35,11 @@ int robot_begin()
   blink(Led_Yellow);  
   pinMode(Led_Red, OUTPUT);        // set the pin as output
   blink(Led_Red);     
+
+// initialize the lcd 
+  lcd.init();                      
+  lcd.backlight();
+  lcd.print("Hello, world!");
   
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
