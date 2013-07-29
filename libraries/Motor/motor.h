@@ -72,6 +72,8 @@
 /* Power +5V */
 /* Ground    */
 
+#define ContactRightPin 37   // Contact sensor Right pin connected to digital pin J9-01 (PMD0/RE0)
+#define ContactLeftPin  38   // Contact sensor Left pin connected to digital pin J8-18 (SCK1/IC3/PMCS2/PMA15/RD10)
 
 void IntrTickRight();  // interrupt handler encoder right
 void IntrTickLeft();   // interrupt handler encoder right

@@ -28,8 +28,13 @@ int motor_begin()
   
   stop();
   Serial.println("Init motors OK"); 
-  
-  // initialize the pin connected to the sensor 
+
+  // initialize the pin connected to the Contact sensors 
+  pinMode(ContactRightPin, INPUT);
+  pinMode(ContactLeftPin, INPUT);
+  Serial.println("Init Contact sensors OK");
+    
+  // initialize the pin connected to the IR sensor 
   GP2Y0A21YK_init(GP2Y0A21YK_Pin); 
   Serial.println("Init IR sensor OK");
 
@@ -40,8 +45,9 @@ int motor_begin()
   delay(15);          // waits 15ms for the servo to reach the position  
   Serial.println("Init IR servo OK");  
     
-  // initialize the compass  
-  int revision = CMPS03.CMPS03_begin();
+  // initialize the compass 
+  int revision ; 
+  //int revision = CMPS03.CMPS03_begin();
   if (revision < 0) {
      Serial.print("Init compass K0 ->Error I2C: ");
      Serial.print(revision);    
@@ -380,8 +386,20 @@ int go(unsigned long timeout, int pid_ind)
 int check_around()
 {
     int distance_right = 0;
-    int distance_left = 0; 
-   
+    int distance_left = 0;
+    int inputpin = HIGH; 
+    
+    // Check Contacts sensors, HIGH in normal situation
+    inputpin = digitalRead(ContactRightPin);  // read input value
+    if (inputpin == LOW) { 
+        return OBSTACLE;   
+    }
+    
+    inputpin = digitalRead(ContactLeftPin);  // read input value
+    if (inputpin == LOW) { 
+        return OBSTACLE;   
+    }
+       
     IRServo.write(0);    // turn servo left
     delay(15*90);        // waits the servo to reach the position 
     distance_left = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance on right side

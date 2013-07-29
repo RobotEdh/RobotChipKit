@@ -30,17 +30,17 @@ int robot_begin()
 {
   int ret = SUCCESS;
  
+  // initialize the lcd 
+  lcd.init();                      
+  lcd.backlight();
+  lcd.print("Start Robot Init");
+  
   Serial.println("Start Robot Init"); 
   pinMode(Led_Yellow, OUTPUT);     // set the pin as output
   blink(Led_Yellow);  
   pinMode(Led_Red, OUTPUT);        // set the pin as output
   blink(Led_Red);     
-
-// initialize the lcd 
-  lcd.init();                      
-  lcd.backlight();
-  lcd.print("Hello, world!");
-  
+ 
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
   Serial.println("Init Tilt&Pan servos OK");
@@ -62,6 +62,8 @@ int robot_begin()
   
   Serial.println("End Robot Init");
   Serial.println("");
+  lcd.setCursor(0,1); 
+  lcd.print("End   Robot Init");
   
   return SUCCESS;
   
@@ -81,11 +83,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  
  digitalWrite(Led_Yellow, HIGH);  // turn on led yellow
  digitalWrite(Led_Red, LOW);      // turn off led red
+ lcd.clear();                       // clear LCD
  
  switch (cmd[0]) {
  
  case CMD_STOP:
-     Serial.println("CMD_STOP"); 
+     Serial.println("CMD_STOP");
+     lcd.print("CMD_STOP"); 
+     
      stop();
      motor_state = STATE_STOP;
      break; 
@@ -94,12 +99,17 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      if (cmd[1] == 0)
      {  
            Serial.println("CMD_START");
+           lcd.print("START"); 
+           
            start_forward();
      }
      else
      {       
            Serial.print("CMD_START_TEST motor: ");
            Serial.println((int)cmd[1]);
+           lcd.print("START motor: ");
+           lcd.print((int)cmd[1]); 
+           
            start_forward_test(cmd[1]);           
      }                      
      motor_state = STATE_GO;
@@ -107,15 +117,27 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  
  case CMD_CHECK_AROUND:
      Serial.println("CMD_CHECK_AROUND");
-     // byte 0: direction
+     lcd.print("CHECK AROUND");
+    
      resp[0] = check_around();
      resp_len = 0+1;
+     
+     lcd.setCursor(0,1); 
+     if      (resp[0] == LEFT_DIRECTION)  lcd.print("LEFT");
+     else if (resp[0] == RIGHT_DIRECTION) lcd.print("RIGHT");
+     else                                 lcd.print("OTHER");
+     
      break; 
 
  case CMD_MOVE_TILT_PAN:
-     Serial.print("CMD_MOVE_TILT_PAN, X Y: "); 
-     Serial.print((int)cmd[1]);
-     Serial.println((int)cmd[2]);
+     Serial.print("CMD_MOVE_TILT_PAN, X Y: "); Serial.print((int)cmd[1]);Serial.println((int)cmd[2]);   
+     lcd.print("MOVE TILT&PAN");
+     lcd.setCursor(0,1); 
+     lcd.print("X: ");
+     lcd.print((int)cmd[1]);
+     lcd.print(" Y: ");
+     lcd.print((int)cmd[2]);
+          
      TiltPan_move(cmd[1], cmd[2]);
      break; 
                     
@@ -123,15 +145,28 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      if (cmd[1] == 180)
      {       
            Serial.print("CMD_TURN_BACK");
+           lcd.print("TURN BACK");
+           
            ret = turnback (10);  // 10s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret); error = 1;}
+           if (ret != SUCCESS){
+           	  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);
+           	  lcd.setCursor(0,1); 
+           	  lcd.print("error: "); lcd.print(ret);
+           	  error = 1;
+           }
      }       
      else if (motor_state == STATE_GO)
      { 
-           Serial.print("CMD_TURN_RIGHT, alpha: ");
-           Serial.println((int)cmd[1]);
-           ret = turn ((double)cmd[1], 5);  // 5s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_RIGHT error"); Serial.println(ret); error = 1;}
+           Serial.print("CMD_TURN_RIGHT, alpha: "); Serial.println((int)cmd[1]);
+           lcd.print("TURN RIGHT "); lcd.print((int)cmd[1]);
+         
+           ret = turn ((double)cmd[1], 5);  // 5s max        
+           if (ret != SUCCESS){
+           	  Serial.print("CMD_TURN_RIGHT error"); Serial.println(ret);
+           	  lcd.setCursor(0,1); 
+           	  lcd.print("error: "); lcd.print(ret);
+           	  error = 1;
+           }           
     }
     break;        
 
@@ -139,20 +174,35 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      if (cmd[1] == 180)
      {       
            Serial.print("CMD_TURN_BACK");
+           lcd.print("TURN BACK");
+                      
            ret = turnback (10);  // 10s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_BACK error"); Serial.println(ret); error = 1;}
+           if (ret != SUCCESS){
+           	  Serial.print("CMD_TURN_BACK error"); Serial.println(ret);
+           	  lcd.setCursor(0,1); 
+           	  lcd.print("error: "); lcd.print(ret);
+           	  error = 1;
+           }
      }    
      else if (motor_state == STATE_GO)
      { 
-           Serial.print("CMD_TURN_LEFT, alpha: ");
-           Serial.println((int)cmd[1]);
+           Serial.print("CMD_TURN_LEFT, alpha: "); Serial.println((int)cmd[1]);
+           lcd.print("TURN LEFT "); lcd.print((int)cmd[1]);
+           
            ret = turn (-(double)cmd[1], 5);  // 5s max
-           if (ret != SUCCESS){  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret); error = 1;}
+           if (ret != SUCCESS){
+           	  Serial.print("CMD_TURN_LEFT error"); Serial.println(ret);
+           	  lcd.setCursor(0,1); 
+           	  lcd.print("error: "); lcd.print(ret);
+           	  error = 1;
+           }
      }
      break;            
      
  case CMD_INFOS:    
      Serial.println("CMD_INFOS");
+     lcd.print("INFOS");
+     
      // byte 0: motor_state
      resp[0] = motor_state;
      // byte 1: SpeedMotorRight
@@ -170,12 +220,20 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
      resp_len = 7+1;
+     
+     lcd.setCursor(0,1); 
+     if (resp[0] == STATE_GO) lcd.print("GO-");
+     else                     lcd.print("   ");
+     lcd.print((int)resp[7]); lcd.print("C-");
+     lcd.print((int)resp[6]); lcd.print("cm-");
+     lcd.print((int)resp[5]); lcd.print("d");     
      break; 
 
  case CMD_PICTURE: 
      Serial.print("CMD_PICTURE, no_picture: ");
      no_picture++;
      Serial.println(no_picture);
+     lcd.print("PICTURE ");
      
      Serial.println("Stop"); 
      stop();
@@ -187,11 +245,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
            // byte 0: picture number
            resp[0] = no_picture;
            resp_len = 0+1;
+           lcd.setCursor(0,1);
+           lcd.print("picture: "); lcd.print(no_picture);
      }
      else
      {
-        Serial.print("makePicture error: ");
-        Serial.println(ret);
+        Serial.print("makePicture error: "); Serial.println(ret);
+        lcd.setCursor(0,1); 
+        lcd.print("error: "); lcd.print(ret);       
         error = 1;
      }
                 
@@ -206,6 +267,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      Serial.print((int)cmd[1]);
      Serial.print("\tPID: ");
      Serial.println((int)cmd[2]);
+     lcd.print("GO, nb secs:  "); lcd.print((int)cmd[1]);
      
      if (motor_state =! STATE_GO)
      {  
@@ -223,22 +285,31 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      
           if ((ret != SUCCESS) && (ret != OBSTACLE))
           {
-            Serial.print("CMD_GO error");
-    	      Serial.println(ret);
+              Serial.print("CMD_GO error"); Serial.println(ret);
+              lcd.setCursor(0,1); 
+              lcd.print("error: "); lcd.print(ret);                
     	      error = 1;
           }
           else if (ret == OBSTACLE)
           {
               ret = SUCCESS;
               Serial.println("CMD_GO Obstacle");
+              lcd.setCursor(0,1); 
+              lcd.print("Obstacle");
+              blink(Led_Red);                
+              
               stop();
               motor_state = STATE_STOP;
-              blink(Led_Red);
               
               dir = check_around();
          
-              Serial.print("check_around, direction: ");
-              Serial.println(dir);
+              Serial.print("check_around, direction: "); Serial.println(dir);
+              lcd.clear();
+              lcd.print("check around");
+              lcd.setCursor(0,1); 
+              if      (dir == LEFT_DIRECTION)  lcd.print("LEFT");
+              else if (dir == RIGHT_DIRECTION) lcd.print("RIGHT");
+              else                             lcd.print("OTHER");
          
               if (dir == LEFT_DIRECTION) {
                    start_forward();
@@ -246,9 +317,17 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    ret = turn (-45,  5); // turn  -45 degrees during 5s max
                    if (ret != SUCCESS)
                    {
-                   	  Serial.print("turn error");
-                   	  Serial.println(ret);
+                   	  Serial.print("turn error"); Serial.println(ret);
+                   	  lcd.clear();                   	  
+                   	  lcd.print("turn left");
+                   	  lcd.setCursor(0,1);
+                   	  lcd.print("error: "); lcd.print(ret);
                    	  error = 1;
+                   }
+                   else
+                   {
+                      lcd.clear();                   	  
+                   	  lcd.print("turn left OK");                  	
                    }
               }
               else if (dir == RIGHT_DIRECTION) {
@@ -257,10 +336,18 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    ret = turn (+45,  5); // turn  +45 degrees during 5s max
                    if (ret != SUCCESS)
                    {
-                   	  Serial.print("turn error");
-                   	  Serial.println(ret);
+                   	  Serial.print("turn error"); Serial.println(ret);
+                   	  lcd.clear();                   	  
+                   	  lcd.print("turn right");
+                   	  lcd.setCursor(0,1);
+                   	  lcd.print("error: "); lcd.print(ret);                   	  
                    	  error = 1;
                    }
+                   else
+                   {
+                      lcd.clear();                   	  
+                   	  lcd.print("turn right OK");                  	
+                   }                  
               }
               else 
               {
@@ -269,15 +356,25 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               	   ret = turnback (10); // turn back during 10s max
                    if (ret != SUCCESS)
                    {
-                      Serial.print("turnback error");
-                   	  Serial.println(ret);
+                      Serial.print("turnback error"); Serial.println(ret);
+                   	  lcd.clear();                   	  
+                   	  lcd.print("turnback");
+                   	  lcd.setCursor(0,1);
+                   	  lcd.print("error: "); lcd.print(ret);                        
                    	  error = 1;
                    }
+                  else
+                   {
+                      lcd.clear();                   	  
+                   	  lcd.print("turnback OK");                  	
+                   }                   
               }                 
           }
           else
           {
               	   Serial.println("GO OK");
+              	   lcd.clear();                   	  
+                   lcd.print("GO OK");
                    error = 0;
           }           
      } // end while
@@ -299,18 +396,29 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
      resp_len = 7+1;
+     
+     if (error == 0) {
+           lcd.setCursor(0,1); 
+           if (resp[0] == STATE_GO) lcd.print("GO-");
+           else                     lcd.print("  -");
+           lcd.print((int)resp[7]); lcd.print("°C-");
+           lcd.print((int)resp[6]); lcd.print("cm-");
+           lcd.print((int)resp[5]); lcd.print("°");
+     } 
+           
      break;
      
  default:
     Serial.println("invalid command");
+    lcd.print("invalid command");
     break;                     
  
  } //end switch
     
  *presp_len = resp_len;
     
- if (error == 1) digitalWrite(Led_Red, HIGH);      // turn on led red
- digitalWrite(Led_Yellow, LOW);  // turn off led yellow
+ if (error == 1) digitalWrite(Led_Red, HIGH); // turn on led red
+ digitalWrite(Led_Yellow, LOW);               // turn off led yellow
                      
  return ret;
 }
