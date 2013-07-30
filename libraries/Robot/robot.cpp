@@ -227,7 +227,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      lcd.print(lcd_pipe,BYTE);  
      lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
      lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
-     lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE);    
+     lcd.print((int)resp[5]); lcd.print((char)223); //degree   
      break; 
 
  case CMD_PICTURE: 
@@ -404,7 +404,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
          lcd.print(lcd_pipe,BYTE);  
          lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
          lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
-         lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE);    
+         lcd.print((int)resp[5]); lcd.print((char)223); //degree   
      } 
            
      break;
