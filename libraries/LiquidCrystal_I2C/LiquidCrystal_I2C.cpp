@@ -81,15 +81,16 @@ void LiquidCrystal_I2C::init_priv()
     uint8_t retarrow[8] = {0x1, 0x1, 0x5, 0x9, 0x1f,0x8, 0x4};
     uint8_t celcius[8]  = {0x10,0x6, 0x9, 0x8, 0x8, 0x9, 0x6};
     uint8_t degree[8]   = {0x0, 0xe, 0xa, 0xe, 0x0, 0x0, 0x0};
-
-	lcd.createChar(lcd_bell,bell);
+    uint8_t pipe[8]     = {0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4};
+    
+    lcd.createChar(lcd_bell,bell);
     lcd.createChar(lcd_note,note);
     lcd.createChar(lcd_clock,clock);
     lcd.createChar(lcd_smiley,smiley);
     lcd.createChar(lcd_duck,duck);
     lcd.createChar(lcd_degree,degree);
     lcd.createChar(lcd_celcius,celcius);
-  
+    lcd.createChar(lcd_pipe,pipe);  
 }
 
 void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
