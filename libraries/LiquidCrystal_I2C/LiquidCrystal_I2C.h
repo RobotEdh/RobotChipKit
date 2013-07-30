@@ -52,6 +52,18 @@
 #define Rw B00000010  // Read/Write bit
 #define Rs B00000001  // Register select bit
 
+
+// custom chars
+#define  lcd_bell    0
+#define  lcd_note    1
+#define  lcd_clock   2
+#define  lcd_smiley  3
+#define  lcd_duck    4
+#define  lcd_degree  5
+#define  lcd_celcius 6
+
+
+
 class LiquidCrystal_I2C : public Print {
 public:
   LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows);
