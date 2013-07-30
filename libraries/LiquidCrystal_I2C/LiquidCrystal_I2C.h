@@ -61,7 +61,7 @@
 #define  lcd_duck    4
 #define  lcd_degree  5
 #define  lcd_celcius 6
-
+#define  lcd_pipe    7
 
 
 class LiquidCrystal_I2C : public Print {
