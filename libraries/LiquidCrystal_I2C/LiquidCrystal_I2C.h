@@ -53,15 +53,14 @@
 #define Rs B00000001  // Register select bit
 
 
-// custom chars
+// custom chars, 7 maximum
 #define  lcd_bell    0
 #define  lcd_note    1
 #define  lcd_clock   2
 #define  lcd_smiley  3
 #define  lcd_duck    4
 #define  lcd_degree  5
-#define  lcd_celcius 6
-#define  lcd_pipe    7
+#define  lcd_pipe    6
 
 
 class LiquidCrystal_I2C : public Print {
