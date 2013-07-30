@@ -67,7 +67,29 @@ void LiquidCrystal_I2C::init_priv()
 {
 	Wire.begin();
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
-	begin(_cols, _rows);  
+	begin(_cols, _rows);
+	
+	// create custom chars (7 maximum)
+    uint8_t bell[8]     = {0x4, 0xe, 0xe, 0xe, 0x1f,0x0, 0x4};
+    uint8_t note[8]     = {0x2, 0x3, 0x2, 0xe, 0x1e,0xc, 0x0};
+    uint8_t clock[8]    = {0x0, 0xe, 0x15,0x17,0x11,0xe, 0x0};
+    uint8_t smiley[8]   = {0x0, 0x11,0x0, 0x0, 0x11,0xe, 0x0};	
+    uint8_t heart[8]    = {0x0, 0xa, 0x1f,0x1f,0xe, 0x4, 0x0};
+    uint8_t duck[8]     = {0x0, 0xc, 0x1d,0xf, 0xf, 0x6, 0x0};
+    uint8_t check[8]    = {0x0, 0x1, 0x3, 0x16,0x1c,0x8, 0x0};
+    uint8_t cross[8]    = {0x0, 0x1b,0xe, 0x4, 0xe, 0x1b,0x0};
+    uint8_t retarrow[8] = {0x1, 0x1, 0x5, 0x9, 0x1f,0x8, 0x4};
+    uint8_t celcius[8]  = {0x10,0x6, 0x9, 0x8, 0x8, 0x9, 0x6};
+    uint8_t degree[8]   = {0x0, 0xe, 0xa, 0xe, 0x0, 0x0, 0x0};
+
+	lcd.createChar(lcd_bell,bell);
+    lcd.createChar(lcd_note,note);
+    lcd.createChar(lcd_clock,clock);
+    lcd.createChar(lcd_smiley,smiley);
+    lcd.createChar(lcd_duck,duck);
+    lcd.createChar(lcd_degree,degree);
+    lcd.createChar(lcd_celcius,celcius);
+  
 }
 
 void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
@@ -318,5 +340,3 @@ uint8_t LiquidCrystal_I2C::init_bargraph(uint8_t graphtype){return 0;}
 void LiquidCrystal_I2C::draw_horizontal_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_col_end){}
 void LiquidCrystal_I2C::draw_vertical_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_row_end){}
 void LiquidCrystal_I2C::setContrast(uint8_t new_val){}
-
-	
