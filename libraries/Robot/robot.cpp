@@ -224,9 +224,9 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      lcd.setCursor(0,1); 
      if (resp[0] == STATE_GO) lcd.print("GO-");
      else                     lcd.print("   ");
-     lcd.print((int)resp[7]); lcd.print("C-");
+     lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print("-");   
      lcd.print((int)resp[6]); lcd.print("cm-");
-     lcd.print((int)resp[5]); lcd.print("d");     
+     lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE);    
      break; 
 
  case CMD_PICTURE: 
@@ -401,9 +401,9 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
            lcd.setCursor(0,1); 
            if (resp[0] == STATE_GO) lcd.print("GO-");
            else                     lcd.print("  -");
-           lcd.print((int)resp[7]); lcd.print("°C-");
+           lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print("-");   
            lcd.print((int)resp[6]); lcd.print("cm-");
-           lcd.print((int)resp[5]); lcd.print("°");
+           lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE); 
      } 
            
      break;
