@@ -17,8 +17,6 @@ CMPS03Class::CMPS03Class ()
 int CMPS03Class::CMPS03_begin ()
 {
     Wire.begin(); // setup I2C
-
-	return CMPS03_revision();
 } 
  
     

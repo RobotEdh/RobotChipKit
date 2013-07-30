@@ -21,7 +21,7 @@ class TMP102Class
   TMP102Class();
   
   void TMP102_begin (void); 
- /* initialize everything, must be called during setup                         */                                            
+ /* initialize I2C, must NOT be called if I2C is already initialized           */                                            
  /* input:       none                                                          */
  /* output:      none                                                          */                             
  /* lib:         Wire.begin                                                    */                                

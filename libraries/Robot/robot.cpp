@@ -89,7 +89,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
  
  case CMD_STOP:
      Serial.println("CMD_STOP");
-     lcd.print("CMD_STOP"); 
+     lcd.print("STOP"); 
      
      stop();
      motor_state = STATE_STOP;
@@ -125,7 +125,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      lcd.setCursor(0,1); 
      if      (resp[0] == LEFT_DIRECTION)  lcd.print("LEFT");
      else if (resp[0] == RIGHT_DIRECTION) lcd.print("RIGHT");
-     else                                 lcd.print("OTHER");
+     else                                 lcd.print("OBSTACLE");
      
      break; 
 
@@ -142,10 +142,11 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      break; 
                     
  case CMD_TURN_RIGHT:
+    lcd.print("TURN RIGHT "); lcd.print((int)cmd[1]);lcd.print((char)223); //degree   
+ 
      if (cmd[1] == 180)
      {       
            Serial.print("CMD_TURN_BACK");
-           lcd.print("TURN BACK");
            
            ret = turnback (10);  // 10s max
            if (ret != SUCCESS){
@@ -157,8 +158,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      }       
      else if (motor_state == STATE_GO)
      { 
-           Serial.print("CMD_TURN_RIGHT, alpha: "); Serial.println((int)cmd[1]);
-           lcd.print("TURN RIGHT "); lcd.print((int)cmd[1]);
+           Serial.print("CMD_TURN_RIGHT, alpha: "); Serial.println((int)cmd[1]);;
          
            ret = turn ((double)cmd[1], 5);  // 5s max        
            if (ret != SUCCESS){
@@ -171,10 +171,11 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
     break;        
 
  case CMD_TURN_LEFT:
+     lcd.print("TURN LEFT "); lcd.print((int)cmd[1]);lcd.print((char)223); //degree   
+     
      if (cmd[1] == 180)
      {       
            Serial.print("CMD_TURN_BACK");
-           lcd.print("TURN BACK");
                       
            ret = turnback (10);  // 10s max
            if (ret != SUCCESS){
@@ -187,7 +188,6 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      else if (motor_state == STATE_GO)
      { 
            Serial.print("CMD_TURN_LEFT, alpha: "); Serial.println((int)cmd[1]);
-           lcd.print("TURN LEFT "); lcd.print((int)cmd[1]);
            
            ret = turn (-(double)cmd[1], 5);  // 5s max
            if (ret != SUCCESS){
@@ -201,7 +201,6 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      
  case CMD_INFOS:    
      Serial.println("CMD_INFOS");
-     lcd.print("INFOS");
      
      // byte 0: motor_state
      resp[0] = motor_state;
@@ -220,14 +219,19 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
      resp_len = 7+1;
-     
-     lcd.setCursor(0,1); 
-     if (resp[0] == STATE_GO) lcd.print("GO");
-     else                     lcd.print("ST");
-     lcd.print(lcd_pipe,BYTE);  
+    
+     if (resp[0] == STATE_GO) {
+         lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);
+     }    
+     else
+     {
+         lcd.print("STOPPED");
+     }
+     lcd.setCursor(0,1);   
      lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
      lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
-     lcd.print((int)resp[5]); lcd.print((char)223); //degree   
+     lcd.print((int)resp[5]); lcd.print((char)223); //degree    
+    
      break; 
 
  case CMD_PICTURE: 
@@ -268,7 +272,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      Serial.print((int)cmd[1]);
      Serial.print("\tPID: ");
      Serial.println((int)cmd[2]);
-     lcd.print("GO, nb secs:  "); lcd.print((int)cmd[1]);
+     lcd.print("GO ");lcd.print((int)cmd[1]);lcd.print("secs");
      
      if (motor_state =! STATE_GO)
      {  
@@ -310,7 +314,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               lcd.setCursor(0,1); 
               if      (dir == LEFT_DIRECTION)  lcd.print("LEFT");
               else if (dir == RIGHT_DIRECTION) lcd.print("RIGHT");
-              else                             lcd.print("OTHER");
+              else                             lcd.print("OBSTACLE");
          
               if (dir == LEFT_DIRECTION) {
                    start_forward();
@@ -399,9 +403,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      resp_len = 7+1;
      
      if (error == 0) {
-         if (resp[0] == STATE_GO) lcd.print("GO");
-         else                     lcd.print("ST");
-         lcd.print(lcd_pipe,BYTE);  
+         if (resp[0] == STATE_GO) {
+             lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);
+         }    
+         else
+         {
+             lcd.print("STOPPED");
+         }
+         lcd.setCursor(0,1);   
          lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
          lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
          lcd.print((int)resp[5]); lcd.print((char)223); //degree   

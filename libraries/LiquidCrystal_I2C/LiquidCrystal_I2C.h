@@ -59,7 +59,7 @@
 #define  lcd_clock   2
 #define  lcd_smiley  3
 #define  lcd_duck    4
-#define  lcd_degree  5
+#define  lcd_celcius 5
 #define  lcd_pipe    6
 
 

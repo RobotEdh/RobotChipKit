@@ -28,16 +28,10 @@ class CMPS03Class
   CMPS03Class();
   
   int CMPS03_begin (void); 
- /* initialize everything, must be called during setup                         */                                            
+ /* initialize I2C, must NOT be called if I2C is already initialized           */                                            
  /* input:       none                                                          */
- /*                  = -1: length to long for buffer                           */
- /*                  = -2: address send, NACK received -> bad address          */
- /*                  = -3: data send, NACK received -> bad register            */
- /*                  = -4: other error (lost bus arbitration, bus error, ..    */
- /*                       -> missing 1Ok pull-down resistor on SDA & SDL pins  */
- /*                  = Software Revision Number otherwise                      */                            
- /* lib:         Wire.begin                                                    */ 
- /*              CMPS03_revision                                               */                         
+ /* output:      none                                                          */                             
+ /* lib:         Wire.begin                                                    */                       
 
   int CMPS03_revision (void);
  /* return Software Revision Number                                            */                                            
