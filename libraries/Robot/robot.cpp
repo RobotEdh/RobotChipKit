@@ -222,10 +222,11 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      resp_len = 7+1;
      
      lcd.setCursor(0,1); 
-     if (resp[0] == STATE_GO) lcd.print("GO-");
-     else                     lcd.print("   ");
-     lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print("-");   
-     lcd.print((int)resp[6]); lcd.print("cm-");
+     if (resp[0] == STATE_GO) lcd.print("GO");
+     else                     lcd.print("ST");
+     lcd.print(lcd_pipe,BYTE);  
+     lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
+     lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
      lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE);    
      break; 
 
@@ -398,12 +399,12 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      resp_len = 7+1;
      
      if (error == 0) {
-           lcd.setCursor(0,1); 
-           if (resp[0] == STATE_GO) lcd.print("GO-");
-           else                     lcd.print("  -");
-           lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print("-");   
-           lcd.print((int)resp[6]); lcd.print("cm-");
-           lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE); 
+         if (resp[0] == STATE_GO) lcd.print("GO");
+         else                     lcd.print("ST");
+         lcd.print(lcd_pipe,BYTE);  
+         lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
+         lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
+         lcd.print((int)resp[5]); lcd.print(lcd_degree,BYTE);    
      } 
            
      break;
