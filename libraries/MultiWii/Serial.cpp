@@ -1,5 +1,11 @@
-//#include "Arduino.h"
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
 #include "WProgram.h"
+#define  PGM_P    const char *
+#define  strlen_P strlen
+#endif
+
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -152,9 +158,8 @@ void tailSerialReply() {
   serialize8(checksum[CURRENTPORT]);UartSendData();
 }
 
-#define 	PGM_P   const char *  // EDH
 void serializeNames(PGM_P s) {
-  //headSerialReply(strlen_P(s)); EDH TODO
+  headSerialReply(strlen_P(s));
   for (PGM_P c = s; pgm_read_byte(c); c++) {
     serialize8(pgm_read_byte(c));
   }
@@ -700,24 +705,29 @@ void serialize8(uint8_t a) {
   serialHeadTX[CURRENTPORT] = t;
 }
 
+#if defined(CHIPKIT) //EDH TOTO
+  void UartSendData() {}
+  void SerialOpen(uint8_t port, uint32_t baud) {}
+#else
+
 #if defined(PROMINI) || defined(MEGA)
   #if defined(PROMINI)
   ISR(USART_UDRE_vect) {  // Serial 0 on a PROMINI
   #endif
   #if defined(MEGA)
- // ISR(USART0_UDRE_vect) { // Serial 0 on a MEGA EDH TODO
+  ISR(USART0_UDRE_vect) { // Serial 0 on a MEGA
   #endif
- //   uint8_t t = serialTailTX[0];
- //   if (serialHeadTX[0] != t) {
- //     if (++t >= TX_BUFFER_SIZE) t = 0;
- //    UDR0 = serialBufferTX[t][0];  // Transmit next byte in the ring
-  //    serialTailTX[0] = t;
-  //  }
-  //  if (t == serialHeadTX[0]) UCSR0B &= ~(1<<UDRIE0); // Check if all data is transmitted . if yes disable transmitter UDRE interrupt
- // }
+    uint8_t t = serialTailTX[0];
+    if (serialHeadTX[0] != t) {
+      if (++t >= TX_BUFFER_SIZE) t = 0;
+      UDR0 = serialBufferTX[t][0];  // Transmit next byte in the ring
+      serialTailTX[0] = t;
+    }
+    if (t == serialHeadTX[0]) UCSR0B &= ~(1<<UDRIE0); // Check if all data is transmitted . if yes disable transmitter UDRE interrupt
+  }
 #endif
 #if defined(MEGA) || defined(PROMICRO)
-  /*ISR(USART1_UDRE_vect) { // Serial 1 on a MEGA or on a PROMICRO EDH TODO
+  ISR(USART1_UDRE_vect) { // Serial 1 on a MEGA or on a PROMICRO
     uint8_t t = serialTailTX[1];
     if (serialHeadTX[1] != t) {
       if (++t >= TX_BUFFER_SIZE) t = 0;
@@ -725,10 +735,10 @@ void serialize8(uint8_t a) {
       serialTailTX[1] = t;
     }
     if (t == serialHeadTX[1]) UCSR1B &= ~(1<<UDRIE1);
-  }*/
+  }
 #endif
 #if defined(MEGA)
- /* ISR(USART2_UDRE_vect) { // Serial 2 on a MEGA EDH TODO
+  ISR(USART2_UDRE_vect) { // Serial 2 on a MEGA
     uint8_t t = serialTailTX[2];
     if (serialHeadTX[2] != t) {
       if (++t >= TX_BUFFER_SIZE) t = 0;
@@ -745,11 +755,37 @@ void serialize8(uint8_t a) {
       serialTailTX[3] = t;
     }
     if (t == serialHeadTX[3]) UCSR3B &= ~(1<<UDRIE3);
-  }*/
+  }
 #endif
 
+
 void UartSendData() {
- // EDH TODO
+  #if defined(PROMINI)
+    UCSR0B |= (1<<UDRIE0);
+  #endif
+  #if defined(PROMICRO)
+    switch (CURRENTPORT) {
+      case 0:
+        while(serialHeadTX[0] != serialTailTX[0]) {
+           if (++serialTailTX[0] >= TX_BUFFER_SIZE) serialTailTX[0] = 0;
+           #if !defined(TEENSY20)
+             USB_Send(USB_CDC_TX,serialBufferTX[serialTailTX[0]],1);
+           #else
+             Serial.write(serialBufferTX[serialTailTX[0]],1);
+           #endif
+         }
+        break;
+      case 1: UCSR1B |= (1<<UDRIE1); break;
+    }
+  #endif
+  #if defined(MEGA)
+    switch (CURRENTPORT) {
+      case 0: UCSR0B |= (1<<UDRIE0); break;
+      case 1: UCSR1B |= (1<<UDRIE1); break;
+      case 2: UCSR2B |= (1<<UDRIE2); break;
+      case 3: UCSR3B |= (1<<UDRIE3); break;
+    }
+  #endif
 }
 
 #if defined(GPS_SERIAL)
@@ -759,19 +795,52 @@ void UartSendData() {
 #endif
 
 void SerialOpen(uint8_t port, uint32_t baud) {
-//EDH TODO
+  uint8_t h = ((F_CPU  / 4 / baud -1) / 2) >> 8;
+  uint8_t l = ((F_CPU  / 4 / baud -1) / 2);
+  switch (port) {
+    #if defined(PROMINI)
+      case 0: UCSR0A  = (1<<U2X0); UBRR0H = h; UBRR0L = l; UCSR0B |= (1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0); break;
+    #endif
+    #if defined(PROMICRO)
+      #if (ARDUINO >= 100) && !defined(TEENSY20)
+        case 0: UDIEN &= ~(1<<SOFE); break;// disable the USB frame interrupt of arduino (it causes strong jitter and we dont need it)
+      #endif
+      case 1: UCSR1A  = (1<<U2X1); UBRR1H = h; UBRR1L = l; UCSR1B |= (1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1); break;
+    #endif
+    #if defined(MEGA)
+      case 0: UCSR0A  = (1<<U2X0); UBRR0H = h; UBRR0L = l; UCSR0B |= (1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0); break;
+      case 1: UCSR1A  = (1<<U2X1); UBRR1H = h; UBRR1L = l; UCSR1B |= (1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1); break;
+      case 2: UCSR2A  = (1<<U2X2); UBRR2H = h; UBRR2L = l; UCSR2B |= (1<<RXEN2)|(1<<TXEN2)|(1<<RXCIE2); break;
+      case 3: UCSR3A  = (1<<U2X3); UBRR3H = h; UBRR3L = l; UCSR3B |= (1<<RXEN3)|(1<<TXEN3)|(1<<RXCIE3); break;
+    #endif
+  }
 }
 
 void SerialEnd(uint8_t port) {
-//EDH TODO
+  switch (port) {
+    #if defined(PROMINI)
+      case 0: UCSR0B &= ~((1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0)|(1<<UDRIE0)); break;
+    #endif
+    #if defined(PROMICRO)
+      case 1: UCSR1B &= ~((1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1)|(1<<UDRIE1)); break;
+    #endif
+    #if defined(MEGA)
+      case 0: UCSR0B &= ~((1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0)|(1<<UDRIE0)); break;
+      case 1: UCSR1B &= ~((1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1)|(1<<UDRIE1)); break;
+      case 2: UCSR2B &= ~((1<<RXEN2)|(1<<TXEN2)|(1<<RXCIE2)|(1<<UDRIE2)); break;
+      case 3: UCSR3B &= ~((1<<RXEN3)|(1<<TXEN3)|(1<<RXCIE3)|(1<<UDRIE3)); break;
+    #endif
+  }
 }
+
+#endif // End defined(CHIPKIT)
+
 
 void store_uart_in_buf(uint8_t data, uint8_t portnum) {
   #if defined(SPEKTRUM)
     if (portnum == SPEK_SERIAL_PORT) {
       if (!spekFrameFlags) { 
-        //sei(); EDH
-        interrupts(); // EDH: activation des interruptions
+        sei();
         uint32_t spekTimeNow = (timer0_overflow_count << 8) * (64 / clockCyclesPerMicrosecond()); //Move timer0_overflow_count into registers so we don't touch a volatile twice
         uint32_t spekInterval = spekTimeNow - spekTimeLast;                                       //timer0_overflow_count will be slightly off because of the way the Arduino core timer interrupt handler works; that is acceptable for this use. Using the core variable avoids an expensive call to millis() or micros()
         spekTimeLast = spekTimeNow;
@@ -780,8 +849,7 @@ void store_uart_in_buf(uint8_t data, uint8_t portnum) {
           serialHeadRX[portnum] = 0;
           spekFrameFlags = 0x01;
         }
-        //cli(); EDH
-        noInterrupts();// EDH 
+        cli();
       }
     }
   #endif
@@ -799,11 +867,11 @@ void store_uart_in_buf(uint8_t data, uint8_t portnum) {
 #if defined(PROMICRO)
   ISR(USART1_RX_vect)  { store_uart_in_buf(UDR1, 1); }
 #endif
-#if defined(MEGA)
-/* EDH TODO  ISR(USART0_RX_vect)  { store_uart_in_buf(UDR0, 0); }
+#if defined(MEGA) && !defined(CHIPKIT) //EDH
+  ISR(USART0_RX_vect)  { store_uart_in_buf(UDR0, 0); }
   ISR(USART1_RX_vect)  { store_uart_in_buf(UDR1, 1); }
   ISR(USART2_RX_vect)  { store_uart_in_buf(UDR2, 2); }
-  ISR(USART3_RX_vect)  { store_uart_in_buf(UDR3, 3); }*/
+  ISR(USART3_RX_vect)  { store_uart_in_buf(UDR3, 3); }
 #endif
 
 uint8_t SerialRead(uint8_t port) {

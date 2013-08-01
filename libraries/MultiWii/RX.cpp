@@ -1,5 +1,12 @@
-//#include "Arduino.h"
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
 #include "WProgram.h"
+#include <sys/attribs.h> //EDH used for __ISR
+#define cli()  asm volatile("di") //turn intrupts off
+#define sei()  asm volatile("ei") //turn intrupts on
+#endif
+
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -46,16 +53,19 @@ void rxInt(void);
 void configureReceiver() {
   /******************    Configure each rc pin for PCINT    ***************************/
   #if defined(STANDARD_RX)
-    #if defined(MEGA)
+    #if (defined(MEGA) && !defined(CHIPKIT))
       DDRK = 0;  // defined PORTK as a digital port ([A8-A15] are consired as digital PINs and not analogical)
     #endif
     // PCINT activation
-    for(uint8_t i = 0; i < PCINT_PIN_COUNT; i++){ // i think a for loop is ok for the init.
-      PCINT_RX_PORT |= PCInt_RX_Pins[i];
-      PCINT_RX_MASK |= PCInt_RX_Pins[i];
-    }
-    PCICR = PCIR_PORT_BIT;
-    
+    #if defined(CHIPKIT)//EDH
+        CNEN = 0x000090fc;   //enable cn2-7,12,15
+    #else 
+       for(uint8_t i = 0; i < PCINT_PIN_COUNT; i++){ // i think a for loop is ok for the init.
+         PCINT_RX_PORT |= PCInt_RX_Pins[i];
+         PCINT_RX_MASK |= PCInt_RX_Pins[i];
+       }
+       PCICR = PCIR_PORT_BIT;
+    #endif
     /*************    atmega328P's Specific Aux2 Pin Setup    *********************/
     #if defined(PROMINI)
      #if defined(RCAUXPIN)
@@ -138,8 +148,15 @@ void configureReceiver() {
     }
 #endif
 
+#if defined(CHIPKIT) //EDH
+   #ifdef __cplusplus
+      extern "C" {
+   #endif
+      void __ISR(_CHANGE_NOTICE_VECTOR, ipl7) ChangeNotice_Handler(void) { //EDH
+#else  	
   // port change Interrupt
   ISR(RX_PC_INTERRUPT) { //this ISR is common to every receiver channel, it is call everytime a change state occurs on a RX input pin
+#endif
     uint8_t mask;
     uint8_t pin;
     uint16_t cTime,dTime;
@@ -187,6 +204,15 @@ void configureReceiver() {
         if(failsafeCnt > 20) failsafeCnt -= 20; else failsafeCnt = 0; 
       }
     #endif
+    
+    #if defined(CHIPKIT)  //EDH
+      PCintLast = RX_PCINT_PIN_PORT; // Read PORT to clear mismatch condition    
+      IFS1CLR = 0x0001; // Be sure to clear the CN interrupt status
+                  // flag before exiting the service routine.
+       #ifdef __cplusplus
+          }
+       #endif                  
+    #endif               
   }
   /*********************      atmega328P's Aux2 Pins      *************************/
   #if defined(PROMINI)
@@ -275,8 +301,7 @@ void configureReceiver() {
   #endif
   
     now = micros();
-    // sei();  EDH
-    interrupts(); // EDH: activation des interruptions
+    sei();
     diff = now - last;
     last = now;
     if(diff>3000) chan = 0;
@@ -385,18 +410,21 @@ void readSpektrum(void) {
 
 uint16_t readRawRC(uint8_t chan) {
   uint16_t data;
+  #if defined(CHIPKIT)
+    cli(); // Let's disable interrupts
+    data = rcValue[rcChannel[chan]]; // Let's copy the data Atomically
+  #else
   #if defined(SPEKTRUM)
     readSpektrum();
     if (chan < RC_CHANS) {
       data = rcValue[rcChannel[chan]];
     } else data = 1500;
   #else
-    //uint8_t oldSREG; EDH TODO ?
-    //oldSREG = SREG;
-    // cli(); EDH
-    noInterrupts();// EDH Let's disable interrupts
+    uint8_t oldSREG;
+    oldSREG = SREG; cli(); // Let's disable interrupts
     data = rcValue[rcChannel[chan]]; // Let's copy the data Atomically
-    //SREG = oldSREG;        // Let's restore interrupt state
+    SREG = oldSREG;        // Let's restore interrupt state
+  #endif
   #endif
   return data; // We return the value correctly copied when the IRQ's where disabled
 }

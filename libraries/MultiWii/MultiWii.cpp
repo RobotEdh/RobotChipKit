@@ -8,9 +8,14 @@ March  2013     V2.2
  any later version. see <http://www.gnu.org/licenses/>
 */
 
-
-//#include "Arduino.h"
+#if defined(ARDUINO) && ARDUINO >= 100
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#include "Arduino.h"
+#else
 #include "WProgram.h"
+#endif
+
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -25,9 +30,8 @@ March  2013     V2.2
 #include "Serial.h"
 #include "GPS.h"
 
-//#include <avr/pgmspace.h>
-#define  VERSION  221
 
+#define  VERSION  221
 
 /*********** RC alias *****************/
 

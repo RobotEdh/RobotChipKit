@@ -15,8 +15,6 @@
 /*	09/01/2011(OliverJ): created										*/
 /*																		*/
 /************************************************************************/
-#ifndef DEEPROM_H_
-#define DEEPROM_H_
 
 #include <stdint.h>
 
@@ -51,5 +49,3 @@ uint32_t getAddress(eeSeg segment);
 uint8_t getData(eeSeg segment);
 BOOL getValid(eeSeg segment);
 BOOL getTaken(eeSeg segment);
-
-#endif /* DEEPROM_H_ */

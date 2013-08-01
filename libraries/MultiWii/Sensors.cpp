@@ -1,6 +1,11 @@
-//#include "Arduino.h"
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
 #include "WProgram.h"
-#include <Wire.h> // used for I2C protocol (lib)
+#include "Wire.h" // used for I2C protocol (lib)
+#define TWBR int notused // do NOT change the I2C clock rate to 400kHz, keep frequency TWI_FREQ 100000 defined in twi.h
+#endif
+
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -12,7 +17,7 @@
 
 void i2c_BMP085_UT_Start(void);
 
-//EDH void waitTransmissionI2C();
+void waitTransmissionI2C();
 void i2c_MS561101BA_UT_Start();
 #if BARO
 void Baro_Common();
@@ -173,25 +178,27 @@ static uint32_t neutralizeTime = 0;
 // ************************************************************************************************************
 // I2C general functions
 // ************************************************************************************************************
+#if defined(CHIPKIT)  //EDH
 
-void i2c_init(void) { //EDH for chipkit
- Wire.begin(); // setup I2C                          
+void i2c_init(void) {
+  Wire.begin(); // setup I2C
 }
 
 void i2c_rep_start(uint8_t address) {
-//EDH not used 
 }
 
-void i2c_stop(void) {
-//EDH not used  
+void i2c_stop(void) { 
 }
 
 void i2c_write(uint8_t data ) {
-//EDH not used 
+  Wire.send((int)data);
+  int ret = Wire.endTransmission(); 
+  delay(1);
 }
 
-uint8_t i2c_read(uint8_t ack) { 
-//EDH not used 
+uint8_t i2c_read(uint8_t ack) {
+  int value = Wire.receive();
+  return value;
 }
 
 uint8_t i2c_readAck() {
@@ -202,31 +209,112 @@ uint8_t i2c_readNak(void) {
   return i2c_read(0);
 }
 
-//EDH void waitTransmissionI2C() {
-//}
+void waitTransmissionI2C() {
+}
 
-size_t i2c_read_to_buf(uint8_t add, void *buf, size_t size) { //EDH for chipkit
+size_t i2c_read_to_buf(uint8_t add, void *buf, size_t size) {
+  Wire.requestFrom(add, (uint8_t)size);
+  
   size_t bytes_read = 0;
   uint8_t *b = (uint8_t*)buf;
-  
-  for (uint8_t k = 0; k < size; k += min(size, BUFFER_LENGTH)) {
-                Wire.requestFrom(add, (uint8_t)min(size - k, BUFFER_LENGTH));
-
-                for (; Wire.available(); bytes_read++) {
-                    *b++ = Wire.receive();
-                }
-    }  
-  
+  while (size--) {
+    /* acknowledge all but the final byte */
+    *b++ = i2c_read(size > 0);
+    /* TODO catch I2C errors here and abort */
+    bytes_read++;
+  }
   return bytes_read;
 }
 
-size_t i2c_read_reg_to_buf(uint8_t add, uint8_t reg, void *buf, size_t size) { //EDH for chipkit
-  Wire.beginTransmission(add);
-  Wire.send(reg);
-  Wire.endTransmission();
-  delay(1);
+size_t i2c_read_reg_to_buf(uint8_t add, uint8_t reg, void *buf, size_t size) {
+  Wire.beginTransmission(add); 
+  
+  i2c_write(reg);        // register selection
+  
   return i2c_read_to_buf(add, buf, size);
 }
+
+#else // NO CHIPKIT
+void i2c_init(void) {
+  #if defined(INTERNAL_I2C_PULLUPS)
+    I2C_PULLUPS_ENABLE
+  #else
+    I2C_PULLUPS_DISABLE
+  #endif
+  TWSR = 0;                                    // no prescaler => prescaler = 1
+  TWBR = ((F_CPU / I2C_SPEED) - 16) / 2;       // change the I2C clock rate
+  TWCR = 1<<TWEN;                              // enable twi module, no interrupt
+}
+
+void i2c_rep_start(uint8_t address) {
+  TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN) ; // send REPEAT START condition
+  waitTransmissionI2C();                       // wait until transmission completed
+  TWDR = address;                              // send device address
+  TWCR = (1<<TWINT) | (1<<TWEN);
+  waitTransmissionI2C();                       // wail until transmission completed
+}
+
+void i2c_stop(void) {
+  TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
+  //  while(TWCR & (1<<TWSTO));                // <- can produce a blocking state with some WMP clones
+}
+
+void i2c_write(uint8_t data ) {
+  TWDR = data;                                 // send data to the previously addressed device
+  TWCR = (1<<TWINT) | (1<<TWEN);
+  waitTransmissionI2C();
+}
+
+uint8_t i2c_read(uint8_t ack) {
+  TWCR = (1<<TWINT) | (1<<TWEN) | (ack? (1<<TWEA) : 0);
+  waitTransmissionI2C();
+  uint8_t r = TWDR;
+  if (!ack) i2c_stop();
+  return r;
+}
+
+uint8_t i2c_readAck() {
+  return i2c_read(1);
+}
+
+uint8_t i2c_readNak(void) {
+  return i2c_read(0);
+}
+
+void waitTransmissionI2C() {
+  uint16_t count = 255;
+  while (!(TWCR & (1<<TWINT))) {
+    count--;
+    if (count==0) {              //we are in a blocking state => we don't insist
+      TWCR = 0;                  //and we force a reset on TWINT register
+      neutralizeTime = micros(); //we take a timestamp here to neutralize the value during a short delay
+      i2c_errors_count++;
+      break;
+    }
+  }
+}
+
+
+size_t i2c_read_to_buf(uint8_t add, void *buf, size_t size) {
+  i2c_rep_start((add<<1) | 1);  // I2C read direction
+  size_t bytes_read = 0;
+  uint8_t *b = (uint8_t*)buf;
+  while (size--) {
+    /* acknowledge all but the final byte */
+    *b++ = i2c_read(size > 0);
+    /* TODO catch I2C errors here and abort */
+    bytes_read++;
+  }
+  return bytes_read;
+}
+
+size_t i2c_read_reg_to_buf(uint8_t add, uint8_t reg, void *buf, size_t size) {
+  i2c_rep_start(add<<1); // I2C write direction
+  i2c_write(reg);        // register selection
+  return i2c_read_to_buf(add, buf, size);
+}
+
+#endif
 
 /* transform a series of bytes from big endian to little
    endian and vice versa. */
@@ -249,12 +337,11 @@ void i2c_getSixRawADC(uint8_t add, uint8_t reg) {
   i2c_read_reg_to_buf(add, reg, &rawADC, 6);
 }
 
-void i2c_writeReg(uint8_t add, uint8_t reg, uint8_t val) { //EDH for Chipkit
-    Wire.beginTransmission(add);
-    Wire.send((uint8_t) reg); // send address
-    Wire.send((uint8_t) val); // send value
- 
-    int ret = Wire.endTransmission();
+void i2c_writeReg(uint8_t add, uint8_t reg, uint8_t val) {
+  i2c_rep_start(add<<1); // I2C write direction
+  i2c_write(reg);        // register selection
+  i2c_write(val);        // value to write in register
+  i2c_stop();
 }
 
 uint8_t i2c_readReg(uint8_t add, uint8_t reg) {
@@ -986,7 +1073,12 @@ void ACC_getADC() {
 #if defined(L3G4200D)
 #define L3G4200D_ADDRESS 0x69
 void Gyro_init() {
-//EDH not used 
+  delay(100);
+  i2c_writeReg(L3G4200D_ADDRESS ,0x20 ,0x8F ); // CTRL_REG1   400Hz ODR, 20hz filter, run!
+  delay(5);
+  i2c_writeReg(L3G4200D_ADDRESS ,0x24 ,0x02 ); // CTRL_REG5   low pass filter enable
+  delay(5);
+  i2c_writeReg(L3G4200D_ADDRESS ,0x23 ,0x30); // CTRL_REG4 Select 2000dps
 }
 
 void Gyro_getADC () {
@@ -1013,7 +1105,15 @@ void Gyro_getADC () {
 // ************************************************************************************************************
 #if defined(ITG3200)
 void Gyro_init() {
-//EDH not used  
+  delay(100);
+  i2c_writeReg(ITG3200_ADDRESS, 0x3E, 0x80); //register: Power Management  --  value: reset device
+//  delay(5);
+//  i2c_writeReg(ITG3200_ADDRESS, 0x15, ITG3200_SMPLRT_DIV); //register: Sample Rate Divider  -- default value = 0: OK
+  delay(5);
+  i2c_writeReg(ITG3200_ADDRESS, 0x16, 0x18 + ITG3200_DLPF_CFG); //register: DLPF_CFG - low pass filter configuration
+  delay(5);
+  i2c_writeReg(ITG3200_ADDRESS, 0x3E, 0x03); //register: Power Management  --  value: PLL with Z Gyro reference
+  delay(100);
 }
 
 void Gyro_getADC () {
@@ -1304,6 +1404,7 @@ void Device_Mag_getADC() {
 #if defined(MPU6050)
 
 void Gyro_init() {
+  TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz
   i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
   delay(5);
   i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x03);             //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
@@ -1377,7 +1478,11 @@ void ACC_getADC () {
 #if defined(MPU3050)
 
 void Gyro_init() {
-//EDH not used  
+  TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz
+  i2c_writeReg(MPU3050_ADDRESS, 0x3E, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
+  delay(5);
+  i2c_writeReg(MPU3050_ADDRESS, 0x3E, 0x03);             //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
+  i2c_writeReg(MPU3050_ADDRESS, 0x16, MPU3050_DLPF_CFG + 0x18); // Gyro CONFIG   -- EXT_SYNC_SET 0 (disable input pin for data sync) ; default DLPF_CFG = 0 => GYRO bandwidth = 256Hz); -- FS_SEL = 3: Full scale set to 2000 deg/sec
 }
 
 void Gyro_getADC () {
@@ -1402,7 +1507,11 @@ void Gyro_getADC () {
 #define WMP_ADDRESS_2 0x52
 
 void Gyro_init() {
-//EDH not used  
+  delay(250);
+  i2c_writeReg(WMP_ADDRESS_1, 0xF0, 0x55); // Initialize Extension
+  delay(250);
+  i2c_writeReg(WMP_ADDRESS_1, 0xFE, 0x05); // Activate Nunchuck pass-through mode
+  delay(250);
 }
 
 void Gyro_getADC() {

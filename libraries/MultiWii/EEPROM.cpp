@@ -1,32 +1,52 @@
-//#include "Arduino.h"
+#if defined(ARDUINO) && ARDUINO >= 100
+#include <avr/eeprom.h>
+#include "Arduino.h"
+#else
 #include "WProgram.h"
+#include "Deeprom.h"
+#endif
+
 #include "config.h"
 #include "def.h"
 #include "types.h"
 #include "EEPROM.h"
-#include "Deeprom.h"
 #include "MultiWii.h"
 #include "Alarms.h"
 #include "GPS.h"
-	
-	
 
+void LoadDefaults(void);
 
-void 	eeprom_read_block (void *__dst, const void *__src, size_t size){
- uint8_t data;    
+#if defined(CHIPKIT)  //EDH
+void eeprom_read_block (uint32_t *__dst, const uint32_t *__src, size_t size){
+ uint8_t data;
  uint32_t address;
  
+ address =  *__src;
  
  for(int i=0; i < size; i++) {
      int ret = readEeprom(address, &data);
      address = address +1;
  }
+ __dst = (uint32_t*)data;
+ 
 }
 
-void 	eeprom_write_block (const void *__src, void *__dst, size_t size){
+void eeprom_write_block (const uint32_t *__src, uint32_t *__dst, size_t size){
+ uint8_t data;
+ uint32_t address;
+ 
+ address =  *__dst;
+ data = (uint8_t)*__src;
+ 
+ for(int i=0; i < size; i++) {
+     int ret = writeEeprom(address, data);
+     address = address +1;
+ }
+
 }
 
-
+#endif
+  
 uint8_t calculate_sum(uint8_t *cb , uint8_t siz) {
   uint8_t sum=0x55;  // checksum init
   while(--siz) sum += *cb++;  // calculate checksum (without checksum byte)
@@ -34,7 +54,11 @@ uint8_t calculate_sum(uint8_t *cb , uint8_t siz) {
 }
 
 void readGlobalSet() {
+#if defined(CHIPKIT) 
+  eeprom_read_block((uint32_t*)&global_conf, (uint32_t*)0, sizeof(global_conf));   
+#else  
   eeprom_read_block((void*)&global_conf, (void*)0, sizeof(global_conf));
+#endif  
   if(calculate_sum((uint8_t*)&global_conf, sizeof(global_conf)) != global_conf.checksum) {
     global_conf.currentSet = 0;
     global_conf.accZero[ROLL] = 5000;    // for config error signalization
@@ -48,7 +72,11 @@ bool readEEPROM() {
   #else
     global_conf.currentSet=0;
   #endif
-  eeprom_read_block((void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
+  #if defined(CHIPKIT)   
+    eeprom_read_block((uint32_t*)&conf, (uint32_t*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
+  #else
+    eeprom_read_block((void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
+  #endif
   if(calculate_sum((uint8_t*)&conf, sizeof(conf)) != conf.checksum) {
     blinkLED(6,100,3);    
     #if defined(BUZZER)
@@ -84,7 +112,11 @@ bool readEEPROM() {
 
 void writeGlobalSet(uint8_t b) {
   global_conf.checksum = calculate_sum((uint8_t*)&global_conf, sizeof(global_conf));
-  eeprom_write_block((const void*)&global_conf, (void*)0, sizeof(global_conf));
+  #if defined(CHIPKIT)  
+    eeprom_write_block((const uint32_t*)&global_conf, (uint32_t*)0, sizeof(global_conf));
+  #else    
+    eeprom_write_block((const void*)&global_conf, (void*)0, sizeof(global_conf));
+  #endif    
   if (b == 1) blinkLED(15,20,1);
   #if defined(BUZZER)
     alarmArray[7] = 1; 
@@ -99,7 +131,11 @@ void writeParams(uint8_t b) {
     global_conf.currentSet=0;
   #endif
   conf.checksum = calculate_sum((uint8_t*)&conf, sizeof(conf));
-  eeprom_write_block((const void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
+  #if defined(CHIPKIT)  
+    eeprom_write_block((const uint32_t*)&conf, (uint32_t*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
+  #else
+    eeprom_write_block((const void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));   
+  #endif 
   readEEPROM();
   if (b == 1) blinkLED(15,20,1);
   #if defined(BUZZER)
@@ -207,7 +243,11 @@ void LoadDefaults() {
 
 #ifdef LOG_PERMANENT
 void readPLog(void) {
-  eeprom_read_block((void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
+  #if defined(CHIPKIT)     
+    eeprom_read_block((uint32_t*)&plog, (uint32_t*)(E2END - 4 - sizeof(plog)), sizeof(plog));
+  #else  
+    eeprom_read_block((void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
+  #endif  
   if(calculate_sum((uint8_t*)&plog, sizeof(plog)) != plog.checksum) {
     blinkLED(9,100,3);
     #if defined(BUZZER)
@@ -222,7 +262,11 @@ void readPLog(void) {
 }
 void writePLog(void) {
   plog.checksum = calculate_sum((uint8_t*)&plog, sizeof(plog));
-  eeprom_write_block((const void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
+ #if defined(CHIPKIT)   
+   eeprom_write_block((const uint32_t*)&plog, (uint32_t*)(E2END - 4 - sizeof(plog)), sizeof(plog));
+ #else
+   eeprom_write_block((const void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
+ #endif  
 }
 #endif
 

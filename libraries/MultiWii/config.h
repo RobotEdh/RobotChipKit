@@ -2,6 +2,14 @@
 #define CONFIG_H_
 
 /*************************************************************************************************/
+/*****  IF you want to use a CHIPKIT platform (based on uc PIC) instead of an arduino         ****/
+/****                     #define  CHIPKIT                                                    ****/
+/*************************************************************************************************/
+
+#define  CHIPKIT   //EDH
+
+
+/*************************************************************************************************/
 /****           CONFIGURABLE PARAMETERS                                                       ****/
 /*************************************************************************************************/
 
@@ -37,7 +45,7 @@
     //#define BI
     //#define TRI
     //#define QUADP
-    #define QUADX
+    #define QUADX//EDH
     //#define Y4
     //#define Y6
     //#define HEX6
@@ -160,7 +168,7 @@
       //#define WMP
       //#define ITG3200
       //#define L3G4200D
-      #define MPU6050       //combo + ACC
+      #define MPU6050       //combo + ACC//EDH
 
       /* I2C accelerometer */
       //#define NUNCHUCK  // if you want to use the nunckuk connected to a WMP
@@ -315,7 +323,7 @@
     /****************************    PPM Sum Reciver    ***********************************/
       /* The following lines apply only for specific receiver with only one PPM sum signal, on digital PIN 2
          Select the right line depending on your radio brand. Feel free to modify the order in your PPM order is different */
-      #define SERIAL_SUM_PPM         PITCH,YAW,THROTTLE,ROLL,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Graupner/Spektrum
+      //#define SERIAL_SUM_PPM         PITCH,YAW,THROTTLE,ROLL,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Graupner/Spektrum
       //#define SERIAL_SUM_PPM         ROLL,PITCH,THROTTLE,YAW,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Robe/Hitec/Futaba
       //#define SERIAL_SUM_PPM         ROLL,PITCH,YAW,THROTTLE,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Multiplex
       //#define SERIAL_SUM_PPM         PITCH,ROLL,THROTTLE,YAW,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For some Hitec/Sanwa/Others

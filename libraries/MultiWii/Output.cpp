@@ -1,5 +1,38 @@
-//#include "Arduino.h"
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
 #include "WProgram.h"
+
+    // For PIC32 Timers, define prescale settings by PWM frequency
+    #define MOTOR12_312KHZ 0 // 1:1, actual frequency 312KHz
+    #define MOTOR12_156KHZ 1 // 1:2, actual frequency 156KHz
+    #define MOTOR12_64KHZ 2 // 1:4, actual frequency 78KHz
+    #define MOTOR12_39KHZ 3 // 1:8, acutal frequency 39KHz
+    #define MOTOR12_19KHZ 4 // 1:16, actual frequency 19KHz
+    #define MOTOR12_8KHZ 5 // 1:32, actual frequency 9.7KHz
+    #define MOTOR12_4_8KHZ 6 // 1:64, actual frequency 4.8KHz
+    #define MOTOR12_2KHZ 7 // 1:256, actual frequency 1.2KHz
+    #define MOTOR12_1KHZ 7 // 1:256, actual frequency 1.2KHz
+
+    #define MOTOR34_312KHZ 0 // 1:1, actual frequency 312KHz
+    #define MOTOR34_156KHZ 1 // 1:2, actual frequency 156KHz
+    #define MOTOR34_64KHZ 2 // 1:4, actual frequency 78KHz
+    #define MOTOR34_39KHZ 3 // 1:8, acutal frequency 39KHz
+    #define MOTOR34_19KHZ 4 // 1:16, actual frequency 19KHz
+    #define MOTOR34_8KHZ 5 // 1:32, actual frequency 9.7KHz
+    #define MOTOR34_4_8KHZ 6 // 1:64, actual frequency 4.8KHz
+    #define MOTOR34_2KHZ 7 // 1:256, actual frequency 1.2KHz
+    #define MOTOR34_1KHZ 7 // 1:256, actual frequency 1.2KHz
+    
+    // PWM rate for DC motors.
+    #define DC_MOTOR_PWM_RATE MOTOR34_39KHZ
+
+    #define OCR3A OC2RS //OC2 (pin 5) PMW 
+    #define OCR3C OC1RS //OC1 (pin 3) PMW 
+    #define OCR4A OC3RS //OC3 (pin 6) PMW 
+    #define OCR3B OC4RS //OC4 (pin 9) PWM
+#endif
+
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -225,7 +258,203 @@ void writeServos() {
 /************  Writes the Motors values to the PWM compare register  ******************/
 /**************************************************************************************/
 void writeMotors() { // [1000;2000] => [125;250]
- //EDH TODO
+  /****************  Specific PWM Timers & Registers for the MEGA's   *******************/
+  #if defined(MEGA)// [1000:2000] => [8000:16000] for timer 3 & 4 for mega
+    #if (NUMBER_MOTOR > 0) 
+      #ifndef EXT_MOTOR_RANGE 
+        OCR3C = motor[0]<<3; //  pin 3
+      #else
+        OCR3C = ((motor[0]<<4) - 16000);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 1)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR3A = motor[1]<<3; //  pin 5
+      #else
+        OCR3A = ((motor[1]<<4) - 16000);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 2)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR4A = motor[2]<<3; //  pin 6
+      #else
+        OCR4A = ((motor[2]<<4) - 16000);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 3)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR3B = motor[3]<<3; //  pin 2
+      #else
+        OCR3B = ((motor[3]<<4) - 16000);
+      #endif
+    #endif
+    
+    #if !defined(CHIPKIT) //EDH TODO maxi 4 motors for chipkit
+     #if (NUMBER_MOTOR > 4)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR4B = motor[4]<<3; //  pin 7
+        OCR4C = motor[5]<<3; //  pin 8
+      #else
+        OCR4B = ((motor[4]<<4) - 16000);
+        OCR4C = ((motor[5]<<4) - 16000);
+      #endif
+     #endif
+     #if (NUMBER_MOTOR > 6)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR2B = motor[6]>>3; //  pin 9
+        OCR2A = motor[7]>>3; //  pin 10
+      #else
+        OCR2B = (motor[6]>>2) - 250;
+        OCR2A = (motor[7]>>2) - 250;
+      #endif
+     #endif
+    #endif  //End !defined(CHIPKIT)
+  #endif
+
+  /******** Specific PWM Timers & Registers for the atmega32u4 (Promicro)   ************/
+  #if defined(PROMICRO)
+    #if (NUMBER_MOTOR > 0)
+      #if defined(A32U4_4_HW_PWM_SERVOS)
+        // write motor0 to pin 6
+        // Timer 4 A & D [1000:2000] => [1000:2000]
+        #ifndef EXT_MOTOR_RANGE
+          TC4H = motor[0]>>8; OCR4D = (motor[0]&0xFF); //  pin 6
+        #else
+          TC4H = (((motor[0]-1000)<<1)+16)>>8; OCR4D = ((((motor[0]-1000)<<1)+16)&0xFF); //  pin 6
+        #endif
+      #else
+        // write motor0 to pin 9
+        // Timer 1 A & B [1000:2000] => [8000:16000]
+        #ifndef EXT_MOTOR_RANGE
+          OCR1A = motor[0]<<3; //  pin 9
+        #else
+          OCR1A = ((motor[0]<<4) - 16000) + 128;
+        #endif
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 1)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR1B = motor[1]<<3; //  pin 10
+      #else
+        OCR1B = ((motor[1]<<4) - 16000) + 128;
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 2) // Timer 4 A & D [1000:2000] => [1000:2000]
+      #if !defined(HWPWM6)
+        // to write values > 255 to timer 4 A/B we need to split the bytes
+        #ifndef EXT_MOTOR_RANGE 
+          TC4H = (2047-motor[2])>>8; OCR4A = ((2047-motor[2])&0xFF); //  pin 5
+        #else
+          TC4H = 2047-(((motor[2]-1000)<<1)+16)>>8; OCR4A = (2047-(((motor[2]-1000)<<1)+16)&0xFF); //  pin 5
+        #endif
+      #else
+        #ifndef EXT_MOTOR_RANGE 
+          OCR3A = motor[2]<<3; //  pin 5
+        #else
+          OCR3A = ((motor[2]<<4) - 16000) + 128;
+        #endif
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 3)
+      #ifndef EXT_MOTOR_RANGE 
+        TC4H = motor[3]>>8; OCR4D = (motor[3]&0xFF); //  pin 6
+      #else
+        TC4H = (((motor[3]-1000)<<1)+16)>>8; OCR4D = ((((motor[3]-1000)<<1)+16)&0xFF); //  pin 6
+      #endif
+    #endif    
+    #if (NUMBER_MOTOR > 4)
+      #if !defined(HWPWM6)
+        #if (NUMBER_MOTOR == 6) && !defined(SERVO)
+          atomicPWM_PIN5_highState = motor[4]<<3;
+          atomicPWM_PIN5_lowState = 16383-atomicPWM_PIN5_highState;
+          atomicPWM_PIN6_highState = motor[5]<<3;
+          atomicPWM_PIN6_lowState = 16383-atomicPWM_PIN6_highState;      
+        #else
+          atomicPWM_PIN5_highState = ((motor[4]-1000)<<4)+320;
+          atomicPWM_PIN5_lowState = 15743-atomicPWM_PIN5_highState;
+          atomicPWM_PIN6_highState = ((motor[5]-1000)<<4)+320;
+          atomicPWM_PIN6_lowState = 15743-atomicPWM_PIN6_highState;        
+        #endif
+      #else
+        #ifndef EXT_MOTOR_RANGE 
+          OCR1C = motor[4]<<3; //  pin 11
+          TC4H = motor[5]>>8; OCR4A = (motor[5]&0xFF); //  pin 13  
+        #else
+          OCR1C = ((motor[4]<<4) - 16000) + 128;
+          TC4H = (((motor[5]-1000)<<1)+16)>>8; OCR4A = ((((motor[5]-1000)<<1)+16)&0xFF); //  pin 13       
+        #endif  
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 6)
+      #if !defined(HWPWM6)
+        atomicPWM_PINA2_highState = ((motor[6]-1000)<<4)+320;
+        atomicPWM_PINA2_lowState = 15743-atomicPWM_PINA2_highState;
+        atomicPWM_PIN12_highState = ((motor[7]-1000)<<4)+320;
+        atomicPWM_PIN12_lowState = 15743-atomicPWM_PIN12_highState;
+      #else
+        atomicPWM_PINA2_highState = ((motor[6]-1000)>>2)+5;
+        atomicPWM_PINA2_lowState = 245-atomicPWM_PINA2_highState;
+        atomicPWM_PIN12_highState = ((motor[7]-1000)>>2)+5;
+        atomicPWM_PIN12_lowState = 245-atomicPWM_PIN12_highState;     
+      #endif
+    #endif
+  #endif
+
+  /********  Specific PWM Timers & Registers for the atmega328P (Promini)   ************/
+  #if defined(PROMINI)
+    #if (NUMBER_MOTOR > 0)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR1A = motor[0]>>3; //  pin 9
+      #else
+        OCR1A = ((motor[0]>>2) - 250);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 1)
+      #ifndef EXT_MOTOR_RANGE 
+        OCR1B = motor[1]>>3; //  pin 10
+      #else
+        OCR1B = ((motor[1]>>2) - 250);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 2)
+      #ifndef EXT_MOTOR_RANGE
+        OCR2A = motor[2]>>3; //  pin 11
+      #else
+        OCR2A = ((motor[2]>>2) - 250);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 3)
+      #ifndef EXT_MOTOR_RANGE
+        OCR2B = motor[3]>>3; //  pin 3
+      #else
+        OCR2B = ((motor[3]>>2) - 250);
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 4)
+      #if (NUMBER_MOTOR == 6) && !defined(SERVO)
+        #ifndef EXT_MOTOR_RANGE 
+          atomicPWM_PIN6_highState = motor[4]>>3;
+          atomicPWM_PIN5_highState = motor[5]>>3;
+        #else
+          atomicPWM_PIN6_highState = (motor[4]>>2) - 250;
+          atomicPWM_PIN5_highState = (motor[5]>>2) - 250;
+        #endif
+        atomicPWM_PIN6_lowState  = 255-atomicPWM_PIN6_highState;
+        atomicPWM_PIN5_lowState  = 255-atomicPWM_PIN5_highState; 
+      #else //note: EXT_MOTOR_RANGE not possible here
+        atomicPWM_PIN6_highState = ((motor[4]-1000)>>2)+5;
+        atomicPWM_PIN6_lowState  = 245-atomicPWM_PIN6_highState;
+        atomicPWM_PIN5_highState = ((motor[5]-1000)>>2)+5;
+        atomicPWM_PIN5_lowState  = 245-atomicPWM_PIN5_highState;
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 6) //note: EXT_MOTOR_RANGE not possible here
+      atomicPWM_PINA2_highState = ((motor[6]-1000)>>2)+5;
+      atomicPWM_PINA2_lowState  = 245-atomicPWM_PINA2_highState;
+      atomicPWM_PIN12_highState = ((motor[7]-1000)>>2)+5;
+      atomicPWM_PIN12_lowState  = 245-atomicPWM_PIN12_highState;
+    #endif
+  #endif
 }
 
 /**************************************************************************************/
@@ -242,7 +471,177 @@ void writeAllMotors(int16_t mc) {   // Sends commands to all motors
 /************        Initialize the PWM Timers and Registers         ******************/
 /**************************************************************************************/
 void initOutput() {
- //EDH TODO
+  /****************            mark all PWM pins as Output             ******************/
+  for(uint8_t i=0;i<NUMBER_MOTOR;i++) {
+    pinMode(PWM_PIN[i],OUTPUT);
+  }
+    
+  /****************  Specific PWM Timers & Registers for the MEGA's    ******************/
+  #if (defined(MEGA) && !defined(CHIPKIT))
+    #if (NUMBER_MOTOR > 0)
+      // init 16bit timer 3
+      TCCR3A |= (1<<WGM31); // phase correct mode
+      TCCR3A &= ~(1<<WGM30);
+      TCCR3B |= (1<<WGM33);
+      TCCR3B &= ~(1<<CS31); // no prescaler
+      ICR3   |= 0x3FFF; // TOP to 16383;      
+      
+      TCCR3A |= _BV(COM3C1); // connect pin 3 to timer 3 channel C
+    #endif
+    #if (NUMBER_MOTOR > 1)
+      TCCR3A |= _BV(COM3A1); // connect pin 5 to timer 3 channel A
+    #endif
+    #if (NUMBER_MOTOR > 2)
+      // init 16bit timer 4
+      TCCR4A |= (1<<WGM41); // phase correct mode
+      TCCR4A &= ~(1<<WGM40);
+      TCCR4B |= (1<<WGM43);
+      TCCR4B &= ~(1<<CS41); // no prescaler
+      ICR4   |= 0x3FFF; // TOP to 16383;    
+      
+      TCCR4A |= _BV(COM4A1); // connect pin 6 to timer 4 channel A
+    #endif
+    #if (NUMBER_MOTOR > 3)
+      TCCR3A |= _BV(COM3B1); // connect pin 2 to timer 3 channel B
+    #endif
+    #if (NUMBER_MOTOR > 4)
+      TCCR4A |= _BV(COM4B1); // connect pin 7 to timer 4 channel B
+      TCCR4A |= _BV(COM4C1); // connect pin 8 to timer 4 channel C
+    #endif
+    #if (NUMBER_MOTOR > 6)
+      // timer 2 is a 8bit timer so we cant change its range 
+      TCCR2A |= _BV(COM2B1); // connect pin 9 to timer 2 channel B
+      TCCR2A |= _BV(COM2A1); // connect pin 10 to timer 2 channel A
+    #endif
+  #endif
+  
+   /****************  Specific PWM Timers & Registers for the CHIPKIT's    ******************/
+  #if defined(CHIPKIT)
+  
+     // Set up Timer2 for 80MHz counting from 0 to 256
+     T2CON = 0x8000 | ((DC_MOTOR_PWM_RATE & 0x07) << 4); // ON=1, FRZ=0, SIDL=0, TGATE=0, TCKPS=<DC_MOTOR_PWM_RATE>, T32=0, TCS=0; // ON=1, FRZ=0, SIDL=0, TGATE=0, TCKPS=0, T32=0, TCS=0
+     TMR2 = 0x0000;
+     PR2 = 0x0100;
+     
+     // Setup OC1 (pin3) in PWM mode, with Timer2 as timebase
+     OC1CON = 0x8006; // OC32 = 0, OCTSEL=0, OCM=6
+     OC1RS = 0x0000;
+     OC1R = 0x0000;
+    
+     // Setup OC2 (pin 5) in PWM mode, with Timer2 as timebase
+     OC2CON = 0x8006; // OC32 = 0, OCTSEL=0, OCM=6
+     OC2RS = 0x0000;
+     OC2R = 0x0000;
+     
+     // Setup OC3 (pin 6) in PWM mode, with Timer2 as timebase
+     OC3CON = 0x8006; // OC32 = 0, OCTSEL=0, OCM=6
+     OC3RS = 0x0000;
+     OC3R = 0x0000;     
+          
+     // Setup OC4 (pin 9) in PWM mode, with Timer2 as timebase
+     OC4CON = 0x8006; // OC32 = 0, OCTSEL=0, OCM=6
+     OC4RS = 0x0000;
+     OC4R = 0x0000;    
+     
+     
+  #endif 
+  
+  /******** Specific PWM Timers & Registers for the atmega32u4 (Promicro)   ************/
+  #if defined(PROMICRO)
+    #if (NUMBER_MOTOR > 0) && ( !defined(A32U4_4_HW_PWM_SERVOS) )
+      TCCR1A |= (1<<WGM11); // phase correct mode & no prescaler
+      TCCR1A &= ~(1<<WGM10);
+      TCCR1B &= ~(1<<WGM12) &  ~(1<<CS11) & ~(1<<CS12);
+      TCCR1B |= (1<<WGM13) | (1<<CS10); 
+      ICR1   |= 0x3FFF; // TOP to 16383;     
+      TCCR1A |= _BV(COM1A1); // connect pin 9 to timer 1 channel A
+    #endif
+    #if (NUMBER_MOTOR > 1)
+      TCCR1A |= _BV(COM1B1); // connect pin 10 to timer 1 channel B
+    #endif
+    #if (NUMBER_MOTOR > 2)
+      #if !defined(HWPWM6) // timer 4A
+        TCCR4E |= (1<<ENHC4); // enhanced pwm mode
+        TCCR4B &= ~(1<<CS41); TCCR4B |= (1<<CS42)|(1<<CS40); // prescaler to 16
+        TCCR4D |= (1<<WGM40); TC4H = 0x3; OCR4C = 0xFF; // phase and frequency correct mode & top to 1023 but with enhanced pwm mode we have 2047
+        TCCR4A |= (1<<COM4A0)|(1<<PWM4A); // connect pin 5 to timer 4 channel A 
+      #else // timer 3A
+        TCCR3A |= (1<<WGM31); // phase correct mode & no prescaler
+        TCCR3A &= ~(1<<WGM30);
+        TCCR3B &= ~(1<<WGM32) &  ~(1<<CS31) & ~(1<<CS32);
+        TCCR3B |= (1<<WGM33) | (1<<CS30); 
+        ICR3   |= 0x3FFF; // TOP to 16383;     
+        TCCR3A |= _BV(COM3A1); // connect pin 5 to timer 3 channel A    
+      #endif 
+    #endif
+    #if (NUMBER_MOTOR > 3) || ( (NUMBER_MOTOR > 0) && defined(A32U4_4_HW_PWM_SERVOS) )
+      #if defined(HWPWM6) 
+        TCCR4E |= (1<<ENHC4); // enhanced pwm mode
+        TCCR4B &= ~(1<<CS41); TCCR4B |= (1<<CS42)|(1<<CS40); // prescaler to 16
+        TCCR4D |= (1<<WGM40); TC4H = 0x3; OCR4C = 0xFF; // phase and frequency correct mode & top to 1023 but with enhanced pwm mode we have 2047
+      #endif
+      TCCR4C |= (1<<COM4D1)|(1<<PWM4D); // connect pin 6 to timer 4 channel D
+    #endif
+    #if (NUMBER_MOTOR > 4)
+      #if defined(HWPWM6) 
+        TCCR1A |= _BV(COM1C1); // connect pin 11 to timer 1 channel C
+        TCCR4A |= (1<<COM4A1)|(1<<PWM4A); // connect pin 13 to timer 4 channel A 
+      #else
+        initializeSoftPWM();
+      #endif
+    #endif
+    #if (NUMBER_MOTOR > 6)
+      #if defined(HWPWM6) 
+        initializeSoftPWM();
+      #endif
+    #endif
+  #endif
+  
+  /********  Specific PWM Timers & Registers for the atmega328P (Promini)   ************/
+  #if defined(PROMINI)
+    #if (NUMBER_MOTOR > 0)
+      TCCR1A |= _BV(COM1A1); // connect pin 9 to timer 1 channel A
+    #endif
+    #if (NUMBER_MOTOR > 1)
+      TCCR1A |= _BV(COM1B1); // connect pin 10 to timer 1 channel B
+    #endif
+    #if (NUMBER_MOTOR > 2)
+      TCCR2A |= _BV(COM2A1); // connect pin 11 to timer 2 channel A
+    #endif
+    #if (NUMBER_MOTOR > 3)
+      TCCR2A |= _BV(COM2B1); // connect pin 3 to timer 2 channel B
+    #endif
+    #if (NUMBER_MOTOR > 4)  // PIN 5 & 6 or A0 & A1
+      initializeSoftPWM();
+      #if defined(A0_A1_PIN_HEX) || (NUMBER_MOTOR > 6)
+        pinMode(5,INPUT);pinMode(6,INPUT);     // we reactivate the INPUT affectation for these two PINs
+        pinMode(A0,OUTPUT);pinMode(A1,OUTPUT);
+      #endif
+    #endif
+  #endif
+
+  /********  special version of MultiWii to calibrate all attached ESCs ************/
+  #if defined(ESC_CALIB_CANNOT_FLY)
+    writeAllMotors(ESC_CALIB_HIGH);
+    blinkLED(2,20, 2);
+    delay(4000);
+    writeAllMotors(ESC_CALIB_LOW);
+    blinkLED(3,20, 2);
+    while (1) {
+      delay(5000);
+      blinkLED(4,20, 2);
+    #if defined(BUZZER)
+      alarmArray[7] = 2;
+    #endif
+    }
+    exit; // statement never reached
+  #endif
+  
+  writeAllMotors(MINCOMMAND);
+  delay(300);
+  #if defined(SERVO)
+    initializeServo();
+  #endif
 }
 
 

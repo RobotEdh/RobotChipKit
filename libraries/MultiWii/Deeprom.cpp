@@ -21,6 +21,7 @@
 /*				Include File Definitions						*/
 /* ------------------------------------------------------------ */
 
+   
 #include <p32xxxx.h>
 #include <stdint.h>
 #include <peripheral/nvm.h>
@@ -143,25 +144,25 @@ BOOL writeEeprom(uint32_t address, uint8_t data)
 
 	//Try writting data to flash
 	for(i=0; i < _EEPROM_PAGE_COUNT; i++) {
-		if(putEeprom(&eedata_addr[i][0], address, data)) {
+		if(putEeprom((eeSeg *)&eedata_addr[i][0], address, data)) {
 			return fTrue;
 		}
 	}
 	
 	for(i=0; i < _EEPROM_PAGE_COUNT; i++) {
 		//Put page to buffer
-		putBuffer(&eedata_addr[i][0], tempBuffer);
+		putBuffer((eeSeg *)&eedata_addr[i][0], tempBuffer);
 
 		//Clear page
 		NVMErasePage(&eedata_addr[i][0]);
 
 		//Put buffer back to page
-		getBuffer(&eedata_addr[i][0], tempBuffer);
+		getBuffer((eeSeg *)&eedata_addr[i][0], tempBuffer);
 	}
 
 	//Try writting data to flash again
 	for(i=0; i < _EEPROM_PAGE_COUNT; i++) {
-		if(putEeprom(&eedata_addr[i][0], address, data)) {
+		if(putEeprom((eeSeg *)&eedata_addr[i][0], address, data)) {
 			return fTrue;
 		}
 	}
@@ -187,7 +188,6 @@ BOOL writeEeprom(uint32_t address, uint8_t data)
 **		Reads data at specifed address location and copys it to
 **		location pointed to by data
 */
-
 BOOL readEeprom(uint32_t address, uint8_t * data)
 {
 	int i;
@@ -199,7 +199,7 @@ BOOL readEeprom(uint32_t address, uint8_t * data)
 
 	//Search through all pages to find specified address
 	for(i=0; i < _EEPROM_PAGE_COUNT; i++) {
-		if(getEeprom(&eedata_addr[i][0], address, data)) {
+		if(getEeprom((eeSeg *)&eedata_addr[i][0], address, data)) {
 			return fTrue;
 		}
 	}
@@ -227,6 +227,7 @@ BOOL readEeprom(uint32_t address, uint8_t * data)
 **		invalidates that location and writes the address and data
 **		to a new unused location.
 */
+
 BOOL putEeprom(eeSeg * eeprom, uint32_t address, uint8_t data)
 {
 	eeSeg tempSeg;
@@ -445,3 +446,4 @@ BOOL getTaken(eeSeg segment)
 {
 	return segment.temp.taken;
 }
+

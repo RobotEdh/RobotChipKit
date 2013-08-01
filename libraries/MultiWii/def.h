@@ -122,9 +122,9 @@
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
   #define MEGA
 #endif
-
-#define MEGA //EDH
-
+#if defined(CHIPKIT) //EDH
+  #define MEGA
+#endif
 
 /**************************************************************************************/
 /***************             motor and servo numbers               ********************/
@@ -529,16 +529,17 @@
 #endif
 
 /**************************  all the Mega types  ***********************************/
-#if defined(MEGA)
+#if defined(MEGA) || defined(CHIPKIT)  //EDH
   #define LEDPIN_PINMODE             pinMode (13, OUTPUT);pinMode (30, OUTPUT);
-
-//EDH  #define LEDPIN_TOGGLE              PINB  |= (1<<7); PINC  |= (1<<7);
-//EDH- PINB - The Port B Input Pins Register - read only 
-//EDH PINC - The Port C Input Pins Register - read only 
-#define LEDPIN_TOGGLE              ; ; // EDH TODO
-
+  #if defined(CHIPKIT)  //EDH
+     #define LEDPIN_TOGGLE              LATB  |= (1<<7); LATC  |= (1<<7);
+  #else
+     #define LEDPIN_TOGGLE              PINB  |= (1<<7); PINC  |= (1<<7);
+  #endif  
+            
   #define LEDPIN_ON                  PORTB |= (1<<7); PORTC |= (1<<7);
   #define LEDPIN_OFF                 PORTB &= ~(1<<7);PORTC &= ~(1<<7);
+
   #define BUZZERPIN_PINMODE          pinMode (32, OUTPUT);
   #if defined PILOTLAMP
     #define    PL_PIN_ON    PORTC |= 1<<5;
@@ -591,8 +592,11 @@
   #define PCINT_RX_MASK              PCMSK2
   #define PCIR_PORT_BIT              (1<<2)
   #define RX_PC_INTERRUPT            PCINT2_vect
-  #define RX_PCINT_PIN_PORT          PINK
-  
+  #if defined(CHIPKIT)  //EDH
+     #define RX_PCINT_PIN_PORT          PORTD
+  #else     
+     #define RX_PCINT_PIN_PORT          PINK
+  #endif
   #define SERVO_1_PINMODE            pinMode(34,OUTPUT);pinMode(44,OUTPUT); // TILT_PITCH - WING left
   #define SERVO_1_PIN_HIGH           PORTC |= 1<<3;PORTL |= 1<<5;
   #define SERVO_1_PIN_LOW            PORTC &= ~(1<<3);PORTL &= ~(1<<5);

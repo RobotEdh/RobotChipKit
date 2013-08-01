@@ -1,2 +1,5 @@
 #define  VERSION  221
-#include "Wire.h"
+#if defined(CHIPKIT)//EDH
+#include "Wire.h" // used for I2C protocol (lib)
+#endif
+
