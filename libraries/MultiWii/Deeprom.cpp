@@ -24,7 +24,15 @@
    
 #include <p32xxxx.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <peripheral/nvm.h>
+#ifdef __cplusplus
+}
+#endif
+
 #include <alloca.h>
 
 #define	OPT_BOARD_INTERNAL
