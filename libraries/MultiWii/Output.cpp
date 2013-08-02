@@ -26,7 +26,9 @@
     
     // PWM rate for DC motors.
     #define DC_MOTOR_PWM_RATE MOTOR34_39KHZ
-
+    
+    //PWM output on MAX32:
+    //Pins 3 (OC1), 5 (OC2), 6 (OC3), 9 (OC4), and 10(OC5) 
     #define OCR3A OC2RS //OC2 (pin 5) PMW 
     #define OCR3C OC1RS //OC1 (pin 3) PMW 
     #define OCR4A OC3RS //OC3 (pin 6) PMW 
