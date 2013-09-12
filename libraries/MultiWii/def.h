@@ -530,17 +530,21 @@
 
 /**************************  all the Mega types  ***********************************/
 #if defined(MEGA) || defined(CHIPKIT)  //EDH
-  #define LEDPIN_PINMODE             pinMode (13, OUTPUT);pinMode (30, OUTPUT);
   #if defined(CHIPKIT)  //EDH
-     #define LEDPIN_TOGGLE              LATB  |= (1<<7); LATC  |= (1<<7);
+     #define LEDPIN_PINMODE              
+     #define LEDPIN_TOGGLE  
+     #define LEDPIN_ON                  
+     #define LEDPIN_OFF 
+     #define BUZZERPIN_PINMODE                                      
   #else
+     #define LEDPIN_PINMODE             pinMode (13, OUTPUT);pinMode (30, OUTPUT);     
      #define LEDPIN_TOGGLE              PINB  |= (1<<7); PINC  |= (1<<7);
-  #endif  
-            
-  #define LEDPIN_ON                  PORTB |= (1<<7); PORTC |= (1<<7);
-  #define LEDPIN_OFF                 PORTB &= ~(1<<7);PORTC &= ~(1<<7);
+     #define LEDPIN_ON                  PORTB |= (1<<7); PORTC |= (1<<7);
+     #define LEDPIN_OFF                 PORTB &= ~(1<<7);PORTC &= ~(1<<7);
+     #define BUZZERPIN_PINMODE          pinMode (32, OUTPUT);
+  #endif    
 
-  #define BUZZERPIN_PINMODE          pinMode (32, OUTPUT);
+  
   #if defined PILOTLAMP
     #define    PL_PIN_ON    PORTC |= 1<<5;
     #define    PL_PIN_OFF   PORTC &= ~(1<<5);
@@ -563,7 +567,12 @@
   #define PINMODE_LCD                pinMode(0, OUTPUT);
   #define LCDPIN_OFF                 PORTE &= ~1; //switch OFF digital PIN 0
   #define LCDPIN_ON                  PORTE |= 1;
-  #define STABLEPIN_PINMODE          pinMode (31, OUTPUT);
+  
+  #if defined(CHIPKIT)  //EDH
+    #define STABLEPIN_PINMODE
+  #else    
+    #define STABLEPIN_PINMODE          pinMode (31, OUTPUT);
+  #endif
   #define STABLEPIN_ON               PORTC |= 1<<6;
   #define STABLEPIN_OFF              PORTC &= ~(1<<6);
   #if defined(PPM_ON_THROTTLE)

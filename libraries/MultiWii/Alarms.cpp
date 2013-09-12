@@ -7,6 +7,7 @@
 #include "config.h"
 #include "def.h"
 #include "types.h"
+#include "Alarms.h"
 #include "MultiWii.h"
 #include "LCD.h"
 #include "Sensors.h"

@@ -19,7 +19,7 @@ void computeIMU () {
   int16_t gyroADCp[3];
   int16_t gyroADCinter[3];
   static uint32_t timeInterleave = 0;
-
+  Serial.println("Start computeIMU");
   //we separate the 2 situations because reading gyro values with a gyro only setup can be acchieved at a higher rate
   //gyro+nunchuk: we must wait for a quite high delay betwwen 2 reads to get both WM+ and Nunchuk data. It works with 3ms
   //gyro only: the delay to read 2 consecutive values can be reduced to only 0.65ms
@@ -79,6 +79,8 @@ void computeIMU () {
     imu.gyroData[YAW] = (gyroYawSmooth*2+imu.gyroData[YAW])/3;
     gyroYawSmooth = imu.gyroData[YAW];
   #endif
+  
+  Serial.println("End computeIMU");
 }
 
 // **************************************************
@@ -168,6 +170,7 @@ float InvSqrt (float x){
 
 // Rotate Estimated vector(s) with small angle approximation, according to the gyro data
 void rotateV(struct fp_vector *v,float* delta) {
+  Serial.println("rotateV");
   fp_vector v_tmp = *v;
   v->Z -= delta[ROLL]  * v_tmp.X + delta[PITCH] * v_tmp.Y;
   v->X += delta[ROLL]  * v_tmp.Z - delta[YAW]   * v_tmp.Y;
@@ -193,6 +196,7 @@ void getEstimatedAttitude(){
   static uint16_t previousT;
   uint16_t currentT = micros();
 
+  Serial.println("getEstimatedAttitude");
   scale = (currentT - previousT) * GYRO_SCALE; // GYRO_SCALE unit: radian/microsecond
   previousT = currentT;
 
@@ -206,7 +210,7 @@ void getEstimatedAttitude(){
 
     accMag += (int32_t)imu.accSmooth[axis]*imu.accSmooth[axis] ;
   }
-
+ 
   rotateV(&EstG.V,deltaGyroAngle);
   #if MAG
     rotateV(&EstM.V,deltaGyroAngle);
@@ -219,7 +223,7 @@ void getEstimatedAttitude(){
   }
 
   accMag = accMag*100/((int32_t)ACC_1G*ACC_1G);
-  validAcc = 72 < (uint16_t)accMag && (uint16_t)accMag < 133;
+  validAcc = 72 < (uint16_t)accMag && (uint16_t)accMag < 133;;
   // Apply complimentary filter (Gyro drift correction)
   // If accel magnitude >1.15G or <0.85G and ACC vector outside of the limit range => we neutralize the effect of accelerometers in the angle estimation.
   // To do that, we just skip filter, as EstV already rotated by Gyro
@@ -251,6 +255,7 @@ void getEstimatedAttitude(){
     cosZ = EstG.V.Z / ACC_1G * 100.0f;                                                        // cos(angleZ) * 100 
     throttleAngleCorrection = THROTTLE_ANGLE_CORRECTION * constrain(100 - cosZ, 0, 100) >>3;  // 16 bit ok: 200*150 = 30000  
   #endif
+  
 }
 
 #define UPDATE_INTERVAL 25000    // 40hz update rate (20hz LPF on acc)

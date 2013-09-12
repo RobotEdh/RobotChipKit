@@ -413,6 +413,7 @@ uint16_t readRawRC(uint8_t chan) {
   #if defined(CHIPKIT)
     cli(); // Let's disable interrupts
     data = rcValue[rcChannel[chan]]; // Let's copy the data Atomically
+    sei(); // Let's restore interrupt state
   #else
   #if defined(SPEKTRUM)
     readSpektrum();
@@ -436,6 +437,8 @@ void computeRC() {
   static uint16_t rcData4Values[RC_CHANS][4], rcDataMean[RC_CHANS];
   static uint8_t rc4ValuesIndex = 0;
   uint8_t chan,a;
+  Serial.println(" Start computeRC");
+
   #if !defined(OPENLRSv2MULTI) // dont know if this is right here
     #if defined(SBUS)
       readSBus();
@@ -465,6 +468,8 @@ void computeRC() {
       }
     }
   #endif
+  
+  Serial.println(" End computeRC");
 }
 
 

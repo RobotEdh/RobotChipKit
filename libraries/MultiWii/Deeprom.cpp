@@ -38,6 +38,7 @@ extern "C" {
 #define	OPT_BOARD_INTERNAL
 #include <pins_arduino.h>
 
+#include "WProgram.h"
 #include "Deeprom.h"
 
 /* ------------------------------------------------------------ */
@@ -199,7 +200,7 @@ BOOL writeEeprom(uint32_t address, uint8_t data)
 BOOL readEeprom(uint32_t address, uint8_t * data)
 {
 	int i;
-
+    
 	if(address > MAX_ADDRESS) {
 		*data = 0xFF;
 		return fFalse;

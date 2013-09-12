@@ -14,32 +14,40 @@
 #include "Alarms.h"
 #include "GPS.h"
 
-void LoadDefaults(void);
-
 #if defined(CHIPKIT)  //EDH
-void eeprom_read_block (uint32_t *__dst, const uint32_t *__src, size_t size){
+void eeprom_read_block (void* __dst, const void* __src, size_t size){
  uint8_t data;
- uint32_t address;
+ uint32_t* address;
+ Serial.println("Start eeprom_read_block");
  
- address =  *__src;
+ address = (uint32_t*) __src;
+
+ Serial.print("size=");Serial.println(size);
+ Serial.print("address=");Serial.println((int)address);
  
  for(int i=0; i < size; i++) {
-     int ret = readEeprom(address, &data);
-     address = address +1;
+     BOOL ret = readEeprom((uint32_t)address, &data);
+     address++;
  }
  __dst = (uint32_t*)data;
+
  
+  Serial.println("End eeprom_read_block");
 }
 
-void eeprom_write_block (const uint32_t *__src, uint32_t *__dst, size_t size){
- uint8_t data;
- uint32_t address;
+void eeprom_write_block (const void* __src, void* __dst, size_t size){
+ uint8_t* data;
+ uint8_t address;
  
- address =  *__dst;
- data = (uint8_t)*__src;
+ Serial.println("eeprom_write_block");
+ Serial.print("size=");Serial.println(size);   
+ //address =  *__dst;
+ address = 0;
+ Serial.print("address=");Serial.println((int)address);
+ data = (uint8_t*) __src;
  
  for(int i=0; i < size; i++) {
-     int ret = writeEeprom(address, data);
+     int ret = writeEeprom(address, *data);
      address = address +1;
  }
 
@@ -54,11 +62,7 @@ uint8_t calculate_sum(uint8_t *cb , uint8_t siz) {
 }
 
 void readGlobalSet() {
-#if defined(CHIPKIT) 
-  eeprom_read_block((uint32_t*)&global_conf, (uint32_t*)0, sizeof(global_conf));   
-#else  
   eeprom_read_block((void*)&global_conf, (void*)0, sizeof(global_conf));
-#endif  
   if(calculate_sum((uint8_t*)&global_conf, sizeof(global_conf)) != global_conf.checksum) {
     global_conf.currentSet = 0;
     global_conf.accZero[ROLL] = 5000;    // for config error signalization
@@ -72,11 +76,7 @@ bool readEEPROM() {
   #else
     global_conf.currentSet=0;
   #endif
-  #if defined(CHIPKIT)   
-    eeprom_read_block((uint32_t*)&conf, (uint32_t*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
-  #else
-    eeprom_read_block((void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
-  #endif
+  eeprom_read_block((void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
   if(calculate_sum((uint8_t*)&conf, sizeof(conf)) != conf.checksum) {
     blinkLED(6,100,3);    
     #if defined(BUZZER)
@@ -113,7 +113,7 @@ bool readEEPROM() {
 void writeGlobalSet(uint8_t b) {
   global_conf.checksum = calculate_sum((uint8_t*)&global_conf, sizeof(global_conf));
   #if defined(CHIPKIT)  
-    eeprom_write_block((const uint32_t*)&global_conf, (uint32_t*)0, sizeof(global_conf));
+    eeprom_write_block((const uint8_t*)&global_conf, (uint8_t*)0, sizeof(global_conf));
   #else    
     eeprom_write_block((const void*)&global_conf, (void*)0, sizeof(global_conf));
   #endif    
@@ -125,18 +125,15 @@ void writeGlobalSet(uint8_t b) {
 }
  
 void writeParams(uint8_t b) {
+  Serial.println("writeParams");  
   #ifdef MULTIPLE_CONFIGURATION_PROFILES
     if(global_conf.currentSet>2) global_conf.currentSet=0;
   #else
     global_conf.currentSet=0;
   #endif
   conf.checksum = calculate_sum((uint8_t*)&conf, sizeof(conf));
-  #if defined(CHIPKIT)  
-    eeprom_write_block((const uint32_t*)&conf, (uint32_t*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
-  #else
-    eeprom_write_block((const void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));   
-  #endif 
-  readEEPROM();
+  eeprom_write_block((const void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));   
+  //readEEPROM();
   if (b == 1) blinkLED(15,20,1);
   #if defined(BUZZER)
     alarmArray[7] = 1; //beep if loaded from gui or android
@@ -144,6 +141,7 @@ void writeParams(uint8_t b) {
 }
 
 void update_constants() { 
+  Serial.println("update_constants");
   #if defined(GYRO_SMOOTHING)
     {
       uint8_t s[3] = GYRO_SMOOTHING;
@@ -184,6 +182,7 @@ void update_constants() {
 
 void LoadDefaults() {
   uint8_t i;
+  Serial.println("LoadDefaults");
   #ifndef SUPPRESS_DEFAULTS_FROM_GUI
 	#if PID_CONTROLLER == 1
       conf.pid[ROLL].P8     = 33;  conf.pid[ROLL].I8    = 30; conf.pid[ROLL].D8     = 23;
@@ -243,11 +242,7 @@ void LoadDefaults() {
 
 #ifdef LOG_PERMANENT
 void readPLog(void) {
-  #if defined(CHIPKIT)     
-    eeprom_read_block((uint32_t*)&plog, (uint32_t*)(E2END - 4 - sizeof(plog)), sizeof(plog));
-  #else  
-    eeprom_read_block((void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
-  #endif  
+  eeprom_read_block((void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
   if(calculate_sum((uint8_t*)&plog, sizeof(plog)) != plog.checksum) {
     blinkLED(9,100,3);
     #if defined(BUZZER)
@@ -262,11 +257,7 @@ void readPLog(void) {
 }
 void writePLog(void) {
   plog.checksum = calculate_sum((uint8_t*)&plog, sizeof(plog));
- #if defined(CHIPKIT)   
-   eeprom_write_block((const uint32_t*)&plog, (uint32_t*)(E2END - 4 - sizeof(plog)), sizeof(plog));
- #else
-   eeprom_write_block((const void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
- #endif  
+  eeprom_write_block((const void*)&plog, (void*)(E2END - 4 - sizeof(plog)), sizeof(plog));
 }
 #endif
 

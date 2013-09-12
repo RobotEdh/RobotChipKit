@@ -177,6 +177,7 @@ void serialCom() {
     HEADER_SIZE,
     HEADER_CMD,
   } c_state[UART_NUMBER];// = IDLE;
+  Serial.println("Start serialCom");
 
   for(n=0;n<UART_NUMBER;n++) {
     #if !defined(PROMINI)
@@ -706,7 +707,12 @@ void serialize8(uint8_t a) {
 }
 
 #if defined(CHIPKIT) //EDH TOTO
-  void UartSendData() {}
+  void UartSendData() {
+        while(serialHeadTX[0] != serialTailTX[0]) {
+           if (++serialTailTX[0] >= TX_BUFFER_SIZE) serialTailTX[0] = 0;
+           Serial.print(serialBufferTX[serialTailTX[0]][0]);
+         }    
+  }
   void SerialOpen(uint8_t port, uint32_t baud) {}
 #else
 
@@ -875,6 +881,9 @@ void store_uart_in_buf(uint8_t data, uint8_t portnum) {
 #endif
 
 uint8_t SerialRead(uint8_t port) {
+  #if defined(CHIPKIT) //EDH
+       return Serial.read();
+  #endif     
   #if defined(PROMICRO)
     #if defined(TEENSY20)
       if(port == 0) return Serial.read();
@@ -916,6 +925,7 @@ void SerialWrite(uint8_t port,uint8_t c){
   #if !defined(PROMINI)
     CURRENTPORT=port;
   #endif
+  
   serialize8(c);UartSendData();
 }
 

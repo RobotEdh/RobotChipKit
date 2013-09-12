@@ -193,5 +193,9 @@ extern int16_t lookupThrottleRC[11];
 #endif
 
 void annexCode();
+#if defined(CHIPKIT) //EDH
+  void MultiWii_setup();
+  void MultiWii_loop ();
+#endif
 
 #endif /* MULTIWII_H_ */

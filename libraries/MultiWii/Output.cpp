@@ -473,6 +473,9 @@ void writeAllMotors(int16_t mc) {   // Sends commands to all motors
 /************        Initialize the PWM Timers and Registers         ******************/
 /**************************************************************************************/
 void initOutput() {
+  Serial.println("Start initOutput");
+  Serial.print("NUMBER_MOTOR: ");
+  Serial.println(NUMBER_MOTOR);
   /****************            mark all PWM pins as Output             ******************/
   for(uint8_t i=0;i<NUMBER_MOTOR;i++) {
     pinMode(PWM_PIN[i],OUTPUT);
@@ -644,6 +647,7 @@ void initOutput() {
   #if defined(SERVO)
     initializeServo();
   #endif
+  Serial.println("End initOutput");
 }
 
 

@@ -331,7 +331,8 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
     }
  
     int ret = Wire.endTransmission();
-    //Serial.println("ret: ");Serial.println(ret);
+    Serial.println("ret: ");Serial.println(ret);
+    Serial.println("devAddr: ");Serial.println((int)devAddr,HEX);
     return ret == 0;       
 }  
 
