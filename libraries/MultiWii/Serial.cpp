@@ -706,14 +706,16 @@ void serialize8(uint8_t a) {
   serialHeadTX[CURRENTPORT] = t;
 }
 
-#if defined(CHIPKIT) //EDH TOTO
+#if defined(CHIPKIT) //EDH
   void UartSendData() {
         while(serialHeadTX[0] != serialTailTX[0]) {
            if (++serialTailTX[0] >= TX_BUFFER_SIZE) serialTailTX[0] = 0;
            Serial.print(serialBufferTX[serialTailTX[0]][0]);
          }    
   }
-  void SerialOpen(uint8_t port, uint32_t baud) {}
+  void SerialOpen(uint8_t port, uint32_t baud) {
+  	if (port == 0) Serial.begin(baud); // initialize serial port
+  }
 #else
 
 #if defined(PROMINI) || defined(MEGA)
@@ -882,7 +884,8 @@ void store_uart_in_buf(uint8_t data, uint8_t portnum) {
 
 uint8_t SerialRead(uint8_t port) {
   #if defined(CHIPKIT) //EDH
-       return Serial.read();
+       if (port == 0) return Serial.read();
+       else return 0;
   #endif     
   #if defined(PROMICRO)
     #if defined(TEENSY20)
