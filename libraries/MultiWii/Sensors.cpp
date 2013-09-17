@@ -181,7 +181,7 @@ static uint32_t neutralizeTime = 0;
 #if defined(CHIPKIT)  //EDH
 
 void i2c_init(void) {
-  Serial.println("i2c_init");
+//  Serial.println("i2c_init");
   Wire.begin(); // setup I2C
 }
 
@@ -1411,7 +1411,7 @@ void Device_Mag_getADC() {
 #if defined(MPU6050)
 
 void Gyro_init() {
-  Serial.println("Gyro_init");
+//  Serial.println("Gyro_init");
   TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz
   i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
   delay(5);
@@ -1425,8 +1425,14 @@ void Gyro_init() {
 }
 
 void Gyro_getADC () {
-  Serial.println("Gyro_getADC");
+  //Serial.println("Gyro_getADC");
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x43);
+  /*Serial.print("rawADC[0]:");Serial.println((int)rawADC[0]);
+  Serial.print("rawADC[1]:");Serial.println((int)rawADC[1]);
+  Serial.print("rawADC[2]:");Serial.println((int)rawADC[2]);
+  Serial.print("rawADC[3]:");Serial.println((int)rawADC[3]);
+  Serial.print("rawADC[4]:");Serial.println((int)rawADC[4]);
+  Serial.print("rawADC[5]:");Serial.println((int)rawADC[5]);*/
   GYRO_ORIENTATION( ((rawADC[0]<<8) | rawADC[1])>>2 , // range: +/- 8192; +/- 2000 deg/sec
                     ((rawADC[2]<<8) | rawADC[3])>>2 ,
                     ((rawADC[4]<<8) | rawADC[5])>>2 );
@@ -1434,7 +1440,7 @@ void Gyro_getADC () {
 }
 
 void ACC_init () {
-  Serial.println("ACC_init");
+//  Serial.println("ACC_init");
   i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
   //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
   //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
@@ -1452,7 +1458,7 @@ void ACC_init () {
 }
 
 void ACC_getADC () {
-  Serial.println("ACC_getADC");  
+//  Serial.println("ACC_getADC");  
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x3B);
   ACC_ORIENTATION( ((rawADC[0]<<8) | rawADC[1])>>3 ,
                    ((rawADC[2]<<8) | rawADC[3])>>3 ,
@@ -1795,7 +1801,7 @@ inline void Sonar_update() {}
 
 
 void initSensors() {
-  Serial.println("Start initSensors");  
+//  Serial.println("Start initSensors");  
   delay(200);
   POWERPIN_ON;
   delay(100);
@@ -1807,5 +1813,5 @@ void initSensors() {
   if (ACC) ACC_init();
   if (SONAR) Sonar_init();
   f.I2C_INIT_DONE = 1;
-  Serial.println("End initSensors");
+//  Serial.println("End initSensors");
 }

@@ -437,7 +437,7 @@ void computeRC() {
   static uint16_t rcData4Values[RC_CHANS][4], rcDataMean[RC_CHANS];
   static uint8_t rc4ValuesIndex = 0;
   uint8_t chan,a;
-  Serial.println(" Start computeRC");
+//  Serial.println(" Start computeRC");
 
   #if !defined(OPENLRSv2MULTI) // dont know if this is right here
     #if defined(SBUS)
@@ -469,7 +469,7 @@ void computeRC() {
     }
   #endif
   
-  Serial.println(" End computeRC");
+//  Serial.println(" End computeRC");
 }
 
 

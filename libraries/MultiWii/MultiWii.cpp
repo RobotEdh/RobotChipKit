@@ -31,8 +31,6 @@ March  2013     V2.2
 #include "GPS.h"
 
 
-#define  VERSION  221
-
 /*********** RC alias *****************/
 
 const char pidnames[] PROGMEM =
@@ -340,7 +338,7 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
   static uint32_t calibratedAccTime;
   uint16_t tmp,tmp2;
   uint8_t axis,prop1,prop2;
-  Serial.println("Start annexCode");
+//  Serial.println("Start annexCode");
 
   // PITCH & ROLL only dynamic PID adjustemnt,  depending on throttle value
   prop2 = 128; // prop2 was 100, is 128 now
@@ -567,7 +565,10 @@ void MultiWii_setup() {
 #else
 void setup () {
 #endif 
-    Serial.println("Start MultiWii setup");
+//    Serial.println("Start MultiWii setup");
+#if defined(CHIPKIT) //EDH
+    SerialOpen(0,SERIAL0_COM_SPEED);
+#else
   #if !defined(GPS_PROMINI)
     SerialOpen(0,SERIAL0_COM_SPEED);
     #if defined(PROMICRO)
@@ -579,13 +580,13 @@ void setup () {
       SerialOpen(3,SERIAL3_COM_SPEED);
     #endif
   #endif
+#endif   
   LEDPIN_PINMODE;
   POWERPIN_PINMODE;
   BUZZERPIN_PINMODE;
   STABLEPIN_PINMODE;
   POWERPIN_OFF;
   initOutput();
-  Serial.println("readGlobalSet 1");
   readGlobalSet();
   #ifndef NO_FLASH_CHECK
     #if defined(MEGA)
@@ -612,14 +613,12 @@ void setup () {
       if(flashsum != global_conf.flashsum) update_constants();  // update constants if firmware is changed and integrity is OK
     }
   #else
-    Serial.println("readEEPROM 1");
+//    Serial.println("readEEPROM 1");
     readEEPROM();                                               // check current setting integrity
-  #endif 
-    Serial.println("global_conf.currentSet: ");Serial.println(global_conf.currentSet); 
+  #endif  
     if(global_conf.currentSet == 0) break;                      // all checks is done
     global_conf.currentSet--;                                   // next setting for check
   }
-  Serial.println("readGlobalSet 2");
   readGlobalSet();                              // reload global settings for get last profile number
   #ifndef NO_FLASH_CHECK
     if(flashsum != global_conf.flashsum) {
@@ -627,7 +626,6 @@ void setup () {
       writeGlobalSet(1);                        // update flash sum in global config
     }
   #endif
-  Serial.println("readEEPROM 2");
   readEEPROM();                                 // load setting data from last used profile
   blinkLED(2,40,global_conf.currentSet+1);          
   configureReceiver();
@@ -710,7 +708,7 @@ void setup () {
 
   debugmsg_append_str("initialization completed\n");
   
-   Serial.println("End MultiWii setup");
+ //  Serial.println("End MultiWii setup");
 }
 
 void go_arm() {
@@ -769,7 +767,7 @@ void MultiWii_loop () {
 #else
 void loop () {
 #endif 
-  Serial.println("Start MultiWii loop"); 
+  //Serial.println("Start MultiWii loop"); 
   
   static uint8_t rcDelayCommand; // this indicates the number of time (multiple of RC measurement at 50Hz) the sticks must be maintained to run or switch off motors
   static uint8_t rcSticks;       // this hold sticks position for command combos
@@ -803,7 +801,6 @@ void loop () {
   #if defined(OPENLRSv2MULTI) 
     Read_OpenLRS_RC();
   #endif 
-  Serial.print("currentTime: "); Serial.println(currentTime);  Serial.print("rcTime: ");Serial.println(rcTime);   
   if (currentTime > rcTime ) { // 50Hz
     rcTime = currentTime + 20000;
     computeRC();
@@ -833,7 +830,7 @@ void loop () {
       stTmp >>= 2;
       if(rcData[i] > MINCHECK) stTmp |= 0x80;      // check for MIN
       if(rcData[i] < MAXCHECK) stTmp |= 0x40;      // check for MAX
-      Serial.print("i: "); Serial.println((int)i);  Serial.print("rcData[i]: ");Serial.println(rcData[i]);   
+      //Serial.print("i: "); Serial.println((int)i);  Serial.print("rcData[i]: ");Serial.println(rcData[i]);   
 
     }
     if(stTmp == rcSticks) {

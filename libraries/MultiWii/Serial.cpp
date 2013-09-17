@@ -177,7 +177,7 @@ void serialCom() {
     HEADER_SIZE,
     HEADER_CMD,
   } c_state[UART_NUMBER];// = IDLE;
-  Serial.println("Start serialCom");
+//  Serial.println("Start serialCom");
 
   for(n=0;n<UART_NUMBER;n++) {
     #if !defined(PROMINI)
@@ -238,6 +238,7 @@ void serialCom() {
           if (checksum[CURRENTPORT] == c) {  // compare calculated and transferred checksum
             evaluateCommand();  // we got a valid packet, evaluate it
           }
+ 
           c_state[CURRENTPORT] = IDLE;
           cc = 0; // no more than one MSP per port and per cycle
         }
@@ -259,7 +260,6 @@ void s_struct_w(uint8_t *cb,uint8_t siz) {
 #ifndef SUPPRESS_ALL_SERIAL_MSP
 void evaluateCommand() {
   uint32_t tmp=0; 
-
   switch(cmdMSP[CURRENTPORT]) {
    case MSP_SET_RAW_RC:
      s_struct_w((uint8_t*)&rcSerial,16);
@@ -710,7 +710,7 @@ void serialize8(uint8_t a) {
   void UartSendData() {
         while(serialHeadTX[0] != serialTailTX[0]) {
            if (++serialTailTX[0] >= TX_BUFFER_SIZE) serialTailTX[0] = 0;
-           Serial.print(serialBufferTX[serialTailTX[0]][0]);
+           Serial.write(serialBufferTX[serialTailTX[0]][0]);
          }    
   }
   void SerialOpen(uint8_t port, uint32_t baud) {
@@ -914,6 +914,9 @@ uint8_t SerialRead(uint8_t port) {
 #endif
 
 uint8_t SerialAvailable(uint8_t port) {
+#if defined(CHIPKIT) //EDH
+   return (uint8_t)Serial.available();
+#endif
   #if defined(PROMICRO)
     #if !defined(TEENSY20)
       if(port == 0) return USB_Available(USB_CDC_RX);

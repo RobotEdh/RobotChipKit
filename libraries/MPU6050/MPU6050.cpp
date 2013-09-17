@@ -161,7 +161,11 @@ int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
     for (uint8_t k = 0; k < length; k += min(length, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
                 Wire.send(regAddr);
-                Wire.endTransmission();
+                int ret = Wire.endTransmission();
+                Serial.print("readBytes ret: ");Serial.println(ret);
+                Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
+                if (ret != 0) return -1;                
+                
                 delay(1);
                 Wire.requestFrom(devAddr, (uint8_t)min(length - k, BUFFER_LENGTH));
 
@@ -183,7 +187,11 @@ int8_t I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint1
 for (uint8_t k = 0; k < length * 2; k += min(length * 2, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
                 Wire.send(regAddr);
-                Wire.endTransmission();
+                int ret = Wire.endTransmission();
+                Serial.print("readWords ret: ");Serial.println(ret);
+                Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
+                if (ret != 0) return -1;               
+                
                 delay(1);
                 Wire.requestFrom(devAddr, (uint8_t)(length * 2)); // length=words, this wants bytes
 
@@ -254,7 +262,7 @@ bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
     // 10100011 original & ~mask
     // 10101011 masked | value
     uint8_t b;
-    if (readByte(devAddr, regAddr, &b) != 0) {
+    if (readByte(devAddr, regAddr, &b) > 0) {
         uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
         data <<= (bitStart - length + 1); // shift data into correct position
         data &= mask; // zero all non-important bits in data
@@ -331,14 +339,12 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
     }
  
     int ret = Wire.endTransmission();
-    Serial.println("ret: ");Serial.println(ret);
-    Serial.println("devAddr: ");Serial.println((int)devAddr,HEX);
+    Serial.print("writeBytes ret: ");Serial.println(ret);
+    Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
     return ret == 0;       
 }  
 
-bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t* data) {
-    uint8_t status = 0;
- 
+bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t* data) { 
     Wire.beginTransmission(devAddr);
     Wire.send(regAddr); // send address
  
@@ -347,8 +353,10 @@ bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16
             Wire.send((uint8_t)data[i]); // send LSB
     }
     
-    Wire.endTransmission();
-    return status == 0;
+    int ret = Wire.endTransmission();
+    Serial.print("writeWords ret: ");Serial.println(ret);
+    Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
+    return ret == 0; 
 }
 
 /** Default constructor, uses default I2C address.
@@ -376,9 +384,9 @@ MPU6050::MPU6050(uint8_t address) {
  * the default internal clock source.
  */
 void MPU6050::initialize() {
-    setClockSource(MPU6050_CLOCK_PLL_XGYRO);
-    setFullScaleGyroRange(MPU6050_GYRO_FS_250);
-    setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+    if(!setClockSource(MPU6050_CLOCK_PLL_XGYRO)) return;
+    if(!setFullScaleGyroRange(MPU6050_GYRO_FS_250)) return;
+    if(!setFullScaleAccelRange(MPU6050_ACCEL_FS_2)) return;
     setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
 }
 
@@ -564,8 +572,8 @@ uint8_t MPU6050::getFullScaleGyroRange() {
  * @see MPU6050_GCONFIG_FS_SEL_BIT
  * @see MPU6050_GCONFIG_FS_SEL_LENGTH
  */
-void MPU6050::setFullScaleGyroRange(uint8_t range) {
-    I2Cdev::writeBits(devAddr, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, range);
+bool MPU6050::setFullScaleGyroRange(uint8_t range) {
+    return I2Cdev::writeBits(devAddr, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, range);
 }
 
 // ACCEL_CONFIG register
@@ -640,8 +648,8 @@ uint8_t MPU6050::getFullScaleAccelRange() {
  * @param range New full-scale accelerometer range setting
  * @see getFullScaleAccelRange()
  */
-void MPU6050::setFullScaleAccelRange(uint8_t range) {
-    I2Cdev::writeBits(devAddr, MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, range);
+bool MPU6050::setFullScaleAccelRange(uint8_t range) {
+    return I2Cdev::writeBits(devAddr, MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, range);
 }
 /** Get the high-pass filter configuration.
  * The DHPF is a filter module in the path leading to motion detectors (Free
@@ -2788,8 +2796,8 @@ uint8_t MPU6050::getClockSource() {
  * @see MPU6050_PWR1_CLKSEL_BIT
  * @see MPU6050_PWR1_CLKSEL_LENGTH
  */
-void MPU6050::setClockSource(uint8_t source) {
-    I2Cdev::writeBits(devAddr, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, source);
+bool MPU6050::setClockSource(uint8_t source) {
+    return I2Cdev::writeBits(devAddr, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, source);
 }
 
 // PWR_MGMT_2 register

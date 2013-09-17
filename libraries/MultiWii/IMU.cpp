@@ -19,7 +19,7 @@ void computeIMU () {
   int16_t gyroADCp[3];
   int16_t gyroADCinter[3];
   static uint32_t timeInterleave = 0;
-  Serial.println("Start computeIMU");
+  //Serial.println("Start computeIMU");
   //we separate the 2 situations because reading gyro values with a gyro only setup can be acchieved at a higher rate
   //gyro+nunchuk: we must wait for a quite high delay betwwen 2 reads to get both WM+ and Nunchuk data. It works with 3ms
   //gyro only: the delay to read 2 consecutive values can be reduced to only 0.65ms
@@ -80,7 +80,7 @@ void computeIMU () {
     gyroYawSmooth = imu.gyroData[YAW];
   #endif
   
-  Serial.println("End computeIMU");
+//  Serial.println("End computeIMU");
 }
 
 // **************************************************
@@ -170,7 +170,7 @@ float InvSqrt (float x){
 
 // Rotate Estimated vector(s) with small angle approximation, according to the gyro data
 void rotateV(struct fp_vector *v,float* delta) {
-  Serial.println("rotateV");
+//  Serial.println("rotateV");
   fp_vector v_tmp = *v;
   v->Z -= delta[ROLL]  * v_tmp.X + delta[PITCH] * v_tmp.Y;
   v->X += delta[ROLL]  * v_tmp.Z - delta[YAW]   * v_tmp.Y;
@@ -196,7 +196,7 @@ void getEstimatedAttitude(){
   static uint16_t previousT;
   uint16_t currentT = micros();
 
-  Serial.println("getEstimatedAttitude");
+//  Serial.println("getEstimatedAttitude");
   scale = (currentT - previousT) * GYRO_SCALE; // GYRO_SCALE unit: radian/microsecond
   previousT = currentT;
 

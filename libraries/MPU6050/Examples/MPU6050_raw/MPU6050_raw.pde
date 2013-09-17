@@ -47,20 +47,29 @@ int16_t ax, ay, az;
 int16_t gx, gy, gz;
 double temperature;
 
-void setup() {
-    // join I2C bus (I2Cdev library doesn't do this automatically)
-    Wire.begin();
-
+void setup() {   
     // initialize serial communication
     Serial.begin(9600);
 
-    // initialize device
-    Serial.println("Initializing I2C devices...");
-    accelgyro.initialize();
+    while(1) {
+       // join I2C bus 
+       Serial.println("Initializing I2C devices...");
+       Wire.begin();
+                                                  // 0: success
+                                                  // 1: length to long for buffer
+                                                  // 2: address send, NACK received -> bad address
+                                                  // 3: data send, NACK received -> bad register
+                                                  // 4: other error (lost bus arbitration, bus error, ..) -> missing 1Ok pull-down resistor on SDA & SDL pins
 
-    // verify connection
-    Serial.println("Testing device connections...");
-    Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+
+       // initialize device
+       accelgyro.initialize();
+       if(accelgyro.testConnection()) break;
+       
+       Serial.println("MPU6050 connection failed, retry in 2 seconds");
+       delay(2*1000);
+    }
+    Serial.println("MPU6050 connection successful");
     
     // get temperature
     temperature = ( (double) accelgyro.getTemperature() + 12412.0) / 340.0;
@@ -84,4 +93,6 @@ void loop() {
     Serial.print(gx); Serial.print("\t");
     Serial.print(gy); Serial.print("\t");
     Serial.println(gz);
+    
+    delay(1000);
 }

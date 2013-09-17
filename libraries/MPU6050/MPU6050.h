@@ -450,7 +450,7 @@ class MPU6050 {
 
         // GYRO_CONFIG register
         uint8_t getFullScaleGyroRange();
-        void setFullScaleGyroRange(uint8_t range);
+        bool setFullScaleGyroRange(uint8_t range);
 
         // ACCEL_CONFIG register
         bool getAccelXSelfTest();
@@ -460,7 +460,7 @@ class MPU6050 {
         bool getAccelZSelfTest();
         void setAccelZSelfTest(bool enabled);
         uint8_t getFullScaleAccelRange();
-        void setFullScaleAccelRange(uint8_t range);
+        bool setFullScaleAccelRange(uint8_t range);
         uint8_t getDHPFMode();
         void setDHPFMode(uint8_t mode);
 
@@ -675,7 +675,7 @@ class MPU6050 {
         bool getTempSensorEnabled();
         void setTempSensorEnabled(bool enabled);
         uint8_t getClockSource();
-        void setClockSource(uint8_t source);
+        bool setClockSource(uint8_t source);
 
         // PWR_MGMT_2 register
         uint8_t getWakeFrequency();

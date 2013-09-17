@@ -18,12 +18,12 @@
 void eeprom_read_block (void* __dst, const void* __src, size_t size){
  uint8_t data;
  uint32_t* address;
- Serial.println("Start eeprom_read_block");
+// Serial.println("Start eeprom_read_block");
  
  address = (uint32_t*) __src;
 
- Serial.print("size=");Serial.println(size);
- Serial.print("address=");Serial.println((int)address);
+ //Serial.print("size=");Serial.println(size);
+ //Serial.print("address=");Serial.println((int)address);
  
  for(int i=0; i < size; i++) {
      BOOL ret = readEeprom((uint32_t)address, &data);
@@ -32,18 +32,18 @@ void eeprom_read_block (void* __dst, const void* __src, size_t size){
  __dst = (uint32_t*)data;
 
  
-  Serial.println("End eeprom_read_block");
+//  Serial.println("End eeprom_read_block");
 }
 
 void eeprom_write_block (const void* __src, void* __dst, size_t size){
  uint8_t* data;
  uint8_t address;
  
- Serial.println("eeprom_write_block");
- Serial.print("size=");Serial.println(size);   
+// Serial.println("eeprom_write_block");
+// Serial.print("size=");Serial.println(size);   
  //address =  *__dst;
  address = 0;
- Serial.print("address=");Serial.println((int)address);
+ //Serial.print("address=");Serial.println((int)address);
  data = (uint8_t*) __src;
  
  for(int i=0; i < size; i++) {
@@ -125,7 +125,7 @@ void writeGlobalSet(uint8_t b) {
 }
  
 void writeParams(uint8_t b) {
-  Serial.println("writeParams");  
+//  Serial.println("writeParams");  
   #ifdef MULTIPLE_CONFIGURATION_PROFILES
     if(global_conf.currentSet>2) global_conf.currentSet=0;
   #else
@@ -141,7 +141,7 @@ void writeParams(uint8_t b) {
 }
 
 void update_constants() { 
-  Serial.println("update_constants");
+//  Serial.println("update_constants");
   #if defined(GYRO_SMOOTHING)
     {
       uint8_t s[3] = GYRO_SMOOTHING;
@@ -182,7 +182,7 @@ void update_constants() {
 
 void LoadDefaults() {
   uint8_t i;
-  Serial.println("LoadDefaults");
+//  Serial.println("LoadDefaults");
   #ifndef SUPPRESS_DEFAULTS_FROM_GUI
 	#if PID_CONTROLLER == 1
       conf.pid[ROLL].P8     = 33;  conf.pid[ROLL].I8    = 30; conf.pid[ROLL].D8     = 23;
