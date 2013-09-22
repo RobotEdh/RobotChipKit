@@ -2,8 +2,9 @@
 #include "Arduino.h"
 #else
 #include "WProgram.h"
+#define TWBR int notused // change the I2C clock rate to 400kHz, change frequency TWI_FREQ 400000 defined in twi.h
+#define TWI_FREQ 400000
 #include "Wire.h" // used for I2C protocol (lib)
-#define TWBR int notused // do NOT change the I2C clock rate to 400kHz, keep frequency TWI_FREQ 100000 defined in twi.h
 #endif
 
 #include "config.h"
@@ -526,7 +527,7 @@ void ACC_Common() {
   imu.accADC[ROLL]  -=  global_conf.accZero[ROLL] ;
   imu.accADC[PITCH] -=  global_conf.accZero[PITCH];
   imu.accADC[YAW]   -=  global_conf.accZero[YAW] ;
-
+ 
   #if defined(SENSORS_TILT_45DEG_LEFT)
     int16_t temp = ((imu.accADC[PITCH] - imu.accADC[ROLL] )*7)/10;
     imu.accADC[ROLL] = ((imu.accADC[ROLL]  + imu.accADC[PITCH])*7)/10;
@@ -1412,11 +1413,10 @@ void Device_Mag_getADC() {
 
 void Gyro_init() {
 //  Serial.println("Gyro_init");
-  TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz
   i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
   delay(5);
   i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x03);             //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
-  i2c_writeReg(MPU6050_ADDRESS, 0x1A, MPU6050_DLPF_CFG); //CONFIG        -- EXT_SYNC_SET 0 (disable input pin for data sync) ; default DLPF_CFG = 0 => ACC bandwidth = 260Hz  GYRO bandwidth = 256Hz)
+  //i2c_writeReg(MPU6050_ADDRESS, 0x1A, MPU6050_DLPF_CFG); //CONFIG        -- EXT_SYNC_SET 0 (disable input pin for data sync) ; default DLPF_CFG = 0 => ACC bandwidth = 260Hz  GYRO bandwidth = 256Hz)
   i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18);             //GYRO_CONFIG   -- FS_SEL = 3: Full scale set to 2000 deg/sec
   // enable I2C bypass for AUX I2C
   #if defined(MAG)
@@ -1440,7 +1440,7 @@ void Gyro_getADC () {
 }
 
 void ACC_init () {
-//  Serial.println("ACC_init");
+  Serial.println("ACC_init");
   i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
   //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
   //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
@@ -1458,12 +1458,19 @@ void ACC_init () {
 }
 
 void ACC_getADC () {
-//  Serial.println("ACC_getADC");  
+  Serial.println("ACC_getADC");  
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x3B);
   ACC_ORIENTATION( ((rawADC[0]<<8) | rawADC[1])>>3 ,
                    ((rawADC[2]<<8) | rawADC[3])>>3 ,
                    ((rawADC[4]<<8) | rawADC[5])>>3 );
+  Serial.print("accADC[ROLL]: ");  Serial.print(ROLL);Serial.print("  ");Serial.println(imu.accADC[ROLL]);
+  Serial.print("accADC[PITCH]: ");  Serial.print(PITCH);Serial.print("  ");Serial.println(imu.accADC[PITCH]);
+  Serial.print("accADC[YAW]: ");  Serial.print(YAW);Serial.print("  ");Serial.println(imu.accADC[YAW]);
   ACC_Common();
+  Serial.print("accADC[ROLL]: ");  Serial.print(ROLL);Serial.print("  ");Serial.println(imu.accADC[ROLL]);
+  Serial.print("accADC[PITCH]: ");  Serial.print(PITCH);Serial.print("  ");Serial.println(imu.accADC[PITCH]);
+  Serial.print("accADC[YAW]: ");  Serial.print(YAW);Serial.print("  ");Serial.println(imu.accADC[YAW]);
+
 }
 
 //The MAG acquisition function must be replaced because we now talk to the MPU device

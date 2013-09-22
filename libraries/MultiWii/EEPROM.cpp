@@ -65,7 +65,7 @@ void readGlobalSet() {
   eeprom_read_block((void*)&global_conf, (void*)0, sizeof(global_conf));
   if(calculate_sum((uint8_t*)&global_conf, sizeof(global_conf)) != global_conf.checksum) {
     global_conf.currentSet = 0;
-    global_conf.accZero[ROLL] = 5000;    // for config error signalization
+    // EDH global_conf.accZero[ROLL] = 5000;    // for config error signalization
   }
 }
  
