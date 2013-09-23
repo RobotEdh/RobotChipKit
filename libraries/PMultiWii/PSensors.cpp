@@ -1,4 +1,3 @@
-
 #include "WProgram.h"
 #include "Wire.h" // used for I2C protocol (lib)
 
@@ -22,21 +21,24 @@ uint8_t rawADC[6];
 // I2C general functions
 // ************************************************************************************************************
 void i2c_init(void) {
+
 #if defined(TRACE)	
   Serial.println("i2c_init");
 #endif
+
   Wire.begin(); // setup I2C
 }
+
 
 size_t i2c_read_reg_to_buf(uint8_t devAddr, uint8_t regAddr, void *buf, size_t size) {
   
   Wire.beginTransmission(devAddr);
   Wire.send(regAddr);
                 
-  int ret = Wire.endTransmission();
+  uint8_t ret = Wire.endTransmission();
 #if defined(TRACE)  
   if (ret != 0) {
-      Serial.print("i2c_read_reg_to_buf ret: ");Serial.println(ret);
+      Serial.print("i2c_read_reg_to_buf ret: ");Serial.println((int)ret);
       Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
   }
 #endif                          
@@ -53,17 +55,18 @@ size_t i2c_read_reg_to_buf(uint8_t devAddr, uint8_t regAddr, void *buf, size_t s
   return bytes_read;	
 }	
 
+
 void i2c_getSixRawADC(uint8_t add, uint8_t reg) {
   i2c_read_reg_to_buf(add, reg, &rawADC, 6);
 }
 
 
 uint8_t i2c_writeReg(uint8_t devAddr, uint8_t regAddr, uint8_t val) {
-	Wire.beginTransmission(devAddr);
+    Wire.beginTransmission(devAddr);
     Wire.send(regAddr); // send address
     Wire.send(val);     // send value
  
-    int ret = Wire.endTransmission();
+    uint8_t ret = Wire.endTransmission();
 #if defined(TRACE)      
     if (ret != 0) {
         Serial.print("i2c_writeReg ret: ");Serial.println((int)ret);
@@ -74,9 +77,11 @@ uint8_t i2c_writeReg(uint8_t devAddr, uint8_t regAddr, uint8_t val) {
 }
 
 
-// ****************
+// ************************************************************************
 // GYRO common part
-// ****************
+// adjust imu.gyroADC according gyroZero and 
+// limit the variation between two consecutive readings (anti gyro glitch)
+// ************************************************************************
 void GYRO_Common() {
   static int16_t previousGyroADC[3] = {0,0,0};
   static int32_t g[3];
@@ -120,9 +125,10 @@ void GYRO_Common() {
 
 }
 
-// ****************
+// ************************************************************************
 // ACC common part
-// ****************
+// adjust imu.gyroADC according accZero
+// ************************************************************************
 void ACC_Common() {
   static int32_t a[3];
   uint8_t axis;
@@ -177,6 +183,7 @@ bool MPU_init() {
   return true;
 }
 
+
 bool Gyro_init() {
   uint8_t ret=0;
   
@@ -185,6 +192,7 @@ bool Gyro_init() {
  
   return true;
 }
+
 
 void Gyro_getADC () {
 #if defined(TRACE)	
@@ -205,6 +213,7 @@ void Gyro_getADC () {
   GYRO_Common();
 }
 
+
 bool ACC_init () {
 #if defined(TRACE)	
   Serial.println("ACC_init");
@@ -213,6 +222,7 @@ bool ACC_init () {
   //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
   //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
 }
+
 
 void ACC_getADC () {
 #if defined(TRACE)
@@ -233,10 +243,12 @@ void ACC_getADC () {
   ACC_Common();
 }
 
+
 bool initSensors() {
 #if defined(TRACE)	
   Serial.println("Start initSensors"); 
 #endif 
+
   i2c_init();
   delay(100);
   
@@ -245,6 +257,7 @@ bool initSensors() {
   if (!ACC_init()) return false;
   
   f.I2C_INIT_DONE = 1;
+
 #if defined(TRACE)	  
   Serial.println("End OK initSensors");
 #endif 
