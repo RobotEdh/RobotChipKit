@@ -51,8 +51,7 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl7) ChangeNotice_Handler(void) {  //priority
 
     if ((thisb ^ lastb) & 0x02) {  // RB1 changed (0x02= 10)  ROLLPIN    
       if (!(thisb & 0x02)) {       // RB1 is low                        
-        dTime = currTime-edgeTime[0]; 
-        Serial.println(dTime);                            
+        dTime = currTime-edgeTime[0];                            
         if (900<dTime && dTime<2200) {  // filter erroneous values                             
           rcValue[0] = (uint16_t)dTime;                             
         }                                                            
