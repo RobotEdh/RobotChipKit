@@ -119,6 +119,7 @@ static uint8_t dynP8[2], dynD8[2];
 global_conf_t global_conf;
 conf_t conf;
 
+
 void annexCode() { // this code is excetuted at each loop and won't interfere with control loop if it lasts less than 650 microseconds
   static uint32_t calibratedAccTime;
   uint16_t tmp,tmp2;
@@ -140,7 +141,7 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
 
   for(axis=0;axis<3;axis++) {
 #if defined(TRACE) 
-    Serial.print("rcData[axis");Serial.print((int)axis);Serial.print("]:");Serial.println(rcData[axis]);
+    Serial.print("rcData[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcData[axis]);
 #endif    
     tmp = min(abs(rcData[axis]-MIDRC),500);
     if(axis!=2) { //ROLL & PITCH
@@ -155,7 +156,7 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
     }
     if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis];
 #if defined(TRACE) 
-    Serial.print("rcCommand[axis");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
+    Serial.print("rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
 #endif         
   }
   tmp = constrain(rcData[THROTTLE],MINCHECK,2000);
@@ -163,19 +164,8 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
   tmp2 = tmp/100;
   rcCommand[THROTTLE] = lookupThrottleRC[tmp2] + (tmp-tmp2*100) * (lookupThrottleRC[tmp2+1]-lookupThrottleRC[tmp2]) / 100; // [0;1000] -> expo -> [conf.minthrottle;MAXTHROTTLE]
 #if defined(TRACE) 
-    Serial.print("rcCommand[THROTTLE");Serial.print((int)THROTTLE);Serial.print("]:");Serial.println(rcCommand[THROTTLE]);
+    Serial.print("rcCommand[");Serial.print((int)THROTTLE);Serial.print("]:");Serial.println(rcCommand[THROTTLE]);
 #endif
-
-  if ( currentTime > calibratedAccTime ) {
-    if (! f.SMALL_ANGLES_25) {
-      // the multi uses ACC and is not calibrated or is too much inclinated
-      f.ACC_CALIBRATED = 0;
-      calibratedAccTime = currentTime + 100000;
-    } else {
-      f.ACC_CALIBRATED = 1;
-    }
-  }
-
 }
 
 
@@ -274,17 +264,20 @@ void MultiWii_loop () {
          
         rcDelayCommand = 0;   
     }
+    
+    annexCode();
+    
   } /* end currentTime > rcTime */
  
   computeIMU();
-  
+   
   // Measure loop rate just afer reading the sensors
   currentTime = micros();
   cycleTime = currentTime - previousTime;
   previousTime = currentTime;
  
   //**** PITCH & ROLL & YAW PID ****
- 
+   
   // PITCH & ROLL
   for(axis=0;axis<2;axis++) {
   	
@@ -350,7 +343,5 @@ void MultiWii_loop () {
     Serial.print("axisPID[");Serial.print((int)YAW);Serial.print("]:");Serial.println(axisPID[YAW]);
 #endif
 
-  mixTable();
-
-  writeMotors();
+  RunMotors();
 }

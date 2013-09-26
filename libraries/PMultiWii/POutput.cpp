@@ -12,6 +12,15 @@ uint8_t PWM_PIN[4] = {3,5,6,9};      // OC1, 0C2, OC3, OC4 = rear, right, left, 
 /************  Writes the Motors values to the PWM compare register  ******************/
 /**************************************************************************************/
 void writeMotors() { // [1000;2000] => [125;250]
+
+#if defined(TRACE)
+  Serial.println(">writeMotors");
+  Serial.print("motor[0]:");Serial.println(motor[0]);
+  Serial.print("motor[1]:");Serial.println(motor[1]);
+  Serial.print("motor[2]:");Serial.println(motor[2]);
+  Serial.print("motor[3]:");Serial.println(motor[3]);
+#endif
+   
   OC1RS = motor[0]<<3;
   OC2RS = motor[1]<<3; 
   OC3RS = motor[2]<<3; 
@@ -32,6 +41,9 @@ void writeAllMotors(int16_t mc) {   // Sends commands to all motors
 /************        Initialize the PWM Timers and Registers         ******************/
 /**************************************************************************************/
 void initOutput() {
+#if defined(TRACE)
+  Serial.println(">>Start initOutput");
+#endif
 
   for(uint8_t i=0;i<4;i++) {
     pinMode(PWM_PIN[i],OUTPUT);
@@ -83,20 +95,21 @@ void initOutput() {
   OC4R = 1500;  // set initial PWM duty cycle in counts
                 
   // Enable Timer 2 and OCX              
-  T2CONSET = 0x8000; // Enable Timer2
+  T2CONSET =  0x8000; // Enable Timer2
   OC1CONSET = 0x8000; // Enable OC1
   OC2CONSET = 0x8000; // Enable OC2  
   OC3CONSET = 0x8000; // Enable OC3  
   OC4CONSET = 0x8000; // Enable OC4                     
-  
- 
+   
   writeAllMotors(MINCOMMAND);
   delay(300);
 
- // Serial.println("End initOutput");
+#if defined(TRACE)
+  Serial.println("<<End initOutput");
+#endif 
 }
 
-void mixTable() {
+void RunMotors() {
   int16_t maxMotor;
   uint8_t i;
   #define PIDMIX(X,Y,Z) rcCommand[THROTTLE] + axisPID[ROLL]*X + axisPID[PITCH]*Y + YAW_DIRECTION * axisPID[YAW]*Z
@@ -119,4 +132,6 @@ void mixTable() {
       if (rcData[THROTTLE] < MINCHECK)
           motor[i] = MINCOMMAND;
     }
+    
+    writeMotors();
 }

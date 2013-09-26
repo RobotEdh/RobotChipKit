@@ -144,8 +144,8 @@ void computeRC() {
     for (chan = 0; chan < RC_CHANS; chan++) { // read data from all channels
         rcData4Values[chan][rc4ValuesIndex] = readRawRC(chan);
 #if defined(TRACE2)  
-        Serial.print("rcData4Values[chan");Serial.print((int)chan);Serial.print("][");
-       Serial.print((int)rc4ValuesIndex);Serial.print("]:");Serial.println(rcData4Values[chan][rc4ValuesIndex]);
+        Serial.print("rcData4Values[");Serial.print((int)chan);Serial.print("][");
+        Serial.print((int)rc4ValuesIndex);Serial.print("]:");Serial.println(rcData4Values[chan][rc4ValuesIndex]);
 #endif
         rcDataMean[chan] = 0;
         for (a=0;a<4;a++) rcDataMean[chan] += rcData4Values[chan][a];  // make average on 4 values
@@ -154,7 +154,7 @@ void computeRC() {
         if ( rcDataMean[chan] < (uint16_t)rcData[chan] -3)  rcData[chan] = rcDataMean[chan]+2; // filter in current value outside +/- 3 previous value
         if ( rcDataMean[chan] > (uint16_t)rcData[chan] +3)  rcData[chan] = rcDataMean[chan]-2;
 #if defined(TRACE)  
-        Serial.print("rcData[chan");Serial.print((int)chan);Serial.print("]:");Serial.println(rcData[chan]);
+        Serial.print("rcData[");Serial.print((int)chan);Serial.print("]:");Serial.println(rcData[chan]);
 #endif       
     } // end read data from all channels
 }

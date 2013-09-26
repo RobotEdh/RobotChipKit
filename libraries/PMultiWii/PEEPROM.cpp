@@ -33,12 +33,20 @@ void LoadDefaults() {
     for(i=0;i<CHECKBOXITEMS;i++) {conf.activate[i] = 0;}
     conf.angleTrim[0] = 0; conf.angleTrim[1] = 0;
     conf.powerTrigger1 = 0;
-
-
-  #ifdef FIXEDWING
-    conf.dynThrPID = 50;
-    conf.rcExpo8   =  0;
-  #endif
+ 
+    // 500/128 = 3.90625    3.9062 * 3.9062 = 15.259   1526*100/128 = 1192
+    for(i=0;i<5;i++) {
+       lookupPitchRollRC[i] = (1526+conf.rcExpo8*(i*i-15))*i*(int32_t)conf.rcRate8/1192;
+    }
+    
+    for(i=0;i<11;i++) {
+       int16_t tmp = 10*i-conf.thrMid8;
+       uint8_t y = 1;
+       if (tmp>0) y = 100-conf.thrMid8;
+       if (tmp<0) y = conf.thrMid8;
+       lookupThrottleRC[i] = 10*conf.thrMid8 + tmp*( 100-conf.thrExpo8+(int32_t)conf.thrExpo8*(tmp*tmp)/(y*y) )/10; // [0;1000]
+       lookupThrottleRC[i] = conf.minthrottle + (int32_t)(MAXTHROTTLE-conf.minthrottle)* lookupThrottleRC[i]/1000;  // [0;1000] -> [conf.minthrottle;MAXTHROTTLE]
+     }
 }
 
 
