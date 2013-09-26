@@ -1815,13 +1815,8 @@
   #endif
 #endif
 
-#if defined(SBUS)
-  #define RC_CHANS 18
-#elif defined(SPEKTRUM) || defined(SERIAL_SUM_PPM)
-  #define RC_CHANS 12
-#else
-  #define RC_CHANS 8
-#endif
+#define RC_CHANS 5
+
 
 
 /**************************************************************************************/

@@ -59,7 +59,6 @@ extern int16_t debug[4];
 
 extern conf_t conf;
 
-extern int16_t  annex650_overrun_count;
 extern flags_struct_t f;
 extern uint16_t intPowerTrigger1;
 

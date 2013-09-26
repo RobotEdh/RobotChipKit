@@ -15,7 +15,7 @@ void computeIMU () {
   static uint32_t timeInterleave = 0;
   
 #if defined(TRACE)
-  Serial.println("Start computeIMU");
+  Serial.println(">>Start computeIMU");
 #endif  
 
 #if ACC
@@ -34,12 +34,8 @@ void computeIMU () {
   
   annexCode();
   
-  if ((uint16_t)(micros()-timeInterleave)>650) {
-       annex650_overrun_count++;
-  } else {
-       while((uint16_t)(micros()-timeInterleave)<650) ; //empirical, interleaving delay between 2 consecutive reads
-  }
-    
+  while((uint16_t)(micros()-timeInterleave)<650) ; //empirical, interleaving delay between 2 consecutive reads
+     
 #if GYRO
   Gyro_getADC();  // second read
 #endif
@@ -48,11 +44,14 @@ void computeIMU () {
       gyroADCinter[axis] =  imu.gyroADC[axis]+gyroADCp[axis];
       if(gyroADCprevious[axis]==0) gyroADCprevious[axis] = imu.gyroADC[axis]; // init previous the first time      
       imu.gyroData[axis] = (gyroADCinter[axis]+gyroADCprevious[axis])/3;
+#if defined(TRACE)  
+      Serial.print("imu.gyroData[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.gyroData[axis]);
+#endif
       gyroADCprevious[axis] = gyroADCinter[axis]>>1;
   }
 
 #if defined(TRACE)  
-  Serial.println("End computeIMU");
+  Serial.println("<<End computeIMU");
 #endif  
 }
 

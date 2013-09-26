@@ -1,6 +1,4 @@
-
 #include "WProgram.h"
-
 
 #include "config.h"
 #include "def.h"
@@ -64,40 +62,20 @@ int16_t  errorAltitudeI = 0;
 // **************
 int16_t gyroZero[3] = {0,0,0};
 int16_t accZero[3] = {0,0,0};
-
 int16_t angle[2]    = {0,0};  // absolute angle inclination in multiple of 0.1 degree    180 deg = 1800
-
 imu_t imu;
 
 analog_t analog;
-
 alt_t alt;
-
 att_t att;
-
-
-
-int16_t  debug[4];
-int16_t  sonarAlt; //to think about the unit
-
 flags_struct_t f;
 
-
 int16_t  i2c_errors_count = 0;
-int16_t  annex650_overrun_count = 0;
-
-
 
 #if defined(THROTTLE_ANGLE_CORRECTION)
   int16_t throttleAngleCorrection = 0;	// correction of throttle in lateral wind,
   int8_t  cosZ = 100;					// cos(angleZ)*100
 #endif
-
-
-
-
-uint16_t intPowerTrigger1;
-
 
 // ******************
 // rc functions
@@ -128,58 +106,28 @@ uint8_t rcSerialCount = 0;   // a counter to select legacy RX when there is no m
 int16_t lookupPitchRollRC[5];// lookup table for expo & RC rate PITCH+ROLL
 int16_t lookupThrottleRC[11];// lookup table for expo & mid THROTTLE
 
-
-
 // *************************
 // motor and servo functions
 // *************************
 int16_t axisPID[3];
 int16_t motor[8];
-int16_t servo[8] = {1500,1500,1500,1500,1500,1500,1500,1000};
 
 // ************************
 // EEPROM Layout definition
 // ************************
 static uint8_t dynP8[2], dynD8[2];
-
 global_conf_t global_conf;
-
 conf_t conf;
-
-
-// **********************
-// GPS common variables
-// **********************
-  int16_t  GPS_angle[2] = { 0, 0};                      // the angles that must be applied for GPS correction
-  int32_t  GPS_coord[2];
-  int32_t  GPS_home[2];
-  int32_t  GPS_hold[2];
-  uint8_t  GPS_numSat;
-  uint16_t GPS_distanceToHome;                          // distance to home  - unit: meter
-  int16_t  GPS_directionToHome;                         // direction to home - unit: degree
-  uint16_t GPS_altitude;                                // GPS altitude      - unit: meter
-  uint16_t GPS_speed;                                   // GPS speed         - unit: cm/s
-  uint8_t  GPS_update = 0;                              // a binary toogle to distinct a GPS position update
-  uint16_t GPS_ground_course = 0;                       //                   - unit: degree*10
-  uint8_t  GPS_Present = 0;                             // Checksum from Gps serial
-  uint8_t  GPS_Enable  = 0;
-
-  // The desired bank towards North (Positive) or South (Negative) : latitude
-  // The desired bank towards East (Positive) or West (Negative)   : longitude
-  int16_t  nav[2];
-  int16_t  nav_rated[2];    //Adding a rate controller to the navigation to make it smoother
-
-  uint8_t nav_mode = NAV_MODE_NONE; // Navigation mode
-
-  uint8_t alarmArray[16];           // array
- 
 
 void annexCode() { // this code is excetuted at each loop and won't interfere with control loop if it lasts less than 650 microseconds
   static uint32_t calibratedAccTime;
   uint16_t tmp,tmp2;
   uint8_t axis,prop1,prop2;
-//  Serial.println("Start annexCode");
 
+#if defined(TRACE) 
+  Serial.println(">annexCode"); 
+#endif 
+ 
   // PITCH & ROLL only dynamic PID adjustemnt,  depending on throttle value
   prop2 = 128; // prop2 was 100, is 128 now
   if (rcData[THROTTLE]>1500) { // breakpoint is fix: 1500
@@ -191,6 +139,9 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
   }
 
   for(axis=0;axis<3;axis++) {
+#if defined(TRACE) 
+    Serial.print("rcData[axis");Serial.print((int)axis);Serial.print("]:");Serial.println(rcData[axis]);
+#endif    
     tmp = min(abs(rcData[axis]-MIDRC),500);
     if(axis!=2) { //ROLL & PITCH
       tmp2 = tmp>>7; // 500/128 = 3.9  => range [0;3]
@@ -203,11 +154,17 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
       rcCommand[axis] = tmp;
     }
     if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis];
+#if defined(TRACE) 
+    Serial.print("rcCommand[axis");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
+#endif         
   }
   tmp = constrain(rcData[THROTTLE],MINCHECK,2000);
   tmp = (uint32_t)(tmp-MINCHECK)*1000/(2000-MINCHECK); // [MINCHECK;2000] -> [0;1000]
   tmp2 = tmp/100;
   rcCommand[THROTTLE] = lookupThrottleRC[tmp2] + (tmp-tmp2*100) * (lookupThrottleRC[tmp2+1]-lookupThrottleRC[tmp2]) / 100; // [0;1000] -> expo -> [conf.minthrottle;MAXTHROTTLE]
+#if defined(TRACE) 
+    Serial.print("rcCommand[THROTTLE");Serial.print((int)THROTTLE);Serial.print("]:");Serial.println(rcCommand[THROTTLE]);
+#endif
 
   if ( currentTime > calibratedAccTime ) {
     if (! f.SMALL_ANGLES_25) {
@@ -251,23 +208,6 @@ void MultiWii_setup() {
   
 }
 
-void go_arm() {
-  if(calibratingG == 0 && f.ACC_CALIBRATED 
-    ) {
-    if(!f.ARMED) { // arm now!
-      f.ARMED = 1;
-      headFreeModeHold = att.heading;
-    }
-  } else if(!f.ARMED) { 
-
-  }
-}
-void go_disarm() {
-  if (f.ARMED) {
-    f.ARMED = 0;
-  }
-}
-
 // ******** Main Loop *********
 
 void MultiWii_loop () {
@@ -292,8 +232,9 @@ void MultiWii_loop () {
   int32_t prop = 0;
 
   
-  if (currentTime > rcTime ) { // 50Hz
+  if (currentTime > rcTime ) { // 50Hz: PPM frequency of the RC, no change happen within 20ms
     rcTime = currentTime + 20000;
+    
     computeRC();
 
     // ------------------ STICKS COMMAND HANDLER --------------------
@@ -315,104 +256,47 @@ void MultiWii_loop () {
     if (rcData[THROTTLE] <= MINCHECK) {            // THROTTLE at minimum
       errorGyroI[ROLL] = 0; errorGyroI[PITCH] = 0; errorGyroI_YAW = 0; 
       errorAngleI[ROLL] = 0; errorAngleI[PITCH] = 0;
-      if (conf.activate[BOXARM] > 0) {             // Arming/Disarming via ARM BOX
-        if ( rcOptions[BOXARM] && f.OK_TO_ARM ) go_arm(); else if (f.ARMED) go_disarm();
-      }
     }
+    
+    // calibrate and configure online
     if(rcDelayCommand == 20) {
-      if(f.ARMED) {                   // actions during armed
-        #ifdef ALLOW_ARM_DISARM_VIA_TX_YAW
-          if (conf.activate[BOXARM] == 0 && rcSticks == THR_LO + YAW_LO + PIT_CE + ROL_CE) go_disarm();    // Disarm via YAW
-        #endif
-      } else {                        // actions during not armed
-        i=0;
-        if (rcSticks == THR_LO + YAW_LO + PIT_LO + ROL_CE) {    // GYRO calibration
-          calibratingG=512;
+        if      (rcSticks == THR_LO + YAW_LO + PIT_LO + ROL_CE) { // throttle=low, yaw=low, pitch=min, roll=center =>GYRO calibration
+            calibratingG=512; 
+        }
+        else if (rcSticks == THR_HI + YAW_LO + PIT_LO + ROL_CE) { // throttle=max, yaw=low, pitch=min, roll=center => ACC calibration
+             calibratingA=512;     
         }
 
-        if (rcSticks == THR_LO + YAW_HI + PIT_HI + ROL_CE) {            // Enter LCD config
-
-          previousTime = micros();
-        }
-        #ifdef ALLOW_ARM_DISARM_VIA_TX_YAW
-          else if (conf.activate[BOXARM] == 0 && rcSticks == THR_LO + YAW_HI + PIT_CE + ROL_CE) go_arm();      // Arm via YAW
-        #endif
-
-
-          else if (rcSticks == THR_HI + YAW_LO + PIT_LO + ROL_CE) calibratingA=512;     // throttle=max, yaw=left, pitch=min
-
-
-        i=0;
         if      (rcSticks == THR_HI + YAW_CE + PIT_HI + ROL_CE) {conf.angleTrim[PITCH]+=2; i=1;}
         else if (rcSticks == THR_HI + YAW_CE + PIT_LO + ROL_CE) {conf.angleTrim[PITCH]-=2; i=1;}
         else if (rcSticks == THR_HI + YAW_CE + PIT_CE + ROL_HI) {conf.angleTrim[ROLL] +=2; i=1;}
         else if (rcSticks == THR_HI + YAW_CE + PIT_CE + ROL_LO) {conf.angleTrim[ROLL] -=2; i=1;}
-        if (i) {
-          //writeParams(1);
-          rcDelayCommand = 0;    // allow autorepetition
-
-        }
-      }
+         
+        rcDelayCommand = 0;   
     }
-    
-    uint16_t auxState = 0;
-    for(i=0;i<4;i++)
-      auxState |= (rcData[AUX1+i]<1300)<<(3*i) | (1300<rcData[AUX1+i] && rcData[AUX1+i]<1700)<<(3*i+1) | (rcData[AUX1+i]>1700)<<(3*i+2);
-    for(i=0;i<CHECKBOXITEMS;i++)
-      rcOptions[i] = (auxState & conf.activate[i])>0;
-
-
-  
-      if ( rcOptions[BOXANGLE] || (failsafeCnt > 5*FAILSAFE_DELAY) ) { 
-        // bumpless transfer to Level mode
-        if (!f.ANGLE_MODE) {
-          errorAngleI[ROLL] = 0; errorAngleI[PITCH] = 0;
-          f.ANGLE_MODE = 1;
-        }  
-      } else {
-        // failsafe support
-        f.ANGLE_MODE = 0;
-      }
-      if ( rcOptions[BOXHORIZON] ) {
-        f.ANGLE_MODE = 0;
-        if (!f.HORIZON_MODE) {
-          errorAngleI[ROLL] = 0; errorAngleI[PITCH] = 0;
-          f.HORIZON_MODE = 1;
-        }
-      } else {
-        f.HORIZON_MODE = 0;
-      }
-  
-
-    if (rcOptions[BOXARM] == 0) f.OK_TO_ARM = 1;
-    #if !defined(GPS_LED_INDICATOR)
-      if (f.ANGLE_MODE || f.HORIZON_MODE) {STABLEPIN_ON;} else {STABLEPIN_OFF;}
-    #endif
- 
-  } 
+  } /* end currentTime > rcTime */
  
   computeIMU();
+  
   // Measure loop rate just afer reading the sensors
   currentTime = micros();
   cycleTime = currentTime - previousTime;
   previousTime = currentTime;
  
-  #if defined(THROTTLE_ANGLE_CORRECTION)
-    if(f.ANGLE_MODE || f.HORIZON_MODE) {
-       rcCommand[THROTTLE]+= throttleAngleCorrection;
-    }
-  #endif
-  
   //**** PITCH & ROLL & YAW PID ****
-  if ( f.HORIZON_MODE ) prop = min(max(abs(rcCommand[PITCH]),abs(rcCommand[ROLL])),512);
-
+ 
   // PITCH & ROLL
   for(axis=0;axis<2;axis++) {
   	
   	//error
     rc = rcCommand[axis]<<1;
     error = rc - imu.gyroData[axis];
-    
+#if defined(TRACE)  
+    Serial.print("imu.gyroData[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.gyroData[axis]);
+    Serial.print("rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
+    Serial.print("error:");Serial.println(error);
+#endif   
+
     //I term
     errorGyroI[axis]  = constrain(errorGyroI[axis]+error,-16000,+16000);       // WindUp   16 bits is ok here
     if (abs(imu.gyroData[axis])>640) errorGyroI[axis] = 0;
@@ -420,23 +304,6 @@ void MultiWii_loop () {
 
     //P term
     PTerm = (int32_t)rc*conf.pid[axis].P8>>6;
-
-    if (f.ANGLE_MODE || f.HORIZON_MODE) { // axis relying on ACC
-      // 50 degrees max inclination
-      errorAngle         = constrain(rc + GPS_angle[axis],-500,+500) - att.angle[axis] + conf.angleTrim[axis]; //16 bits is ok here
-      errorAngleI[axis]  = constrain(errorAngleI[axis]+errorAngle,-10000,+10000);                                                // WindUp     //16 bits is ok here
-
-      PTermACC           = ((int32_t)errorAngle*conf.pid[PIDLEVEL].P8)>>7; // 32 bits is needed for calculation: errorAngle*P8 could exceed 32768   16 bits is ok for result
-      
-      int16_t limit      = conf.pid[PIDLEVEL].D8*5;
-      PTermACC           = constrain(PTermACC,-limit,+limit);
-
-      ITermACC           = ((int32_t)errorAngleI[axis]*conf.pid[PIDLEVEL].I8)>>12;   // 32 bits is needed for calculation:10000*I8 could exceed 32768   16 bits is ok for result
-
-      ITerm              = ITermACC + ((ITerm-ITermACC)*prop>>9);
-      PTerm              = PTermACC + ((PTerm-PTermACC)*prop>>9);
-    }
-
     PTerm -= ((int32_t)imu.gyroData[axis]*dynP8[axis])>>6; // 32 bits is needed for calculation   
     
     //D term
@@ -449,6 +316,9 @@ void MultiWii_loop () {
     DTerm = ((int32_t)DTerm*dynD8[axis])>>5;        // 32 bits is needed for calculation
 
     axisPID[axis] =  PTerm + ITerm - DTerm;
+#if defined(TRACE)  
+    Serial.print("axisPID[");Serial.print((int)axis);Serial.print("]:");Serial.println(axisPID[axis]);
+#endif     
   }
 
   //YAW
@@ -458,7 +328,11 @@ void MultiWii_loop () {
   //error
   rc = (int32_t)rcCommand[YAW] * (2*conf.yawRate + 30)  >> 5;
   error = rc - imu.gyroData[YAW];
-  
+#if defined(TRACE)  
+    Serial.print("imu.gyroData[");Serial.print((int)YAW);Serial.print("]:");Serial.println(imu.gyroData[YAW]);
+    Serial.print("rcCommand[");Serial.print((int)YAW);Serial.print("]:");Serial.println(rcCommand[YAW]);
+    Serial.print("error:");Serial.println(error);
+#endif  
   //I term
   errorGyroI_YAW  += (int32_t)error*conf.pid[YAW].I8;
   errorGyroI_YAW  = constrain(errorGyroI_YAW, 2-((int32_t)1<<28), -2+((int32_t)1<<28));
@@ -472,6 +346,9 @@ void MultiWii_loop () {
   ITerm = constrain((int16_t)(errorGyroI_YAW>>13),-GYRO_I_MAX,+GYRO_I_MAX);
   
   axisPID[YAW] =  PTerm + ITerm; // No D term
+#if defined(TRACE)  
+    Serial.print("axisPID[");Serial.print((int)YAW);Serial.print("]:");Serial.println(axisPID[YAW]);
+#endif
 
   mixTable();
 

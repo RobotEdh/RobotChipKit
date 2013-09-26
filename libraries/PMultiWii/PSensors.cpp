@@ -23,7 +23,7 @@ uint8_t rawADC[6];
 // ************************************************************************************************************
 void i2c_init(void) {
 #if defined(TRACE)	
-  Serial.println("i2c_init");
+  Serial.println(">i2c_init");
 #endif
   Wire.begin(); // setup I2C
 }
@@ -113,12 +113,13 @@ void GYRO_Common() {
     if (previousGyroADC[axis] != 0) imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);  
 #if defined(TRACE)  
   //  Serial.print("previousGyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)previousGyroADC[axis]);
-  //  Serial.print("imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)imu.gyroADC[axis]);
+      Serial.print("imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.gyroADC[axis]);
 #endif      
     previousGyroADC[axis] = imu.gyroADC[axis];
   }
 
 }
+
 
 // ****************
 // ACC common part
@@ -149,7 +150,7 @@ void ACC_Common() {
   for (axis = 0; axis < 3; axis++) {
     imu.accADC[axis]  -= accZero[axis];
 #if defined(TRACE)  
-  Serial.print("accZero[");Serial.print((int)axis);Serial.print("]:");Serial.println(accZero[axis]);
+ // Serial.print("accZero[");Serial.print((int)axis);Serial.print("]:");Serial.println(accZero[axis]);
   Serial.print("imu.accADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.accADC[axis]);
 #endif 
   }
@@ -163,7 +164,7 @@ bool MPU_init() {
   uint8_t ret=0;
     
 #if defined(TRACE)	
-  Serial.println("MPU_init");
+  Serial.println(">MPU_init");
 #endif    
   // TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz
   ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
@@ -188,7 +189,7 @@ bool Gyro_init() {
 
 void Gyro_getADC () {
 #if defined(TRACE)	
-  Serial.println("Gyro_getADC");
+  Serial.println(">Gyro_getADC");
 #endif    
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x43); // range: +/- 8192; +/- 2000 deg/sec
   
@@ -197,9 +198,9 @@ void Gyro_getADC () {
   imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
   /* FIX ME divide by 2 as scale +/- 2000 deg/sec ?? */
 #if defined(TRACE)    
-  Serial.print("imu.accADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.accADC[ROLL],DEC);
-  Serial.print("imu.accADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.accADC[PITCH],DEC);
-  Serial.print("imu.accADC[");Serial.print((int)YAW);Serial.print("]:");Serial.println((int16_t)imu.accADC[YAW],DEC); 
+  Serial.print("imu.gyroADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[ROLL],DEC);
+  Serial.print("imu.gyroADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[PITCH],DEC);
+  Serial.print("imu.gyroADC[");Serial.print((int)YAW);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[YAW],DEC); 
 #endif  
 
   GYRO_Common();
@@ -207,7 +208,7 @@ void Gyro_getADC () {
 
 bool ACC_init () {
 #if defined(TRACE)	
-  Serial.println("ACC_init");
+  Serial.println(">ACC_init");
 #endif    
   i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
   //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
@@ -216,7 +217,7 @@ bool ACC_init () {
 
 void ACC_getADC () {
 #if defined(TRACE)
-  Serial.println("ACC_getADC"); 
+  Serial.println(">ACC_getADC"); 
 #endif    
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x3B);
     
@@ -235,7 +236,7 @@ void ACC_getADC () {
 
 bool initSensors() {
 #if defined(TRACE)	
-  Serial.println("Start initSensors"); 
+  Serial.println(">Start initSensors"); 
 #endif 
   i2c_init();
   delay(100);
@@ -246,7 +247,7 @@ bool initSensors() {
   
   f.I2C_INIT_DONE = 1;
 #if defined(TRACE)	  
-  Serial.println("End OK initSensors");
+  Serial.println("<End OK initSensors");
 #endif 
   return true;
 }
