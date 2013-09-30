@@ -11,10 +11,6 @@
  #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND), default for FreeIMU v0.4 and InvenSense evaluation board
 //#define MPU6050_ADDRESS     0x69 // address pin AD0 high (VCC)
 
-//Default settings LPF 256Hz/8000Hz sample
-#define MPU6050_DLPF_CFG   0
-
-
 uint8_t rawADC[6];
   
 // ************************************************************************************************************
@@ -77,6 +73,71 @@ uint8_t i2c_writeReg(uint8_t devAddr, uint8_t regAddr, uint8_t val) {
 }
 
 
+
+// ************************************************************************************************************
+// I2C Gyroscope and Accelerometer MPU6050
+// ************************************************************************************************************
+
+bool MPU_init() {
+  uint8_t ret=0;
+    
+#if defined(TRACE)	
+  Serial.println(">MPU_init");
+#endif    
+  // TWBR = ((F_CPU / 400000L) - 16) / 2; // FIX ME change the I2C clock rate to 400kHz
+  ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80); //PWR_MGMT_1    -- DEVICE_RESET 1
+  if (ret> 0) return false;
+  delay(5);
+  ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x03); //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
+  if (ret> 0) return false;
+  ret=i2c_writeReg(MPU6050_ADDRESS, 0x1A, 0x00); //CONFIG        -- EXT_SYNC_SET 0 (disable input pin for data sync) ; DLPF_CFG = 0 => ACC bandwidth = 260Hz  GYRO bandwidth = 256Hz)
+  if (ret> 0) return false;
+
+  return true;
+}
+
+
+bool Gyro_init() {
+  uint8_t ret=0;
+  
+  ret=i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18); //GYRO_CONFIG   -- FS_SEL = 3: Full scale set to 2000 deg/sec
+  if (ret> 0) return false;
+ 
+  return true;
+}
+
+
+bool ACC_init () {
+#if defined(TRACE)	
+  Serial.println(">ACC_init");
+#endif    
+  i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
+  //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
+  //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
+}
+
+
+bool initSensors() {
+#if defined(TRACE)	
+  Serial.println(">Start initSensors"); 
+#endif 
+
+  i2c_init();
+  delay(100);
+  
+  if (!MPU_init()) return false;
+  if (!Gyro_init()) return false ;
+  if (!ACC_init()) return false;
+  
+  f.I2C_INIT_DONE = 1;
+
+#if defined(TRACE)	  
+  Serial.println("<End OK initSensors");
+#endif 
+  return true;
+}
+
+
 // ************************************************************************
 // GYRO common part
 // adjust imu.gyroADC according gyroZero and 
@@ -124,6 +185,36 @@ void GYRO_Common() {
   }
 
 }
+
+
+/*******************************************************************************/
+/*                    Gyro_getADC                                              */
+/*  - call i2c_getSixRawADC to get raw values for:                             */
+/*                            imu.gyroADC[axis]                                */
+/*  - call GYRO_Common to adjust imu.gyroADC[axis] with gyroZero and           */
+/*    limit the variation between two consecutive readings (anti gyro glitch)  */
+/*    interval [-8192;+8192]                                                                           */
+/*******************************************************************************/
+
+void Gyro_getADC () {
+#if defined(TRACE)	
+  Serial.println(">Gyro_getADC");
+#endif    
+  i2c_getSixRawADC(MPU6050_ADDRESS, 0x43); // range: +/- 8192; +/- 2000 deg/sec
+  
+  imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
+  imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
+  imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
+  /* FIX ME divide by 2 as scale +/- 2000 deg/sec ?? */
+#if defined(TRACE)    
+  Serial.print("imu.gyroADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[ROLL],DEC);
+  Serial.print("imu.gyroADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[PITCH],DEC);
+  Serial.print("imu.gyroADC[");Serial.print((int)YAW);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[YAW],DEC); 
+#endif  
+
+  GYRO_Common();
+}
+
 // ************************************************************************
 // ACC common part
 // adjust imu.gyroADC according accZero
@@ -146,7 +237,7 @@ void ACC_Common() {
     if (calibratingA == 1) {
       accZero[ROLL]  = a[ROLL]>>9;
       accZero[PITCH] = a[PITCH]>>9;
-      accZero[YAW]   = (a[YAW]>>9)-ACC_1G; // Check value ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096  or 4096/8 if acc is divded by 8 
+      accZero[YAW]   = (a[YAW]>>9)-ACC_1G; // FIX ME: Check value ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096  or 4096/8 if acc is divded by 8 
     }
     calibratingA--;
   }
@@ -160,68 +251,14 @@ void ACC_Common() {
   }
 }
 
-// ************************************************************************************************************
-// I2C Gyroscope and Accelerometer MPU6050
-// ************************************************************************************************************
 
-bool MPU_init() {
-  uint8_t ret=0;
-    
-#if defined(TRACE)	
-  Serial.println(">MPU_init");
-#endif    
-  // TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz
-  ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80);             //PWR_MGMT_1    -- DEVICE_RESET 1
-  if (ret> 0) return false;
-  delay(5);
-  ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x03);             //PWR_MGMT_1    -- SLEEP 0; CYCLE 0; TEMP_DIS 0; CLKSEL 3 (PLL with Z Gyro reference)
-  if (ret> 0) return false;
-  ret=i2c_writeReg(MPU6050_ADDRESS, 0x1A, MPU6050_DLPF_CFG); //CONFIG        -- EXT_SYNC_SET 0 (disable input pin for data sync) ; default DLPF_CFG = 0 => ACC bandwidth = 260Hz  GYRO bandwidth = 256Hz)
-  if (ret> 0) return false;
-
-  return true;
-}
-
-
-bool Gyro_init() {
-  uint8_t ret=0;
-  
-  ret=i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18);             //GYRO_CONFIG   -- FS_SEL = 3: Full scale set to 2000 deg/sec
-  if (ret> 0) return false;
- 
-  return true;
-}
-
-
-void Gyro_getADC () {
-#if defined(TRACE)	
-  Serial.println(">Gyro_getADC");
-#endif    
-  i2c_getSixRawADC(MPU6050_ADDRESS, 0x43); // range: +/- 8192; +/- 2000 deg/sec
-  
-  imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
-  imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
-  imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-  /* FIX ME divide by 2 as scale +/- 2000 deg/sec ?? */
-#if defined(TRACE)    
-  Serial.print("imu.gyroADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[ROLL],DEC);
-  Serial.print("imu.gyroADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[PITCH],DEC);
-  Serial.print("imu.gyroADC[");Serial.print((int)YAW);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[YAW],DEC); 
-#endif  
-
-  GYRO_Common();
-}
-
-
-bool ACC_init () {
-#if defined(TRACE)	
-  Serial.println(">ACC_init");
-#endif    
-  i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
-  //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
-  //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
-}
-
+/****************************************************************/
+/*                    ACC_getADC                                */
+/*  - call i2c_getSixRawADC to get raw values for:              */
+/*                            imu.accADC[axis]                  */
+/*  - call ACC_Common to adjust imu.accADC[axis] with accZero   */
+/*    interval [-4096;+4096]                                    */
+/****************************************************************/
 
 void ACC_getADC () {
 #if defined(TRACE)
@@ -242,23 +279,3 @@ void ACC_getADC () {
   ACC_Common();
 }
 
-
-bool initSensors() {
-#if defined(TRACE)	
-  Serial.println(">Start initSensors"); 
-#endif 
-
-  i2c_init();
-  delay(100);
-  
-  if (!MPU_init()) return false;
-  if (!Gyro_init()) return false ;
-  if (!ACC_init()) return false;
-  
-  f.I2C_INIT_DONE = 1;
-
-#if defined(TRACE)	  
-  Serial.println("<End OK initSensors");
-#endif 
-  return true;
-}

@@ -127,15 +127,27 @@ uint16_t readRawRC(uint8_t chan) {
   return data; // We return the value correctly copied when the IRQ's where disabled
 }
 
-/**************************************************************************************
-***************   compute and Filter the RX data rcData[chan]
-**************************************************************************************/
+
+/**********************************************************************/
+/*                    computeRC                                       */
+/*  - call readRawRC to get:                                          */
+/*         rcData4Values[chan][rc4ValuesIndex]                        */
+/*    and make average on 4 values to get:                            */
+/*         rcData[chan] interval [1000;2000]                          */
+/*  - compute rcCommand[axis]                                         */
+/*            interval [-500;+500] for ROLL & PITCH & YAW             */
+/*            interval [conf.minthrottle;MAXTHROTTLE] for THROTTLE    */
+/**********************************************************************/
+
 void computeRC() {
   static uint16_t rcData4Values[RC_CHANS][4], rcDataMean[RC_CHANS];
   static uint8_t rc4ValuesIndex = 0;
+  uint16_t tmp,tmp2;
+  uint8_t axis,prop1,prop2;
   uint8_t chan,a;
+  
 #if defined(TRACE)
-  Serial.println(">computeRC");
+    Serial.println(">computeRC");
 #endif 
 
     rc4ValuesIndex++;
@@ -157,8 +169,45 @@ void computeRC() {
         Serial.print("rcData[");Serial.print((int)chan);Serial.print("]:");Serial.println(rcData[chan]);
 #endif       
     } // end read data from all channels
-}
+ 
+    
+    // PITCH & ROLL only dynamic PID adjustemnt, depending on throttle value
+    prop2 = 128; // prop2 was 100, is 128 now
+    if (rcData[THROTTLE]>1500) { // breakpoint is fix: 1500
+        if (rcData[THROTTLE]<2000) {
+            prop2 -=  ((uint16_t)conf.dynThrPID*(rcData[THROTTLE]-1500)>>9); //  /512 instead of /500
+        } else {
+            prop2 -=  conf.dynThrPID;
+        }
+    }
 
+    for(axis=0;axis<3;axis++) {
+        tmp = min(abs(rcData[axis]-MIDRC),500);
+        if(axis!=2) { //ROLL & PITCH
+            tmp2 = tmp>>7; // 500/128 = 3.9  => range [0;3]
+            rcCommand[axis] = lookupPitchRollRC[tmp2] + ((tmp-(tmp2<<7)) * (lookupPitchRollRC[tmp2+1]-lookupPitchRollRC[tmp2])>>7);
+            prop1 = 128-((uint16_t)conf.rollPitchRate*tmp>>9); // prop1 was 100, is 128 now -- and /512 instead of /500
+            prop1 = (uint16_t)prop1*prop2>>7; // prop1: max is 128   prop2: max is 128   result prop1: max is 128
+            dynP8[axis] = (uint16_t)conf.pid[axis].P8*prop1>>7; // was /100, is /128 now
+            dynD8[axis] = (uint16_t)conf.pid[axis].D8*prop1>>7; // was /100, is /128 now
+        }
+        else  // YAW
+        {      
+            rcCommand[axis] = tmp;
+        }
+        if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis];
+#if defined(TRACE) 
+        Serial.print("rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
+#endif         
+    }
+    tmp = constrain(rcData[THROTTLE],MINCHECK,2000);
+    tmp = (uint32_t)(tmp-MINCHECK)*1000/(2000-MINCHECK); // [MINCHECK;2000] -> [0;1000]
+    tmp2 = tmp/100;
+    rcCommand[THROTTLE] = lookupThrottleRC[tmp2] + (tmp-tmp2*100) * (lookupThrottleRC[tmp2+1]-lookupThrottleRC[tmp2]) / 100; // [0;1000] -> expo -> [conf.minthrottle;MAXTHROTTLE]
+#if defined(TRACE) 
+    Serial.print("rcCommand[");Serial.print((int)THROTTLE);Serial.print("]:");Serial.println(rcCommand[THROTTLE]);
+#endif
+}
 
 
 

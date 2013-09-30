@@ -46,6 +46,7 @@ extern int16_t  errorAltitudeI;
 extern int16_t  i2c_errors_count;
 extern uint8_t alarmArray[16];
 extern global_conf_t global_conf;
+extern uint8_t dynP8[2], dynD8[2];
 
 extern imu_t imu;
 extern analog_t analog;
@@ -142,11 +143,6 @@ extern int16_t lookupThrottleRC[11];
 
   extern volatile uint8_t  spekFrameFlags;
   extern volatile uint32_t spekTimeLast;
-
-#if defined(THROTTLE_ANGLE_CORRECTION)
-  extern int16_t throttleAngleCorrection;
-  extern int8_t  cosZ;
-#endif
 
 void annexCode();
 

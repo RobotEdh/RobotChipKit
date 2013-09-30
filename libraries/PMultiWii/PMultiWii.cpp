@@ -72,11 +72,6 @@ flags_struct_t f;
 
 int16_t  i2c_errors_count = 0;
 
-#if defined(THROTTLE_ANGLE_CORRECTION)
-  int16_t throttleAngleCorrection = 0;	// correction of throttle in lateral wind,
-  int8_t  cosZ = 100;					// cos(angleZ)*100
-#endif
-
 // ******************
 // rc functions
 // ******************
@@ -115,58 +110,12 @@ int16_t motor[8];
 // ************************
 // EEPROM Layout definition
 // ************************
-static uint8_t dynP8[2], dynD8[2];
+uint8_t dynP8[2], dynD8[2];
 global_conf_t global_conf;
 conf_t conf;
 
 
-void annexCode() { // this code is excetuted at each loop and won't interfere with control loop if it lasts less than 650 microseconds
-  static uint32_t calibratedAccTime;
-  uint16_t tmp,tmp2;
-  uint8_t axis,prop1,prop2;
 
-#if defined(TRACE) 
-  Serial.println(">annexCode"); 
-#endif 
- 
-  // PITCH & ROLL only dynamic PID adjustemnt,  depending on throttle value
-  prop2 = 128; // prop2 was 100, is 128 now
-  if (rcData[THROTTLE]>1500) { // breakpoint is fix: 1500
-    if (rcData[THROTTLE]<2000) {
-      prop2 -=  ((uint16_t)conf.dynThrPID*(rcData[THROTTLE]-1500)>>9); //  /512 instead of /500
-    } else {
-      prop2 -=  conf.dynThrPID;
-    }
-  }
-
-  for(axis=0;axis<3;axis++) {
-#if defined(TRACE) 
-    Serial.print("rcData[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcData[axis]);
-#endif    
-    tmp = min(abs(rcData[axis]-MIDRC),500);
-    if(axis!=2) { //ROLL & PITCH
-      tmp2 = tmp>>7; // 500/128 = 3.9  => range [0;3]
-      rcCommand[axis] = lookupPitchRollRC[tmp2] + ((tmp-(tmp2<<7)) * (lookupPitchRollRC[tmp2+1]-lookupPitchRollRC[tmp2])>>7);
-      prop1 = 128-((uint16_t)conf.rollPitchRate*tmp>>9); // prop1 was 100, is 128 now -- and /512 instead of /500
-      prop1 = (uint16_t)prop1*prop2>>7; // prop1: max is 128   prop2: max is 128   result prop1: max is 128
-      dynP8[axis] = (uint16_t)conf.pid[axis].P8*prop1>>7; // was /100, is /128 now
-      dynD8[axis] = (uint16_t)conf.pid[axis].D8*prop1>>7; // was /100, is /128 now
-    } else {      // YAW
-      rcCommand[axis] = tmp;
-    }
-    if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis];
-#if defined(TRACE) 
-    Serial.print("rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
-#endif         
-  }
-  tmp = constrain(rcData[THROTTLE],MINCHECK,2000);
-  tmp = (uint32_t)(tmp-MINCHECK)*1000/(2000-MINCHECK); // [MINCHECK;2000] -> [0;1000]
-  tmp2 = tmp/100;
-  rcCommand[THROTTLE] = lookupThrottleRC[tmp2] + (tmp-tmp2*100) * (lookupThrottleRC[tmp2+1]-lookupThrottleRC[tmp2]) / 100; // [0;1000] -> expo -> [conf.minthrottle;MAXTHROTTLE]
-#if defined(TRACE) 
-    Serial.print("rcCommand[");Serial.print((int)THROTTLE);Serial.print("]:");Serial.println(rcCommand[THROTTLE]);
-#endif
-}
 
 
 void MultiWii_setup() {
@@ -189,8 +138,6 @@ void MultiWii_setup() {
 
   calibratingA = 0;
   calibratingG = 512;
-
-  f.SMALL_ANGLES_25=1; // important for gyro only conf
 
 #if defined(TRACE)
   Serial.println("End MultiWii_setup");
@@ -265,8 +212,6 @@ void MultiWii_loop () {
         rcDelayCommand = 0;   
     }
     
-    annexCode();
-    
   } /* end currentTime > rcTime */
  
   computeIMU();
@@ -339,6 +284,7 @@ void MultiWii_loop () {
   ITerm = constrain((int16_t)(errorGyroI_YAW>>13),-GYRO_I_MAX,+GYRO_I_MAX);
   
   axisPID[YAW] =  PTerm + ITerm; // No D term
+  
 #if defined(TRACE)  
     Serial.print("axisPID[");Serial.print((int)YAW);Serial.print("]:");Serial.println(axisPID[YAW]);
 #endif
