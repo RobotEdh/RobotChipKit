@@ -34,7 +34,6 @@ extern uint32_t currentTime;
 extern uint16_t previousTime;
 extern uint16_t cycleTime;
 extern uint16_t calibratingA;
-extern uint16_t calibratingB;
 extern uint16_t calibratingG;
 extern int16_t  magHold,headFreeModeHold;
 extern uint8_t  vbatMin;
@@ -52,9 +51,6 @@ extern imu_t imu;
 extern analog_t analog;
 extern alt_t alt;
 extern att_t att;
-#ifdef LOG_PERMANENT
-extern plog_t plog;
-#endif
 
 extern int16_t debug[4];
 
@@ -65,21 +61,11 @@ extern uint16_t intPowerTrigger1;
 
 extern int16_t gyroZero[3];
 extern int16_t accZero[3];
-extern int16_t angle[2];
-
-
-#if BARO
-  extern int32_t baroPressure;
-  extern int32_t baroTemperature;
-  extern int32_t baroPressureSum;
-#endif
 
 extern int16_t axisPID[3];
 extern int16_t motor[8];
 extern int16_t servo[8];
 
-extern int16_t failsafeEvents;
-extern volatile int16_t failsafeCnt;
 
 extern int16_t rcData[RC_CHANS];
 extern int16_t rcSerial[8];

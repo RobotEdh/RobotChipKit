@@ -36,7 +36,9 @@ void computeIMU () {
   
   timeInterleave=micros();
    
-  while((uint16_t)(micros()-timeInterleave)<650) ; //empirical, interleaving delay between 2 consecutive reads
+  while((uint16_t)(micros()-timeInterleave)<650) ; //empirical, interleaving delay 650 micros between 2 consecutive reads
+                                                   // we could use interrupt or FIFO register to known 
+                                                   // when a new data is available in MPU6050
      
   Gyro_getADC();  // second read
 

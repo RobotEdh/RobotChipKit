@@ -109,6 +109,13 @@ void initOutput() {
 #endif 
 }
 
+/*******************************************************************************/
+/*                    RunMotors                                                */
+/*  - Compute motor[i] using rcCommand[THROTTLE] and PID coeff                 */
+/*                                                                             */
+/*  - call writeMotors to run motors using motor[i]                            */                                                  */
+/*******************************************************************************/
+
 void RunMotors() {
   int16_t maxMotor;
   uint8_t i;

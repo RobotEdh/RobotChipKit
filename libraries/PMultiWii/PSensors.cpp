@@ -8,7 +8,7 @@
 #include "PIMU.h"
 
 /*** I2C address ***/
- #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND), default for FreeIMU v0.4 and InvenSense evaluation board
+ #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND)
 //#define MPU6050_ADDRESS     0x69 // address pin AD0 high (VCC)
 
 uint8_t rawADC[6];
@@ -84,7 +84,7 @@ bool MPU_init() {
 #if defined(TRACE)	
   Serial.println(">MPU_init");
 #endif    
-  // TWBR = ((F_CPU / 400000L) - 16) / 2; // FIX ME change the I2C clock rate to 400kHz
+  // FIX ME change the I2C clock rate to 400kHz like multiwii ?
   ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80); //PWR_MGMT_1    -- DEVICE_RESET 1
   if (ret> 0) return false;
   delay(5);
@@ -193,7 +193,7 @@ void GYRO_Common() {
 /*                            imu.gyroADC[axis]                                */
 /*  - call GYRO_Common to adjust imu.gyroADC[axis] with gyroZero and           */
 /*    limit the variation between two consecutive readings (anti gyro glitch)  */
-/*    interval [-8192;+8192]                                                                           */
+/*    interval [-8192;+8192]                                                   */
 /*******************************************************************************/
 
 void Gyro_getADC () {
@@ -205,7 +205,7 @@ void Gyro_getADC () {
   imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-  /* FIX ME divide by 2 as scale +/- 2000 deg/sec ?? */
+  //FIX ME divide by 4 like multiwii ?
 #if defined(TRACE)    
   Serial.print("imu.gyroADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[ROLL],DEC);
   Serial.print("imu.gyroADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[PITCH],DEC);
@@ -269,7 +269,7 @@ void ACC_getADC () {
   imu.accADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.accADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.accADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-  /* FIX ME divide by 8 as scale +/-  8g ?? */
+  /* FIX ME divide by 8 like Multiwii ? */
 #if defined(TRACE)    
   Serial.print("imu.accADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.accADC[ROLL],DEC);
   Serial.print("imu.accADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.accADC[PITCH],DEC);

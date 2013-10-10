@@ -1,0 +1,24 @@
+ 1/make average on 4 values to get rcData[chan] interval [#1000;#2000]                           
+ 
+ 2/compute rcCommand[axis] from rcData[chan] using ratio/expo & min/max                                       
+            interval [#-500;#+500] for ROLL & PITCH                    
+            interval [-500;+500] for YAW                               
+            interval [conf.minthrottle;MAXTHROTTLE] for THROTTLE       
+            conf.minthrottle usualy = 1150, MAXTHROTTLE usually = 1850 
+
+ 3/Compute errors to determine PID coeff
+  	//Roll&Pitch
+    rc = rcCommand[axis]<<1; // [#-500;#+500] translated to [#-1000;#+1000]
+    error = rc - imu.gyroData[axis];
+     
+    // YAW  
+    rc = (int32_t)rcCommand[YAW] * (2*conf.yawRate + 32)/32;
+    error = rc - imu.gyroData[YAW];
+  
+ 4/ Compute motors based on rcCommand[THROTTLE] and PID coeff
+    PIDMIX(X,Y,Z) rcCommand[THROTTLE] + axisPID[ROLL]*X + axisPID[PITCH]*Y + YAW_DIRECTION * axisPID[YAW]*Z
+
+    motor[0] = PIDMIX(-1,+1,-1); //REAR_R
+    motor[1] = PIDMIX(-1,-1,+1); //FRONT_R
+    motor[2] = PIDMIX(+1,+1,+1); //REAR_L
+    motor[3] = PIDMIX(+1,-1,-1); //FRONT_L

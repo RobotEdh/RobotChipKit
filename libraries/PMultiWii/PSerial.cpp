@@ -258,7 +258,7 @@ void evaluateCommand() {
        uint16_t h;
        uint8_t  i,j,k,l;
      } misc;
-     misc.a = intPowerTrigger1;
+     misc.a = 0;
      misc.b = conf.minthrottle;
      misc.c = MAXTHROTTLE;
      misc.d = MINCOMMAND;
@@ -333,7 +333,6 @@ void evaluateCommand() {
      s_struct((uint8_t*)&imu,18);
      break;
    case MSP_SERVO:
-     s_struct((uint8_t*)&servo,16);
      break;
    case MSP_SERVO_CONF:
      s_struct((uint8_t*)&conf.servoConf[0].min,56); // struct servo_conf_ is 7 bytes length: min:2 / max:2 / middle:2 / rate:1    ----     8 servo =>  8x7 = 56
@@ -395,9 +394,6 @@ void evaluateCommand() {
    case MSP_EEPROM_WRITE:
      //writeParams(0);
      headSerialReply(0);
-     break;
-   case MSP_DEBUG:
-     s_struct((uint8_t*)&debug,8);
      break;
    default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
      headSerialError(0);
