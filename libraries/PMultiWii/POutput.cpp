@@ -12,13 +12,23 @@ uint8_t PWM_PIN[4] = {3,5,6,9};      // OC1, 0C2, OC3, OC4 = rear, right, left, 
 /************  Writes the Motors values to the PWM compare register  ******************/
 /**************************************************************************************/
 void writeMotors() { // [1000;2000] => [125;250]
-
+  int i=0;
+  
 #if defined(TRACE)
   Serial.println(">writeMotors");
-  Serial.print("motor[0]:");Serial.println(motor[0]);
-  Serial.print("motor[1]:");Serial.println(motor[1]);
-  Serial.print("motor[2]:");Serial.println(motor[2]);
-  Serial.print("motor[3]:");Serial.println(motor[3]);
+    
+  for (i = 0; i < 4; i++) { 
+        Serial.print("rcData[");Serial.print(i);Serial.print("]:");Serial.println(rcData[i]);
+        Serial.print("rcCommand[");Serial.print(i);Serial.print("]:");Serial.println(rcCommand[i]); 
+  }
+ 
+  Serial.print("axisPID[ROLL]:");Serial.println(axisPID[ROLL]);
+  Serial.print("axisPID[PITCH]:");Serial.println(axisPID[PITCH]);
+  Serial.print("axisPID[YAW]:");Serial.println(axisPID[YAW]);
+   
+  for (i = 0; i < 4; i++) { 
+        Serial.print("motor[");Serial.print(i);Serial.print("]:");Serial.println(motor[i]);
+  }
 #endif
    
   OC1RS = motor[0]<<3;
@@ -113,7 +123,7 @@ void initOutput() {
 /*                    RunMotors                                                */
 /*  - Compute motor[i] using rcCommand[THROTTLE] and PID coeff                 */
 /*                                                                             */
-/*  - call writeMotors to run motors using motor[i]                            */                                                  */
+/*  - call writeMotors to run motors using motor[i]                            */                                                 
 /*******************************************************************************/
 
 void RunMotors() {
