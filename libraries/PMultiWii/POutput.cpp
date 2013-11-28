@@ -11,7 +11,7 @@ uint8_t PWM_PIN[4] = {3,5,6,9};      // OC1, 0C2, OC3, OC4 = rear, right, left, 
 /**************************************************************************************/
 /************  Writes the Motors values to the PWM compare register  ******************/
 /**************************************************************************************/
-void writeMotors() { // [1000;2000] => [125;250]
+void writeMotors() { // [936;1875] => [312;625]
   int i=0;
   
 #if defined(TRACE)
@@ -31,10 +31,10 @@ void writeMotors() { // [1000;2000] => [125;250]
   }
 #endif
    
-  OC1RS = motor[0]<<3;
-  OC2RS = motor[1]<<3; 
-  OC3RS = motor[2]<<3; 
-  OC4RS = motor[3]<<3;  
+  OC1RS = motor[0]/3;
+  OC2RS = motor[1]/3; 
+  OC3RS = motor[2]/3; 
+  OC4RS = motor[3]/3;  
 }
 
 /**************************************************************************************/
@@ -59,50 +59,55 @@ void initOutput() {
     pinMode(PWM_PIN[i],OUTPUT);
   }
     
-  // Initialization TIMER2 80Mhz counting from 0 until 256
-  T2CON = 0x0030 ;  // 0x0030=0000000000110000 
-  				   // ON=0 (Timer is disable for now)
+  // Initialization TIMER2
+  T2CON = 0x0070 ;  // 0x0070=0000000001110000 
+  				    // ON=0 (Timer is disable for now)
                     // FRZ=0 (Continue operation even when CPU is in Debug Exception mode)
                     // SIDL=0 (Continue operation even in Idle mode)
                     // TGATE=0, (Gated time accumulation is disabled) 
-                    // TCKPS=011 (1:8 prescale value) frequency 39KHz ??
+                    // TCKPS=111 (1:256 prescale value) CPU clock = 80 MHz => Period : 256/80Mhz = 256/80 000 000 = 3,2 us
                     // T32=0 (TMRx and TMRy form separate 16-bit timer)
                     // TCS=0 (Internal peripheral clock) 
                                                       
-  TMR2 = 0x0000;    // start TIMER2 from 0...
-  PR2 = 0x0100;     // ...	until 256
+  TMR2 = 0;    // start TIMER2 from 0...
+  PR2 = 6249;  // ...	until 6249 => TIMER2 Period = (6249+1)* 3,2 us = 20 ms = 50Hz
+    
+  // The ESC generally accepts a nominal 50 Hz PWM servo input signal whose pulse width varies from 1ms to 2ms.
+  // When supplied with a 1 ms width pulse at 50Hz(6250/0.02s)*0.001s = 312.5, the ESC responds by turning off the DC motor attached to its output.
+  // A 1.5ms (6250/0.02s)*0.0015s = 468.75 pulse-width input signal results in a 50% duty cycle output signal that drives the motor at approximately half-speed.
+  // When presented with 2.0ms (6250/0.02s)*0.002s = 625 input signal, the motor runs at full speed due to the 100% duty cycle (on constantly) output.
        
   // Configure the control register OC1CON for the output compare channel 1
   OC1CON = 0; // clear OC1
   OC1CONbits.OCM = 0b110; // OCM=110: PWM mode on OC1, Fault pin disable
   // Configure the compare register OC1R and compare register secondary OC1RS for the output compare channel 1
-  OC1RS = 1500; // set buffered PWM duty cycle in counts,
+  OC1RS = 312; // set buffered PWM duty cycle in counts,
                // duty cycle is OC1RS/(PR2+1)
-  OC1R = 1500;  // set initial PWM duty cycle in counts
+  OC1R = 312;  // set initial PWM duty cycle in counts
   
   // Configure the control register OC2CON for the output compare channel 2
   OC2CON = 0; // clear OC2
   OC2CONbits.OCM = 0b110; // OCM=110: PWM mode on OC2, Fault pin disable
   // Configure the compare register OC2R and compare register secondary OC1RS for the output compare channel 2
-  OC2RS = 1500; // set buffered PWM duty cycle in counts,
+  OC2RS = 312; // set buffered PWM duty cycle in counts,
                // duty cycle is OC2RS/(PR2+1)
-  OC2R = 1500;  // set initial PWM duty cycle in counts
+  OC2R = 312;  // set initial PWM duty cycle in counts
   
   // Configure the control register OC3CON for the output compare channel 3
   OC3CON = 0; // clear OC3
   OC3CONbits.OCM = 0b110; // OCM=110: PWM mode on OC3, Fault pin disable
   // Configure the compare register OC3R and compare register secondary OC1RS for the output compare channel 3
-  OC3RS = 1500; // set buffered PWM duty cycle in counts,
+  OC3RS = 312; // set buffered PWM duty cycle in counts,
                 // duty cycle is OC3RS/(PR2+1)
-  OC3R = 1500;  // set initial PWM duty cycle in counts
+  OC3R = 312;  // set initial PWM duty cycle in counts
   
   // Configure the control register OC4CON for the output compare channel 4
   OC4CON = 0; // clear OC4
   OC4CONbits.OCM = 0b110; // OCM=110: PWM mode on OC4, Fault pin disable
   // Configure the compare register OC4R and compare register secondary OC4RS for the output compare channel 4
-  OC4RS = 1500; // set buffered PWM duty cycle in counts,
+  OC4RS = 312; // set buffered PWM duty cycle in counts,
                 // duty cycle is OC4RS/(PR2+1)
-  OC4R = 1500;  // set initial PWM duty cycle in counts
+  OC4R = 312;  // set initial PWM duty cycle in counts
                 
   // Enable Timer 2 and OCX              
   T2CONSET =  0x8000; // Enable Timer2
@@ -146,7 +151,7 @@ void RunMotors() {
     
       motor[i] = constrain(motor[i], conf.minthrottle, MAXTHROTTLE);
  
-      if (rcData[THROTTLE] < MINCHECK)
+      if (rcData[THROTTLE] < MINCHECK) // stop requested
           motor[i] = MINCOMMAND;
     }
     

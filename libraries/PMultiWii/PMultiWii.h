@@ -21,7 +21,7 @@
 #define NAV_D                  0.08      //
 #define NAV_IMAX               20        // degrees
 
-#define MINCHECK 1100
+#define MINCHECK 1200
 #define MAXCHECK 1900
 
 extern volatile unsigned long timer0_overflow_count;
