@@ -7,7 +7,7 @@
             conf.minthrottle usualy = 1150, MAXTHROTTLE usually = 1850 
 
  3/Compute errors to determine PID coeff
-  	//Roll&Pitch
+    // ROLL & PITCH 
     rc = rcCommand[axis]<<1; // [#-500;#+500] translated to [#-1000;#+1000]
     error = rc - imu.gyroData[axis];
      

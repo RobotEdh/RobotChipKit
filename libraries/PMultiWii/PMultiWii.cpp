@@ -156,7 +156,8 @@ void MultiWii_loop () {
     rcTime = currentTime + 20000;
     
     computeRC();
-    
+
+#if !defined(TEST)    
     serialCom();
 
     // ------------------ STICKS COMMAND HANDLER --------------------
@@ -189,16 +190,18 @@ void MultiWii_loop () {
         }       
         rcDelayCommand = 0;   
     }
-    
+#endif    
   } /* end currentTime > rcTime */
- 
+
+#if !defined(TEST)   
   computeIMU();
-   
+#endif    
   // Measure loop rate just afer reading the sensors
   currentTime = micros();
   cycleTime = currentTime - previousTime;
   previousTime = currentTime;
  
+#if !defined(TEST) 
   //**** PITCH & ROLL & YAW PID ****
    
   // PITCH & ROLL
@@ -266,6 +269,12 @@ void MultiWii_loop () {
 #if defined(TRACE)  
     Serial.print("axisPID[");Serial.print((int)YAW);Serial.print("]:");Serial.println(axisPID[YAW]);
 #endif
+
+#else
+  axisPID[PITCH] = 0;
+  axisPID[ROLL] = 0;
+  axisPID[YAW] = 0;
+#endif   
 
   RunMotors();
 }
