@@ -391,12 +391,12 @@ int check_around()
     // Check Contacts sensors, HIGH in normal situation
     inputpin = digitalRead(ContactRightPin);  // read input value
     if (inputpin == LOW) { 
-        return OBSTACLE;   
+        return OBSTACLE_RIGHT;   
     }
     
     inputpin = digitalRead(ContactLeftPin);  // read input value
     if (inputpin == LOW) { 
-        return OBSTACLE;   
+        return OBSTACLE_LEFT;   
     }
        
     IRServo.write(0);    // turn servo left
@@ -414,18 +414,18 @@ int check_around()
 	 
     if (distance_left == -1) 
     {
-         return LEFT_DIRECTION;
+         return DIRECTION_LEFT;
     }     
     else if (distance_right == -1) 
     {
-         return RIGHT_DIRECTION;
+         return DIRECTION_RIGHT;
     }    
     else if ((distance_left > 0) && (distance_left > distance_right)) {
-         return LEFT_DIRECTION;     
+         return DIRECTION_LEFT;     
     }
     else if (distance_right > 0) 
     {
-         return RIGHT_DIRECTION; 
+         return DIRECTION_RIGHT; 
     }
     else
     {
@@ -557,7 +557,7 @@ int turnback(unsigned long timeout)
           Serial.print("check_around, direction: ");
           Serial.println(dir);
          
-          if (dir == LEFT_DIRECTION)
+          if (dir == DIRECTION_LEFT)
           {
                start_forward();
                ret = turn (-45,  5); // turn  -45 degrees during 5s max
@@ -568,7 +568,7 @@ int turnback(unsigned long timeout)
                }
                end_turn = 1;
            }
-           else if (dir == RIGHT_DIRECTION)
+           else if (dir == DIRECTION_RIGHT)
            {
                start_forward();
                ret = turn (+45,  5); // turn  +45 degrees during 5s max

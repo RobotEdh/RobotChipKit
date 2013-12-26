@@ -123,10 +123,12 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      resp_len = 0+1;
      
      lcd.setCursor(0,1); 
-     if      (resp[0] == LEFT_DIRECTION)  lcd.print("LEFT");
-     else if (resp[0] == RIGHT_DIRECTION) lcd.print("RIGHT");
-     else                                 lcd.print("OBSTACLE");
-     
+     if      (resp[0] == DIRECTION_LEFT)  lcd.print("LEFT");
+     else if (resp[0] == DIRECTION_RIGHT) lcd.print("RIGHT");
+     else if (resp[0] == OBSTACLE_LEFT)   lcd.print("OBSTACLE LEFT");
+     else if (resp[0] == OBSTACLE_RIGHT)  lcd.print("OBSTACLE RIGHT");
+     else if (resp[0] == OBSTACLE)        lcd.print("OBSTACLE");
+     else                                 lcd.print("?");    
      break; 
 
  case CMD_MOVE_TILT_PAN:
@@ -312,11 +314,14 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
               lcd.clear();
               lcd.print("check around");
               lcd.setCursor(0,1); 
-              if      (dir == LEFT_DIRECTION)  lcd.print("LEFT");
-              else if (dir == RIGHT_DIRECTION) lcd.print("RIGHT");
-              else                             lcd.print("OBSTACLE");
+              if      (dir == DIRECTION_LEFT)  lcd.print("LEFT");
+              else if (dir == DIRECTION_RIGHT) lcd.print("RIGHT");
+              else if (dir == OBSTACLE_LEFT)   lcd.print("OBSTACLE LEFT");
+              else if (dir == OBSTACLE_RIGHT)  lcd.print("OBSTACLE RIGHT");
+              else if (dir == OBSTACLE)        lcd.print("OBSTACLE");
+              else                             lcd.print("?");;
          
-              if (dir == LEFT_DIRECTION) {
+              if (dir == DIRECTION_LEFT) {
                    start_forward();
                    motor_state = STATE_GO;
                    ret = turn (-45,  5); // turn  -45 degrees during 5s max
@@ -335,7 +340,7 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
                    	  lcd.print("turn left OK");                  	
                    }
               }
-              else if (dir == RIGHT_DIRECTION) {
+              else if (dir == DIRECTION_RIGHT) {
                    start_forward();
                    motor_state = STATE_GO;
                    ret = turn (+45,  5); // turn  +45 degrees during 5s max

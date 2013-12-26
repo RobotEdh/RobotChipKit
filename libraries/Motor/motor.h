@@ -14,11 +14,13 @@
 #define SUCCESS 0
 #define SPEED_ERROR -1
 #define OBSTACLE -2
-#define TIMEOUT -3
-#define BAD_ANGLE -4
-#define COMPASS_ERROR -5
-#define CAMERA_ERROR -6
-#define SDCARD_ERROR -7
+#define OBSTACLE_LEFT -3
+#define OBSTACLE_RIGHT -4
+#define TIMEOUT -5
+#define BAD_ANGLE -6
+#define COMPASS_ERROR -7
+#define CAMERA_ERROR -8
+#define SDCARD_ERROR -9
 
 #define CMD_SIZE 3
 #define RESP_SIZE 8
@@ -41,8 +43,8 @@
 #define SPEEDTURN     80     // speed at turn 
 #define SPEEDBACK     50     // speed at turn back
 
-#define LEFT_DIRECTION 1
-#define RIGHT_DIRECTION 2
+#define DIRECTION_LEFT 1
+#define DIRECTION_RIGHT 2
 
 #define BOTH_MOTOR 0
 #define LEFT_MOTOR 1
@@ -303,8 +305,10 @@ int check_around();
 /* input:       none                                                          */   
 /* output:      return                                                        */                            
 /*                  = OBSTACLE if an obstacle is detected for both directions */
-/*                  = LEFT_DIRECTION if best direction to go                  */ 
-/*                  = RIGHT_DIRECTION if best direction to go                 */                      
+/*                  = OBSTACLE_LEFT if an obstacle is detected on left side   */
+/*                  = OBSTACLE_RIGHT if an obstacle is detected on right side */
+/*                  = DIRECTION_LEFT if best direction to go is left side     */ 
+/*                  = DIRECTION_RIGHT if best direction to go is right side   */                      
 /* lib:         Servo.write                                                   */                                                              
 /*              delay                                                         */
 /*              adjustMotor                                                   */                                
