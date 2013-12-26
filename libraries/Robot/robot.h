@@ -7,12 +7,24 @@
 #define Led_Yellow 16   // Led Yellow connected to digital pin J4-06(SCL3A/SDO3A/U3ATX/PMA8/CN18/RF5)
 #define Led_Red    17   // Led Red connected to digital pin J4-05(SDA3A/SDI3A/U3ARX/PMA9/CN17/RF4)
 
+#define buzzPin    39   // Buzzerconnected to digital pin J8-15(PMRD/CN14/RD5)
+
 void blink(int led);
 /* Description: blink a led                                                   */                                            
 /* input:       led                                                           */
 /* output:      none                                                          */
 /* lib:         digitalWrite                                                  */
 /*              delay                                                         */ 
+
+
+void buzz(int buzzNb);
+/* Description: buzz                                                          */                                            
+/* input:       buzzNb                                                        */
+/*              Number of times buzzing                                       */
+/* output:      none                                                          */
+/* lib:         digitalWrite                                                  */
+/*              delay                                                         */
+
 
 int robot_begin();     
 /* Description: initialize everything, must be called during setup            */                                            

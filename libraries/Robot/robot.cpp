@@ -26,6 +26,16 @@ void blink(int led)
   }          
 }
 
+void buzz(int buzzNb)
+{  
+  for (int i=0;i<buzzNb;i++){
+      digitalWrite(buzzPin, HIGH);
+      delay(1);
+      digitalWrite(buzzPin, LOW); 
+      delay(200);
+   }            
+}
+
 int robot_begin()
 {
   int ret = SUCCESS;
@@ -39,8 +49,14 @@ int robot_begin()
   pinMode(Led_Yellow, OUTPUT);     // set the pin as output
   blink(Led_Yellow);  
   pinMode(Led_Red, OUTPUT);        // set the pin as output
-  blink(Led_Red);     
- 
+  blink(Led_Red);  
+  Serial.println("Init Leds OK");
+    
+  // initialize the buzzer
+  pinMode(buzzPin, OUTPUT); 
+  buzz(3);       
+  Serial.println("Init Buzzer OK");
+   
   // initialize the Tilt&Pan servos  
   TiltPan_begin(HSERVO_Pin, VSERVO_Pin);
   Serial.println("Init Tilt&Pan servos OK");
