@@ -119,18 +119,19 @@ int CmdRobot (uint16_t cmd [3], uint16_t *resp, int *presp_len)
      Serial.println("CMD_CHECK_AROUND");
      lcd.print("CHECK AROUND");
     
-     resp[0] = check_around();
-     resp_len = 0+1;
+     dir = check_around();
      
      lcd.setCursor(0,1); 
-     if      (resp[0] == DIRECTION_LEFT)  lcd.print("LEFT");
-     else if (resp[0] == DIRECTION_RIGHT) lcd.print("RIGHT");
-     else if (resp[0] == OBSTACLE_LEFT)   lcd.print("OBSTACLE LEFT");
-     else if (resp[0] == OBSTACLE_RIGHT)  lcd.print("OBSTACLE RIGHT");
-     else if (resp[0] == OBSTACLE)        lcd.print("OBSTACLE");
-     else                                 lcd.print("?");    
-     break; 
+     if      (dir == DIRECTION_LEFT)  lcd.print("LEFT");
+     else if (dir == DIRECTION_RIGHT) lcd.print("RIGHT");
+     else if (dir == OBSTACLE_LEFT)   lcd.print("OBSTACLE LEFT");
+     else if (dir == OBSTACLE_RIGHT)  lcd.print("OBSTACLE RIGHT");
+     else if (dir == OBSTACLE)        lcd.print("OBSTACLE");
+     else                             lcd.print("?");;
 
+     resp[0] = dir;
+     resp_len = 0+1;
+     
  case CMD_MOVE_TILT_PAN:
      Serial.print("CMD_MOVE_TILT_PAN, X Y: "); Serial.print((int)cmd[1]);Serial.println((int)cmd[2]);   
      lcd.print("MOVE TILT&PAN");
