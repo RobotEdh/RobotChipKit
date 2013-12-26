@@ -13,8 +13,7 @@
 
 #define PAYLOAD_SIZE 80
 
-#define WiFiConnectMacro() DWIFIcK::connect(szSsid, keySet, iWEPKey, &status)
-
+#define WiFiConnectMacro() DWIFIcK::connect(szSsid, key, &status)
 
 class WiFiCmdRobot
 {
