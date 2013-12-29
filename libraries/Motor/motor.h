@@ -50,7 +50,8 @@
 #define LEFT_MOTOR 1
 #define RIGHT_MOTOR 2
 
-#define DISTANCE_MIN 50 // 50 cm before stopping, must be > 20cm which is lower range of IR sensor
+#define DISTANCE_MIN 50 // 50 cm before stopping, must be > 20cm which is lower range of IR sensor and
+                        // must be > 30cm which is the distance run by the motor in 1 second between 2 checks
 
 #define InMotorRight1Pin  30      // In pin of Motor controller #1 for motor right #1 connected to digital pin J9-08(PMD7/RE7)
 #define EnableMotorRight1Pin 3    // Enable pin of Motor controller #1 for motor right #1 connected to PWM pin J14-07(SDO1/OC1/INT0/RD0)   Use TIMER_OC1
@@ -292,6 +293,7 @@ int go(unsigned long timeout, int pid_ind);
 /*                  = 1: enable PID adjustement                               */    
 /* output:      return                                                        */                            
 /*                  = SPEED_ERROR if speed computed > SPEEDMAX                */
+/*                  = OBSTACLE_LEFT or OBSTACLE_RIGHT if an obstacle is hit   */
 /*                  = OBSTACLE if an obstacle is detected before DISTANCE_MIN */
 /*                  = SUCCESS otherwise                                       */                                          
 /* lib:         computePID                                                    */                                

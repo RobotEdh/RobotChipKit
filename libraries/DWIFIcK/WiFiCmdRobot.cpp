@@ -1,6 +1,8 @@
 #include <WiFiCmdRobot.h>
 #include <robot.h>
+#include <LiquidCrystal_I2C.h> // LCD
 
+extern LiquidCrystal_I2C lcd;
 
 // Specify the IP+Port
 extern IPv4 ipServer = {192,168,0,15};
@@ -29,37 +31,18 @@ String szcmd;
 uint16_t cmd[CMD_SIZE];
 uint16_t cmd_GO[CMD_SIZE];
 uint16_t t_GO = 10;     // 10s max for GO command
-uint16_t resp[RESP_SIZE];
+int16_t resp[RESP_SIZE];
 int resp_len = 0;
    
 DNETcK::STATUS status;
 
-/***       void setup()
- *
- *       Parameters:
- *          None
- *              
- *       Return Values:
- *          None
- *
- *       Description: 
- *       
- *      Arduino setup function.
- *      
- *      Initialize the Serial Monitor, and initializes the
- *      the IP stack for a static IP of ipServer
- *      No other network addresses are supplied so 
- *      DNS will fail as any name lookup and time servers
- *      will all fail. But since we are only listening, who cares.
- *      
- * ------------------------------------------------------------ */
 int WiFiCmdRobot::WiFiCmdRobot_begin() {
   
     int conID = DWIFIcK::INVALID_CONNECTION_ID;
     int cNetworks = 0;
     int iNetwork = 0; 
     int ret=SUCCESS;
-    
+  
     // initialize the SD-Card    
     ret = initSDCard();
     if (ret != SUCCESS)
@@ -81,7 +64,10 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
         Serial.println(ret);
     }
     
-    Serial.println("Start WIFI Init");  
+    Serial.println("Start WIFI Init"); 
+    lcd.clear();
+    lcd.print("Start WIFI Init");
+           
     // set my default wait time to nothing
     DNETcK::setDefaultBlockTime(DNETcK::msImmediate); 
 
@@ -314,6 +300,8 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
 
     Serial.println("End WIFI Init");
     Serial.println("");
+    lcd.setCursor(0,1); 
+    lcd.print("End   WIFI Init");
     
     return SUCCESS;                        
 }
@@ -334,6 +322,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
         {
             Serial.print("Listening on port: ");
             Serial.println(portServer, DEC);
+            digitalWrite(Led_Yellow, HIGH);               // turn on led yellow
             break;
         }  
         else if(DNETcK::isStatusAnError(status))
@@ -345,7 +334,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
         }
     }
 
-    // wait for a connection untiltimeout
+    // wait for a connection until timeout
     conx = 0;
     start = millis();
     while ((millis() - start < timeout*1000) && (conx == 0)) { 
@@ -365,6 +354,9 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
     if((conx == 1) && (tcpServer.acceptClient(&tcpClient)))
     {
        Serial.println("Got a Connection");
+       lcd.clear();
+       lcd.print("Got a Connection");
+       
        stringRead = "";
        while (tcpClient.isConnected())
        {
@@ -385,6 +377,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
                                 }
                                 else    
                                 {
+                                    cmd_GO[0] = 0; //reset GO command
                                     ret = ReplyKO ();
                                 }
                                 break;                             
@@ -443,6 +436,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
       
     // Close
     tcpClient.close();
+    digitalWrite(Led_Yellow, LOW);               // turn off led yellow
     Serial.println("Closing TcpClient");
     
     return SUCCESS;    

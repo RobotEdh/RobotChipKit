@@ -23,20 +23,25 @@ WiFiCmdRobot Server;
 
 void setup()
 {
+  int ret = SUCCESS;
   
   Serial.begin(9600); // initialize serial port
-  robot_begin(); 
-  motor_begin(); 
-  Server.WiFiCmdRobot_begin();
+  ret = robot_begin(); 
+  if (ret != SUCCESS) exit;
+  ret = motor_begin(); 
+  if (ret != SUCCESS) exit;
+  ret = Server.WiFiCmdRobot_begin();
+  if (ret != SUCCESS) exit;
 
 }
 
 
 void loop()
 {
-
+  int ret = SUCCESS;
   
- Server.WiFiCmdRobot_main();
+  ret = Server.WiFiCmdRobot_main();
+  if (ret != SUCCESS) exit;
   
   return;
 }

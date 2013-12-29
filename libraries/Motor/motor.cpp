@@ -2,7 +2,9 @@
 #include <GP2Y0A21YK.h> // IR sensor
 #include <CMPS03.h>     // Compas
 #include <Servo.h>      // Servo
+#include <LiquidCrystal_I2C.h> // LCD
 
+extern LiquidCrystal_I2C lcd;
 int SpeedMotorRight = 0;      // Duty cycle PWM motor right between 0 and SPEEDMAX( 255)
 int SpeedMotorLeft = 0;       // Duty cycle PWM motor left between 0 and SPEEDMAX (255)
 
@@ -16,6 +18,9 @@ Servo IRServo;               // The Servo class used for IR sensor
 
 int motor_begin()
 {
+  lcd.clear();
+  lcd.print("Start Motor Init");
+  
   // H bridge setup
   pinMode(InMotorRight1Pin, OUTPUT);      // set the pin as output
   pinMode(EnableMotorRight1Pin, OUTPUT);  // set the analogig pin as output for PWM
@@ -69,6 +74,8 @@ int motor_begin()
   	
   Serial.println("End Motor Init");
   Serial.println("");
+  lcd.setCursor(0,1); 
+  lcd.print("End   Motor Init");
   return SUCCESS;
   
 }
@@ -343,6 +350,7 @@ int go(unsigned long timeout, int pid_ind)
  int pid;
  int distance = 0;
  int direction = 0; /* direction between 0-254, 0: North */
+ int inputpin = HIGH; 
  
  TickLeft = 0;  // reset ticks
  TickRight = 0;
@@ -363,17 +371,31 @@ int go(unsigned long timeout, int pid_ind)
                    if (ret == SPEED_ERROR) return SPEED_ERROR;
              }
        } // end PID
-       
-       if (millis() - current > 2*1000) { // check every 2 seconds
+
+    
+       // Check Contacts sensors, HIGH in normal situation
+       inputpin = digitalRead(ContactRightPin);  // read input value
+       if (inputpin == LOW) { 
+           return OBSTACLE_RIGHT;   
+       }  
+       inputpin = digitalRead(ContactLeftPin);  // read input value
+       if (inputpin == LOW) { 
+           return OBSTACLE_LEFT;   
+       }
+            
+       if (millis() - current > 1*1000) { // check every 1 second
              current = millis();
              distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
-             Serial.print("-->distance: ");
-             Serial.println(distance);
 
              if ((distance > 0) && (distance < DISTANCE_MIN))
              {
                    return OBSTACLE;       
              }
+             else
+             {
+                   Serial.print("-->distance: ");
+                   Serial.println(distance);
+             }     
         }     
        
  }  // end while (millis() - start < timeout)

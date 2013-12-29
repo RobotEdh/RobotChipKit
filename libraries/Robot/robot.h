@@ -35,7 +35,7 @@ int robot_begin();
 /*              pinMode                                                       */
 /*              digitalWrite                                                  */
 
-int CmdRobot (uint16_t cmd[3], uint16_t *resp, int *presp_len);
+int CmdRobot (uint16_t cmd[3], int16_t *resp, int *presp_len);
 /* Description: command the robot                                             */                                            
 /* input:       cmd                                                           */
 /*                  = command and the related parameters                      */
