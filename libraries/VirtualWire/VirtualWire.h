@@ -54,6 +54,13 @@
 // an ISR
 extern "C"
 {
+    // compute Optimized CRC-CCITT calculation.
+    // Polynomial: x^16 + x^12 + x^5 + 1 (0x8408)
+    // Initial value: 0xffff
+    //This is the CRC used by PPP and IrDA.
+    // See RFC1171 (PPP protocol) and IrDA IrLAP 1.1
+    extern uint16_t crc_ccitt_update (uint16_t crc, uint8_t data);
+    
     // Set the digital IO pin to be for transmit data
     // Defaults to 12
     extern void vw_set_tx_pin(uint8_t pin);

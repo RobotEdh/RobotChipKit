@@ -15,6 +15,9 @@
 #include "VirtualWire.h"
 //#include <util/crc16.h>
 
+#define lo8(x) ((int)(x)&0xff) 
+#define hi8(x) ((int)(x)>>8) 
+
 static uint8_t vw_tx_buf[(VW_MAX_MESSAGE_LEN * 2) + VW_HEADER_LEN] 
      = {0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x38, 0x2c};
 
@@ -108,6 +111,15 @@ static uint8_t symbols[] =
 extern "C"
 {
 
+// Compute Optimized CRC-CCITT calculation.
+uint16_t crc_ccitt_update (uint16_t crc, uint8_t data)
+{
+    data ^= lo8 (crc);
+    data ^= data << 4;
+
+    return ((((uint16_t)data << 8) | hi8 (crc)) ^ (uint8_t)(data >> 4) 
+            ^ ((uint16_t)data << 3));
+}
 // Compute CRC over count bytes.
 // This should only be ever called at user level, not interrupt level
 uint16_t vw_crc(uint8_t *ptr, uint8_t count)
@@ -115,7 +127,7 @@ uint16_t vw_crc(uint8_t *ptr, uint8_t count)
     uint16_t crc = 0xffff;
 
     while (count-- > 0) 
-	//crc = _crc_ccitt_update(crc, *ptr++);
+	crc = crc_ccitt_update(crc, *ptr++);
     return crc;
 }
 
@@ -354,7 +366,7 @@ uint8_t vw_send(uint8_t* buf, uint8_t len)
     vw_wait_tx();
 
     // Encode the message length
-    //crc = _crc_ccitt_update(crc, count);
+    crc = crc_ccitt_update(crc, count);
     p[index++] = symbols[count >> 4];
     p[index++] = symbols[count & 0xf];
 
@@ -362,7 +374,7 @@ uint8_t vw_send(uint8_t* buf, uint8_t len)
     // 2 6-bit symbols, high nybble first, low nybble second
     for (i = 0; i < len; i++)
     {
-	//crc = _crc_ccitt_update(crc, buf[i]);
+	crc = crc_ccitt_update(crc, buf[i]);
 	p[index++] = symbols[buf[i] >> 4];
 	p[index++] = symbols[buf[i] & 0xf];
     }
