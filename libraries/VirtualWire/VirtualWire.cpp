@@ -321,7 +321,13 @@ void vw_setup(uint16_t speed)
 static uint8_t _timer_calc(uint16_t speed, uint16_t max_ticks, uint16_t *nticks)
 {
     // Clock divider (prescaler) values - 0/3333: error flag
+#if defined (CHIPKIT)
+    uint16_t prescalers[] = {0, 1, 2, 4, 8, 16, 32, 64, 256};
+    uint8_t prescaler_max=9; // mamimum index into array & return bit value
+#else    
     uint16_t prescalers[] = {0, 1, 8, 64, 256, 1024, 3333};
+    uint8_t prescaler_max=7; // mamimum index into array & return bit value    
+#endif    
     uint8_t prescaler=0; // index into array & return bit value
     unsigned long ulticks; // calculate by ntick overflow
 
@@ -334,7 +340,7 @@ static uint8_t _timer_calc(uint16_t speed, uint16_t max_ticks, uint16_t *nticks)
     }
 
     // test increasing prescaler (divisor), decreasing ulticks until no overflow
-    for (prescaler=1; prescaler < 7; prescaler += 1)
+    for (prescaler=1; prescaler < prescaler_max; prescaler += 1)
     {
         // Amount of time per CPU clock tick (in seconds)
         float clock_time = (1.0 / (float(F_CPU) / float(prescalers[prescaler])));
@@ -351,7 +357,7 @@ static uint8_t _timer_calc(uint16_t speed, uint16_t max_ticks, uint16_t *nticks)
     }
 
     // Check for error
-    if ((prescaler == 6) || (ulticks < 2) || (ulticks > max_ticks))
+    if ((prescaler == prescaler_max-1) || (ulticks < 2) || (ulticks > max_ticks))
     {
         // signal fault
         *nticks = 0;
@@ -401,26 +407,33 @@ void vw_setup(uint16_t speed)
     }
 
  // Initialization TIMER2
-  T2CON = 0x0070 ;  // 0x0070=0000000001110000 
+  T2CON = 0x0000 ;  // 0x0070=0000000000000000 
   				    // ON=0 (Timer is disable for now)
                     // FRZ=0 (Continue operation even when CPU is in Debug Exception mode)
                     // SIDL=0 (Continue operation even in Idle mode)
-                    // TGATE=0, (Gated time accumulation is disabled) 
-                    // TCKPS=111 (1:256 prescale value) CPU clock = 80 MHz => Period : 256/80Mhz = 256/80 000 000 = 3,2 us
+                    // TGATE=0 (Gated time accumulation is disabled) 
+                    // TCKPS=000 (prescale value updated below)
                     // T32=0 (TMRx and TMRy form separate 16-bit timer)
                     // TCS=0 (Internal peripheral clock) 
-                                                      
+  T2CONbits.TCKPS =  1>> (prescaler-1);    // TCKPS= prescale value CPU clock = 80 MHz => Period : prescale value/80Mhz = prescale value/80 000 000                                              
+                                           //111 = 1:256 prescale value
+                                           //110 = 1:64 prescale value
+                                           //101 = 1:32 prescale value
+                                           //100 = 1:16 prescale value
+                                           //011 = 1:8 prescale value
+                                           //010 = 1:4 prescale value
+                                           //001 = 1:2 prescale value
+                                           //000 = 1:1 prescale value
   TMR2 = 0;    // start TIMER2 from 0...
-  PR2 = nticks;  // ...	until nticks => TIMER2 Period = (nticks+1)* 3,2 us
+  PR2 = nticks;  // ...	until nticks => TIMER2 Period = (nticks+1)* prescale value/80 000 000  seconds
         
   // Configure the control register OC1CON for the output compare channel 1
   OC1CON = 0; // clear OC1
   OC1CONbits.OCM = 0b011; // OCM=011: Compare event toggles OCx pin
 
   // Configure the compare register OC1R and compare register secondary OC1RS for the output compare channel 1
-  OC1RS = nticks; // set buffered PWM duty cycle in counts,
-                  // duty cycle is OC1RS/(PR2+1)
-  OC1R = nticks;  // set initial PWM duty cycle in counts
+  OC1RS = nticks; // set buffered cycle in counts
+  OC1R = nticks;  // set initial cycle in counts
   
   // Enable Timer 2 and OC1              
   T2CONSET =  0x8000; // Enable Timer2
