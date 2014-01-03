@@ -415,7 +415,7 @@ void vw_setup(uint16_t speed)
                     // TCKPS=000 (prescale value updated below)
                     // T32=0 (TMRx and TMRy form separate 16-bit timer)
                     // TCS=0 (Internal peripheral clock) 
-  T2CONbits.TCKPS =  1>> (prescaler-1);    // TCKPS= prescale value CPU clock = 80 MHz => Period : prescale value/80Mhz = prescale value/80 000 000                                              
+  T2CONbits.TCKPS =  1 << (prescaler-1);   //TCKPS= prescale value CPU clock = 80 MHz => Period : prescale value/80Mhz = prescale value/80 000 000                                              
                                            //111 = 1:256 prescale value
                                            //110 = 1:64 prescale value
                                            //101 = 1:32 prescale value
