@@ -127,6 +127,19 @@ void MultiWii_setup() {
   Serial.println("End MultiWii_setup");
 #endif 
   
+/* START TESTCASE 1 CODE: spin up each blade individually for 10s each and check they all turn the right way  */
+  for(i=0; i< 4; i++)
+  {
+      writeOneMotor(i, MINCOMMAND);
+      delay(10*1000);
+  }   
+/* END TESTCASE 1 CODE */
+
+
+/* START TESTCASE 2 CODE: Spin all the motors together for 10s judging how much lift is provided  */
+  writeAllMotors(MINCOMMAND);
+  delay(10*1000);  
+/* END TESTCASE 2 CODE */
 }
 
 // ******** Main Loop *********

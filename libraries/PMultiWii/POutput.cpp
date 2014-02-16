@@ -38,11 +38,24 @@ void writeMotors() { // [936;1875] => [312;625]
 }
 
 /**************************************************************************************/
-/************          Writes the mincommand to all Motors           ******************/
+/************          Writes the command to one Motor               ******************/
 /**************************************************************************************/
-void writeAllMotors(int16_t mc) {   // Sends commands to all motors
+void writeOneMotor(uint8_t no, int16_t value) {   // Sends commands to all motors
   for (uint8_t i =0;i<4;i++) {
-    motor[i]=mc;
+    motor[i]=0;
+  }
+  motor[no]=value;
+   
+  writeMotors();
+}
+
+
+/**************************************************************************************/
+/************          Writes the command to all Motors              ******************/
+/**************************************************************************************/
+void writeAllMotors(int16_t value) {   // Sends commands to all motors
+  for (uint8_t i =0;i<4;i++) {
+    motor[i]=value;
   }
   writeMotors();
 }
