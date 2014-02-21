@@ -44,7 +44,7 @@ uint32_t currentTime = 0;
 uint16_t previousTime = 0;
 uint16_t cycleTime = 0;     // this is the number in micro second to achieve a full loop, it can differ a little and is taken into account in the PID loop
 uint16_t calibratingA = 0;  // the calibration is done in the main loop. Calibrating decreases at each cycle down to 0, then we enter in a normal mode.
-uint16_t calibratingG;
+uint16_t calibratingG = 0;
 int16_t  magHold,headFreeModeHold; // [-180;+180]
 uint8_t  vbatMin = VBATNOMINAL;  // lowest battery voltage in 0.1V steps
 uint8_t  rcOptions[CHECKBOXITEMS];
@@ -56,6 +56,9 @@ int16_t  errorAltitudeI = 0;
 int16_t gyroZero[3] = {0,0,0};
 int16_t accZero[3] = {0,0,0};
 imu_t imu;
+int16_t e_roll;
+int16_t e_pitch;
+int16_t e_yaw;
 
 analog_t analog;
 alt_t alt;
@@ -128,7 +131,7 @@ void MultiWii_setup() {
 #endif 
   
 /* START TESTCASE 1 CODE: spin up each blade individually for 10s each and check they all turn the right way  */
-  for(i=0; i< 4; i++)
+  for(int i=0; i< 4; i++)
   {
       writeOneMotor(i, MINCOMMAND);
       delay(10*1000);
@@ -140,7 +143,18 @@ void MultiWii_setup() {
   writeAllMotors(MINCOMMAND);
   delay(10*1000);  
 /* END TESTCASE 2 CODE */
+
+/* CALIBRATE */  
+  calibratingG=512; 
+  calibratingA=512; 
+
+  while (calibratingG > 0 || calibratingA > 0)
+  { 
+    computeIMU();
+  }
+  
 }
+
 
 // ******** Main Loop *********
 
@@ -163,7 +177,7 @@ void MultiWii_loop () {
   static uint32_t timestamp_fixated = 0;
   int16_t rc;
   int32_t prop = 0;
-
+  
   
   if (currentTime > rcTime ) { // 50Hz: PPM frequency of the RC, no change happen within 20ms
     rcTime = currentTime + 20000;
@@ -192,17 +206,7 @@ void MultiWii_loop () {
     if (rcData[THROTTLE] <= MINCHECK) {            // THROTTLE at minimum
       errorGyroI[ROLL] = 0; errorGyroI[PITCH] = 0; errorGyroI_YAW = 0; // reset I sum
     }
-    
-    // calibrate online
-    if(rcDelayCommand == 20) {
-        if      (rcSticks == THR_LO + YAW_LO + PIT_LO + ROL_CE) { // throttle=low, yaw=low, pitch=min, roll=center =>GYRO calibration
-            calibratingG=512; 
-        }
-        else if (rcSticks == THR_HI + YAW_LO + PIT_LO + ROL_CE) { // throttle=max, yaw=low, pitch=min, roll=center => ACC calibration
-             calibratingA=512;     
-        }       
-        rcDelayCommand = 0;   
-    }
+
 #endif    
   } /* end currentTime > rcTime */
 

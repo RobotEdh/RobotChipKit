@@ -5,7 +5,8 @@
 #include "def.h"
 #include "types.h"
 #include "PMultiWii.h"
-#include "PIMU.h"
+#include "PSensors.h"
+
 
 /*** I2C address ***/
  #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND)
@@ -114,6 +115,8 @@ bool ACC_init () {
   i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
   //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
   //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
+  
+  return true;
 }
 
 
@@ -148,7 +151,7 @@ void GYRO_Common() {
   static int32_t g[3];
   uint8_t axis;
 
-  if (calibratingG>0) {
+  if (calibratingG>0) { /* Calbrating phase*/
     for (axis = 0; axis < 3; axis++) {
       // Reset g[axis] at start of calibration
       if (calibratingG == 512) {
@@ -166,22 +169,27 @@ void GYRO_Common() {
       }
     }
     calibratingG--;
-    
-  }
 
-  for (axis = 0; axis < 3; axis++) {
-    imu.gyroADC[axis]  -= gyroZero[axis];  
 #if defined(TRACE)  
-  //  Serial.print("gyroZero[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)gyroZero[axis]);
- //   Serial.print("imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)imu.gyroADC[axis]);
+    Serial.print("gyroZero[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)gyroZero[axis]);
 #endif    
-    //anti gyro glitch, limit the variation between two consecutive readings
-    if (previousGyroADC[axis] != 0) imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);  
+  }
+  
+  else
+  
+  {               /* Flying phase */
+    for (axis = 0; axis < 3; axis++) {
+      imu.gyroADC[axis]  -= gyroZero[axis];  
 #if defined(TRACE)  
-  //  Serial.print("previousGyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)previousGyroADC[axis]);
-      Serial.print("imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.gyroADC[axis]);
+      Serial.print("1-imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)imu.gyroADC[axis]);
+#endif    
+      //anti gyro glitch, limit the variation between two consecutive readings
+      if (previousGyroADC[axis] != 0) imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);  
+#if defined(TRACE)  
+      Serial.print("2-imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.gyroADC[axis]);
 #endif      
-    previousGyroADC[axis] = imu.gyroADC[axis];
+      previousGyroADC[axis] = imu.gyroADC[axis];
+    }
   }
 
 }
@@ -217,13 +225,13 @@ void Gyro_getADC () {
 
 // ************************************************************************
 // ACC common part
-// adjust imu.gyroADC according accZero
+// adjust imu.accADC according accZero
 // ************************************************************************
 void ACC_Common() {
   static int32_t a[3];
   uint8_t axis;
   
-  if (calibratingA>0) {
+  if (calibratingA>0) { /* Calibrating phase */
     for (axis = 0; axis < 3; axis++) {
       // Reset a[axis] at start of calibration
       if (calibratingA == 512) a[axis]=0;
@@ -240,14 +248,21 @@ void ACC_Common() {
       accZero[YAW]   = (a[YAW]>>9)-ACC_1G; // FIX ME: Check value ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096  or 4096/8 if acc is divded by 8 
     }
     calibratingA--;
-  }
- 
-  for (axis = 0; axis < 3; axis++) {
-    imu.accADC[axis]  -= accZero[axis];
 #if defined(TRACE)  
- // Serial.print("accZero[");Serial.print((int)axis);Serial.print("]:");Serial.println(accZero[axis]);
-  Serial.print("imu.accADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.accADC[axis]);
+    Serial.print("accZero[");Serial.print((int)axis);Serial.print("]:");Serial.println(accZero[axis]);
+      
+#endif    
+  }
+  
+  else
+  
+  {                     /* Flying phase */
+    for (axis = 0; axis < 3; axis++) {
+      imu.accADC[axis]  -= accZero[axis];
+#if defined(TRACE)  
+      Serial.print("imu.accADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.accADC[axis]);
 #endif 
+    }
   }
 }
 
@@ -258,6 +273,7 @@ void ACC_Common() {
 /*                            imu.accADC[axis]                  */
 /*  - call ACC_Common to adjust imu.accADC[axis] with accZero   */
 /*    interval [-4096;+4096]                                    */
+/*  - call ComputeEulerAngles to get the Euler angles in radians*/
 /****************************************************************/
 
 void ACC_getADC () {
@@ -277,5 +293,14 @@ void ACC_getADC () {
 #endif      
 
   ACC_Common();
+  
+  ComputeEulerAngles();
 }
 
+
+void ComputeEulerAngles()
+{
+	e_roll = atan2(imu.accADC[ROLL], pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[PITCH], 2), 0.5));
+	e_pitch  = atan2(imu.accADC[PITCH],  pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[ROLL], 2), 0.5));
+	e_yaw   = atan2(imu.accADC[YAW] + 1.0, pow(pow(imu.accADC[ROLL], 2) + pow(imu.accADC[PITCH], 2), 0.5));
+}

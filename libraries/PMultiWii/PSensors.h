@@ -5,7 +5,8 @@ void ACC_getADC ();
 
 void Gyro_getADC ();
 
-void initSensors();
+bool initSensors();
 
+void ComputeEulerAngles();
 
 #endif /* SENSORS_H_ */

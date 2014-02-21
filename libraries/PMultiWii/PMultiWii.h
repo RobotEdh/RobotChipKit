@@ -66,6 +66,9 @@ extern int16_t axisPID[3];
 extern int16_t motor[8];
 extern int16_t servo[8];
 
+extern int16_t e_roll;
+extern int16_t e_pitch;
+extern int16_t e_yaw;
 
 extern int16_t rcData[RC_CHANS];
 extern int16_t rcSerial[8];
@@ -130,7 +133,7 @@ extern int16_t lookupThrottleRC[11];
   extern volatile uint8_t  spekFrameFlags;
   extern volatile uint32_t spekTimeLast;
 
-void annexCode();
+  void annexCode();
 
   void MultiWii_setup();
   void MultiWii_loop ();
