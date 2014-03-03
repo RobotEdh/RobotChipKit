@@ -52,7 +52,7 @@ void computeIMU () {
 #endif
       gyroADCprevious[axis] = gyroADCinter[axis]>>1;
   }
-
+  
 #if defined(TRACE)  
   Serial.println("<<End computeIMU");
 #endif  

@@ -151,7 +151,8 @@ void GYRO_Common() {
   static int32_t g[3];
   uint8_t axis;
 
-  if (calibratingG>0) { /* Calbrating phase*/
+  if (calibratingG>0) {
+    /* Calbrating phase */
     for (axis = 0; axis < 3; axis++) {
       // Reset g[axis] at start of calibration
       if (calibratingG == 512) {
@@ -169,15 +170,14 @@ void GYRO_Common() {
       }
     }
     calibratingG--;
-
+    
 #if defined(TRACE)  
     Serial.print("gyroZero[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)gyroZero[axis]);
 #endif    
   }
-  
   else
-  
-  {               /* Flying phase */
+  {
+    /* Flying phase */
     for (axis = 0; axis < 3; axis++) {
       imu.gyroADC[axis]  -= gyroZero[axis];  
 #if defined(TRACE)  
@@ -190,6 +190,27 @@ void GYRO_Common() {
 #endif      
       previousGyroADC[axis] = imu.gyroADC[axis];
     }
+    
+    ComputeEulerAngles();
+  
+    // compute delta time DT for gyro integration
+    currentTime = millis();
+    dt = currentTime-previousTime;
+    previousTime = currentTime;
+  
+    // integrate the gyros angular velocity to determine angle
+    i_pitch = imu.gyroData[0] * dt;
+    i_roll =  imu.gyroData[1] * dt;
+  
+    // adjust angle using complementary filter
+	if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
+	c_pitch = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
+	prev_c_pitch = c_pitch;
+    
+    if (prev_c_roll == 0) prev_c_roll = e_roll;
+	c_roll  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
+	prev_c_roll = c_roll;
+  
   }
 
 }
@@ -294,13 +315,10 @@ void ACC_getADC () {
 
   ACC_Common();
   
-  ComputeEulerAngles();
 }
-
 
 void ComputeEulerAngles()
 {
-	e_roll = atan2(imu.accADC[ROLL], pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[PITCH], 2), 0.5));
-	e_pitch  = atan2(imu.accADC[PITCH],  pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[ROLL], 2), 0.5));
-	e_yaw   = atan2(imu.accADC[YAW] + 1.0, pow(pow(imu.accADC[ROLL], 2) + pow(imu.accADC[PITCH], 2), 0.5));
+	e_pitch  = atan2(imu.accADC[PITCH],  pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[ROLL],  2), 0.5));
+	e_roll   = atan2(imu.accADC[ROLL],   pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[PITCH], 2), 0.5));
 }

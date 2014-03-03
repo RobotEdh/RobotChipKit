@@ -186,29 +186,8 @@ void MultiWii_loop () {
 
 #if !defined(TEST)    
     serialCom();
-
-    // ------------------ STICKS COMMAND HANDLER --------------------
-    // checking sticks positions
-    uint8_t stTmp = 0;
-    for(i=0;i<4;i++) {
-      stTmp >>= 2;
-      if(rcData[i] > MINCHECK) stTmp |= 0x80;      // check for MIN
-      if(rcData[i] < MAXCHECK) stTmp |= 0x40;      // check for MAX
-      //Serial.print("i: "); Serial.println((int)i);  Serial.print("rcData[i]: ");Serial.println(rcData[i]);   
-
-    }
-    if(stTmp == rcSticks) {
-      if(rcDelayCommand<250) rcDelayCommand++;
-    } else rcDelayCommand = 0;
-    rcSticks = stTmp;
-    
-    // perform actions    
-    if (rcData[THROTTLE] <= MINCHECK) {            // THROTTLE at minimum
-      errorGyroI[ROLL] = 0; errorGyroI[PITCH] = 0; errorGyroI_YAW = 0; // reset I sum
-    }
-
 #endif    
-  } /* end currentTime > rcTime */
+  }
 
 #if !defined(TEST)   
   computeIMU();
@@ -234,24 +213,20 @@ void MultiWii_loop () {
 #endif   
 
     //I term
-    if (abs(imu.gyroData[axis])>640) errorGyroI[axis] = 0;                     // WindUp, ignore startup or big errors
-    errorGyroI[axis]  = constrain(errorGyroI[axis]+error,-16000,+16000);       // WindUp   16 bits is ok here
-    ITerm = (errorGyroI[axis]>>7)*conf.pid[axis].I8>>6;                        // 16 bits is ok here 16000/125 = 128 ; 128*250 = 32000
+    sum_error[axis] += error;
+    ITerm = Ki[axis]*sum_error[axis];
+    
 
     //P term
-    PTerm = (int32_t)rc*conf.pid[axis].P8>>6;
-    PTerm -= ((int32_t)imu.gyroData[axis]*dynP8[axis])>>6; // 32 bits is needed for calculation   
-    
+    PTerm = Kp[axis]*error;
+        
     //D term
-    delta          = imu.gyroData[axis] - lastGyro[axis];  // 16 bits is ok here, the dif between 2 consecutive gyro reads is limited to 800
-    lastGyro[axis] = imu.gyroData[axis];
-    DTerm          = delta+delta1[axis]+delta2[axis];
-    delta2[axis]   = delta1[axis];
-    delta1[axis]   = delta;
- 
-    DTerm = ((int32_t)DTerm*dynD8[axis])>>5;        // 32 bits is needed for calculation
+    Dterm = Kd[axis]*(error - last_error[axis]); 
+    last_error[axis] = error;
 
+    //PID
     axisPID[axis] =  PTerm + ITerm - DTerm;
+    
 #if defined(TRACE)  
     Serial.print("axisPID[");Serial.print((int)axis);Serial.print("]:");Serial.println(axisPID[axis]);
 #endif     
