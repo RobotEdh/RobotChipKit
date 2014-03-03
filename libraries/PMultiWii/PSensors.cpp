@@ -132,8 +132,6 @@ bool initSensors() {
   if (!Gyro_init()) return false ;
   if (!ACC_init()) return false;
   
-  f.I2C_INIT_DONE = 1;
-
 #if defined(TRACE)	  
   Serial.println("<End OK initSensors");
 #endif 
@@ -191,18 +189,24 @@ void GYRO_Common() {
       previousGyroADC[axis] = imu.gyroADC[axis];
     }
     
-    ComputeEulerAngles();
-  
+    // compute Euler angles between [-PI;+PI]
+	e_pitch  = atan2(imu.accADC[PITCH],  pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[ROLL],  2), 0.5));
+	e_roll   = atan2(imu.accADC[ROLL],   pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[PITCH], 2), 0.5));
+
+#if defined(TRACE)  
+      Serial.print("e_pitch:");Serial.println(e_pitch);
+      Serial.print("e_roll:");Serial.println(e_roll);
+#endif   
     // compute delta time DT for gyro integration
     currentTime = millis();
     dt = currentTime-previousTime;
     previousTime = currentTime;
   
-    // integrate the gyros angular velocity to determine angle
+    // integrate the gyros angular velocity to determine angles
     i_pitch = imu.gyroData[0] * dt;
     i_roll =  imu.gyroData[1] * dt;
   
-    // adjust angle using complementary filter
+    // adjust angle using complementary filter between [-PI;+PI]
 	if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
 	c_pitch = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
 	prev_c_pitch = c_pitch;
@@ -210,7 +214,11 @@ void GYRO_Common() {
     if (prev_c_roll == 0) prev_c_roll = e_roll;
 	c_roll  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
 	prev_c_roll = c_roll;
-  
+
+#if defined(TRACE)  
+      Serial.print("c_pitch:");Serial.println(c_pitch);
+      Serial.print("c_roll:");Serial.println(c_roll);
+#endif  
   }
 
 }
@@ -317,8 +325,3 @@ void ACC_getADC () {
   
 }
 
-void ComputeEulerAngles()
-{
-	e_pitch  = atan2(imu.accADC[PITCH],  pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[ROLL],  2), 0.5));
-	e_roll   = atan2(imu.accADC[ROLL],   pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[PITCH], 2), 0.5));
-}
