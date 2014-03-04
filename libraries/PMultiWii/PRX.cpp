@@ -4,7 +4,6 @@
 #include "config.h"
 #include "def.h"
 #include "types.h"
-#include "PSerial.h"
 #include "PMultiWii.h"
 
 /**************************************************************************************/
@@ -146,7 +145,6 @@ uint16_t readRawRC(uint8_t chan) {
 /*            interval [-500;+500] for YAW                                  */
 /*            interval [conf.minthrottle;MAXTHROTTLE] for THROTTLE          */
 /*            conf.minthrottle usualy = 1150, MAXTHROTTLE usually = 1850    */
-/*  - compute dynP8 & dynD8                                                 */
 /****************************************************************************/
 
 void computeRC() {
@@ -181,8 +179,8 @@ void computeRC() {
 
     //ROLL & PITCH & YAW 
     for(axis=0;axis<3;axis++) { 
-        rcCommand[axis] = min(abs(rcData[axis]-MIDRC),500);                     // interval [#1000;#2000] translated to interval [0;500]
-        if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis]; // interval [#1000;#2000] translated to interval [-500; +500]
+        rcCommand[axis] = min(abs(rcData[axis]-MIDRC),500);         // interval [#1000;#2000] 
+        if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis]; // translated to interval [-500; +500]
            
 #if defined(TRACE) 
         Serial.print("rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);

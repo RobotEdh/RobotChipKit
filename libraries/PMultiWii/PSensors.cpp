@@ -17,7 +17,7 @@ uint8_t rawADC[6];
 // ************************************************************************************************************
 // I2C general functions
 // ************************************************************************************************************
-void i2c_init(void) {
+void i2c_init() {
 
 #if defined(TRACE)	
   Serial.println(">i2c_init");
@@ -148,6 +148,14 @@ void GYRO_Common() {
   static int16_t previousGyroADC[3] = {0,0,0};
   static int32_t g[3];
   uint8_t axis;
+  double e_pitch, e_roll;
+  double i_pitch, i_roll;
+  static double prev_c_pitch = 0.0;
+  static double prev_c_roll  = 0.0;
+  double a = 0.98;
+  uint32_t currentTime;
+  static uint32_t previousTime = 0;
+  uint32_t dt;
 
   if (calibratingG>0) {
     /* Calbrating phase */
@@ -190,8 +198,8 @@ void GYRO_Common() {
     }
     
     // compute Euler angles between [-PI;+PI]
-	e_pitch  = atan2(imu.accADC[PITCH],  pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[ROLL],  2), 0.5));
-	e_roll   = atan2(imu.accADC[ROLL],   pow(pow(imu.accADC[YAW] + 1.0, 2) + pow(imu.accADC[PITCH], 2), 0.5));
+	e_pitch  = atan2((double)imu.accADC[PITCH],  pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[ROLL],  2), 0.5));
+	e_roll   = atan2((double)imu.accADC[ROLL],   pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[PITCH], 2), 0.5));
 
 #if defined(TRACE)  
       Serial.print("e_pitch:");Serial.println(e_pitch);
@@ -206,14 +214,14 @@ void GYRO_Common() {
     i_pitch = imu.gyroData[0] * dt;
     i_roll =  imu.gyroData[1] * dt;
   
-    // adjust angle using complementary filter between [-PI;+PI]
+    // adjust angles Pitch & Roll using complementary filter between [-PI;+PI]
 	if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
-	c_pitch = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
-	prev_c_pitch = c_pitch;
+	c_angle[0] = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
+	prev_c_pitch = c_angle[0];
     
     if (prev_c_roll == 0) prev_c_roll = e_roll;
-	c_roll  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
-	prev_c_roll = c_roll;
+	c_angle[1]  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
+	prev_c_roll = c_angle[1];
 
 #if defined(TRACE)  
       Serial.print("c_pitch:");Serial.println(c_pitch);
