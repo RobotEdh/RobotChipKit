@@ -9,10 +9,15 @@
 
 
 /*** I2C address ***/
- #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND)
+#define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND)
 //#define MPU6050_ADDRESS     0x69 // address pin AD0 high (VCC)
 
+<<<<<<< HEAD
 #define ACC_1G             4096 // ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096 
+=======
+
+#define G_FORCE 9.80665
+>>>>>>> 2484eb058b0eb2562a0885f76ec0fa2274212a81
 
 uint8_t rawADC[6];
   
@@ -191,6 +196,8 @@ void GYRO_Common() {
   uint8_t axis;
   double e_pitch, e_roll;
   double i_pitch, i_roll;
+  double eax, eay, eaz;
+  double evx, evy, evz;
   static double prev_c_pitch = 0.0;
   static double prev_c_roll  = 0.0;
   double a = 0.98;
@@ -242,8 +249,13 @@ void GYRO_Common() {
 	e_roll   = atan2((double)imu.accADC[ROLL],   pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[PITCH], 2), 0.5));
 
 #if defined(TRACE)  
+<<<<<<< HEAD
       Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
       Serial.print("e_roll:");Serial.println(e_roll);
+=======
+    Serial.print("e_pitch:");Serial.println(e_pitch);
+    Serial.print("e_roll:");Serial.println(e_roll);
+>>>>>>> 2484eb058b0eb2562a0885f76ec0fa2274212a81
 #endif   
     // compute delta time DT for gyro integration
     currentTime = millis();
@@ -262,11 +274,31 @@ void GYRO_Common() {
     if (prev_c_roll == 0) prev_c_roll = e_roll;
 	c_angle[1]  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
 	prev_c_roll = c_angle[1];
-
 #if defined(TRACE)  
+<<<<<<< HEAD
       Serial.print(">>>GYRO_Common: c_angle[0]:");Serial.print(c_angle[0]);Serial.print(" *** ");
       Serial.print("c_angle[1]:");Serial.println(c_angle[1]);
+=======
+    Serial.print("c_pitch:");Serial.println(c_pitch);
+    Serial.print("c_roll:");Serial.println(c_roll);
+>>>>>>> 2484eb058b0eb2562a0885f76ec0fa2274212a81
 #endif  
+
+	// Convert the acceleration to earth coordinates
+	eax = (double)imu.accADC[PITCH] * cos(c_angle[0]);
+	eay = (double)imu.accADC[ROLL]  * cos(c_angle[1]);
+	eaz = (double)imu.accADC[YAW]   * cos(c_angle[0]) * cos(c_angle[1]);
+
+	// Integrate acceleration to speed and convert in earth's X and Y axes meters per second
+	evx += eax * dt * G_FORCE;
+	evy += eay * dt * G_FORCE;
+	evz += eaz * dt * G_FORCE;
+#if defined(TRACE)  
+    Serial.print("evx:");Serial.println(evx);
+    Serial.print("evy:");Serial.println(evy);
+    Serial.print("evz:");Serial.println(evz);
+#endif
+
   }
 
 }
