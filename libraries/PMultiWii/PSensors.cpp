@@ -12,6 +12,8 @@
  #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND)
 //#define MPU6050_ADDRESS     0x69 // address pin AD0 high (VCC)
 
+#define ACC_1G             4096 // ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096 
+
 uint8_t rawADC[6];
   
 // ************************************************************************************************************
@@ -20,10 +22,14 @@ uint8_t rawADC[6];
 void i2c_init() {
 
 #if defined(TRACE)	
-  Serial.println(">i2c_init");
-#endif
+  Serial.println(">>>Start i2c_init");
+#endif 
 
   Wire.begin(); // setup I2C
+  
+#if defined(TRACE)	
+  Serial.println("<<<End   i2c_init");
+#endif  
 }
 
 
@@ -83,7 +89,7 @@ bool MPU_init() {
   uint8_t ret=0;
     
 #if defined(TRACE)	
-  Serial.println(">MPU_init");
+  Serial.println(">>>Start  MPU_init");
 #endif    
   // FIX ME change the I2C clock rate to 400kHz like multiwii ?
   ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80); //PWR_MGMT_1    -- DEVICE_RESET 1
@@ -94,46 +100,81 @@ bool MPU_init() {
   ret=i2c_writeReg(MPU6050_ADDRESS, 0x1A, 0x00); //CONFIG        -- EXT_SYNC_SET 0 (disable input pin for data sync) ; DLPF_CFG = 0 => ACC bandwidth = 260Hz  GYRO bandwidth = 256Hz)
   if (ret> 0) return false;
 
+#if defined(TRACE)	
+  Serial.println("<<<End OK MPU_init");
+#endif 
   return true;
 }
 
 
 bool Gyro_init() {
   uint8_t ret=0;
+#if defined(TRACE)	
+  Serial.println(">>>Start  Gyro_init");
+#endif 
   
   ret=i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18); //GYRO_CONFIG   -- FS_SEL = 3: Full scale set to 2000 deg/sec
   if (ret> 0) return false;
- 
+
+#if defined(TRACE)	
+  Serial.println("<<<End OK Gyro_init");
+#endif
+
   return true;
 }
 
 
 bool ACC_init () {
+  uint8_t ret=0;    
 #if defined(TRACE)	
-  Serial.println(">ACC_init");
-#endif    
-  i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);             //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
+  Serial.println(">>>Start  ACC_init");
+#endif     
+
+  i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);     //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
+  if (ret> 0) return false;
   //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
   //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
-  
+
+#if defined(TRACE)	
+  Serial.println("<<<End OK ACC_init");
+#endif 
+ 
   return true;
 }
 
 
 bool initSensors() {
 #if defined(TRACE)	
-  Serial.println(">Start initSensors"); 
+  Serial.println(">>Start initSensors"); 
 #endif 
 
   i2c_init();
   delay(100);
   
-  if (!MPU_init()) return false;
-  if (!Gyro_init()) return false ;
-  if (!ACC_init()) return false;
+  if (!MPU_init())
+  {   
+#if defined(TRACE)	  
+   Serial.println("<<End KO MPU_init");
+#endif    
+    return false;
+  }
+  if (!Gyro_init())
+  {   
+#if defined(TRACE)	  
+   Serial.println("<<End KO Gyro_init");
+#endif    
+    return false;
+  }    
+  if (!ACC_init())
+      {   
+#if defined(TRACE)	  
+   Serial.println("<<End KO ACC_init");
+#endif    
+    return false;
+  }
   
 #if defined(TRACE)	  
-  Serial.println("<End OK initSensors");
+  Serial.println("<<End OK initSensors");
 #endif 
   return true;
 }
@@ -173,36 +214,35 @@ void GYRO_Common() {
       // Calculate average on 512 readings   
       if (calibratingG == 1) {
         gyroZero[axis]=g[axis]>>9;
-      }
-    }
-    calibratingG--;
-    
 #if defined(TRACE)  
     Serial.print("gyroZero[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)gyroZero[axis]);
-#endif    
+#endif        
+      }
+    }
+    calibratingG--;  
   }
   else
   {
     /* Flying phase */
     for (axis = 0; axis < 3; axis++) {
       imu.gyroADC[axis]  -= gyroZero[axis];  
-#if defined(TRACE)  
-      Serial.print("1-imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println((int)imu.gyroADC[axis]);
-#endif    
+ 
       //anti gyro glitch, limit the variation between two consecutive readings
       if (previousGyroADC[axis] != 0) imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);  
-#if defined(TRACE)  
-      Serial.print("2-imu.gyroADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.gyroADC[axis]);
-#endif      
       previousGyroADC[axis] = imu.gyroADC[axis];
     }
-    
+#if defined(TRACE)  
+    Serial.print(">>>GYRO_Common: imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
+    Serial.print("imu.gyroADC[PITCH]:");Serial.print(imu.gyroADC[PITCH]);Serial.print(" *** ");
+    Serial.print("imu.gyroADC[YAW]:");Serial.println(imu.gyroADC[YAW]);
+#endif
+   
     // compute Euler angles between [-PI;+PI]
 	e_pitch  = atan2((double)imu.accADC[PITCH],  pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[ROLL],  2), 0.5));
 	e_roll   = atan2((double)imu.accADC[ROLL],   pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[PITCH], 2), 0.5));
 
 #if defined(TRACE)  
-      Serial.print("e_pitch:");Serial.println(e_pitch);
+      Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
       Serial.print("e_roll:");Serial.println(e_roll);
 #endif   
     // compute delta time DT for gyro integration
@@ -224,8 +264,8 @@ void GYRO_Common() {
 	prev_c_roll = c_angle[1];
 
 #if defined(TRACE)  
-      Serial.print("c_pitch:");Serial.println(c_pitch);
-      Serial.print("c_roll:");Serial.println(c_roll);
+      Serial.print(">>>GYRO_Common: c_angle[0]:");Serial.print(c_angle[0]);Serial.print(" *** ");
+      Serial.print("c_angle[1]:");Serial.println(c_angle[1]);
 #endif  
   }
 
@@ -242,19 +282,17 @@ void GYRO_Common() {
 /*******************************************************************************/
 
 void Gyro_getADC () {
-#if defined(TRACE)	
-  Serial.println(">Gyro_getADC");
-#endif    
+   
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x43); // range: +/- 8192; +/- 2000 deg/sec
   
   imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
   //FIX ME divide by 4 like multiwii ?
-#if defined(TRACE)    
-  Serial.print("imu.gyroADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[ROLL],DEC);
-  Serial.print("imu.gyroADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[PITCH],DEC);
-  Serial.print("imu.gyroADC[");Serial.print((int)YAW);Serial.print("]:");Serial.println((int16_t)imu.gyroADC[YAW],DEC); 
+#if defined(TRACE)  
+    Serial.print(">>>Gyro_getADC: imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
+    Serial.print("imu.gyroADC[PITCH]:");Serial.print(imu.gyroADC[PITCH]);Serial.print(" *** ");
+    Serial.print("imu.gyroADC[YAW]:");Serial.println(imu.gyroADC[YAW]);
 #endif  
 
   GYRO_Common();
@@ -278,17 +316,18 @@ void ACC_Common() {
       imu.accADC[axis]=0;
       accZero[axis]=0;
     }
-    // Calculate average on 512 readings , shift Z down by ACC_1G
+    // Calculate average on 512 readings
     if (calibratingA == 1) {
       accZero[ROLL]  = a[ROLL]>>9;
       accZero[PITCH] = a[PITCH]>>9;
-      accZero[YAW]   = (a[YAW]>>9)-ACC_1G; // FIX ME: Check value ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096  or 4096/8 if acc is divded by 8 
-    }
-    calibratingA--;
+      accZero[YAW]   = a[YAW]>>9; 
 #if defined(TRACE)  
-    Serial.print("accZero[");Serial.print((int)axis);Serial.print("]:");Serial.println(accZero[axis]);
-      
-#endif    
+      Serial.print("accZero[ROLL]:");Serial.println(accZero[ROLL]);
+      Serial.print("accZero[PITCH]:");Serial.println(accZero[PITCH]);
+      Serial.print("accZero[YAW]:");Serial.println(accZero[YAW]);      
+#endif
+    }
+    calibratingA--;   
   }
   
   else
@@ -296,10 +335,12 @@ void ACC_Common() {
   {                     /* Flying phase */
     for (axis = 0; axis < 3; axis++) {
       imu.accADC[axis]  -= accZero[axis];
-#if defined(TRACE)  
-      Serial.print("imu.accADC[");Serial.print((int)axis);Serial.print("]:");Serial.println(imu.accADC[axis]);
-#endif 
     }
+#if defined(TRACE)  
+    Serial.print(">>>ACC_Common: imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
+    Serial.print("imu.accADC[PITCH]:");Serial.print(imu.accADC[PITCH]);Serial.print(" *** ");
+    Serial.print("imu.accADC[YAW]:");Serial.println(imu.accADC[YAW]);
+#endif   
   }
 }
 
@@ -314,20 +355,18 @@ void ACC_Common() {
 /****************************************************************/
 
 void ACC_getADC () {
-#if defined(TRACE)
-  Serial.println(">ACC_getADC"); 
-#endif    
+  
   i2c_getSixRawADC(MPU6050_ADDRESS, 0x3B);
     
   imu.accADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.accADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.accADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-  /* FIX ME divide by 8 like Multiwii ? */
-#if defined(TRACE)    
-  Serial.print("imu.accADC[");Serial.print((int)ROLL);Serial.print("]:");Serial.println((int16_t)imu.accADC[ROLL],DEC);
-  Serial.print("imu.accADC[");Serial.print((int)PITCH);Serial.print("]:");Serial.println((int16_t)imu.accADC[PITCH],DEC);
-  Serial.print("imu.accADC[");Serial.print((int)YAW);Serial.print("]:");Serial.println((int16_t)imu.accADC[YAW],DEC); 
-#endif      
+
+#if defined(TRACE)  
+    Serial.print(">>>ACC_getADC: imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
+    Serial.print("imu.accADC[PITCH]:");Serial.print(imu.accADC[PITCH]);Serial.print(" *** ");
+    Serial.print("imu.accADC[YAW]:");Serial.println(imu.accADC[YAW]);
+#endif        
 
   ACC_Common();
   

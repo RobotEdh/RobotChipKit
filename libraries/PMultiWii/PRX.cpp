@@ -19,7 +19,7 @@ volatile uint16_t rcValue[RC_CHANS] = {1502, 1502, 1502, 1502, 1502}; // interva
 void configureReceiver() {
 
 #if defined(TRACE)  
-  Serial.println(">configureReceiver"); 
+  Serial.println(">>Start configureReceiver"); 
 #endif
      
   asm volatile("di");      //disable CPU interrupts
@@ -35,6 +35,10 @@ void configureReceiver() {
   IEC1SET = 0x0001;        //enable the CN interrupt enable bit
   
   asm volatile("ei");      //enable CPU interrupts
+  
+#if defined(TRACE)  
+  Serial.println("<<End   configureReceiver"); 
+#endif  
 }
 
 

@@ -1,9 +1,7 @@
 #ifndef DEF_H_
 #define DEF_H
 
-//#define TRACE
-//#define TRACE2
-#define TEST
+#define TRACE
 
 /**************************************************************************************/
 /***************             test configurations                   ********************/

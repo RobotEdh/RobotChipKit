@@ -6,31 +6,20 @@
 #include "PMultiWii.h"
 
 uint8_t PWM_PIN[4] = {3,5,6,9};      // OC1, 0C2, OC3, OC4 = rear, right, left, front   
+int16_t motor[4];
 
 
 /**************************************************************************************/
 /************  Writes the Motors values to the PWM compare register  ******************/
 /**************************************************************************************/
 void writeMotors() { // [936;1875] => [312;625]
-  int i=0;
-  
+
 #if defined(TRACE)
-  Serial.println(">writeMotors");
-    
-  for (i = 0; i < 4; i++) { 
-        Serial.print("rcData[");Serial.print(i);Serial.print("]:");Serial.println(rcData[i]);
-        Serial.print("rcCommand[");Serial.print(i);Serial.print("]:");Serial.println(rcCommand[i]); 
+  for (int i = 0; i < 4; i++) { 
+        Serial.print(">>>writeMotors: motor[");Serial.print(i);Serial.print("]:");Serial.println(motor[i]);
   }
- 
-  Serial.print("axisPID[ROLL]:");Serial.println(axisPID[ROLL]);
-  Serial.print("axisPID[PITCH]:");Serial.println(axisPID[PITCH]);
-  Serial.print("axisPID[YAW]:");Serial.println(axisPID[YAW]);
-   
-  for (i = 0; i < 4; i++) { 
-        Serial.print("motor[");Serial.print(i);Serial.print("]:");Serial.println(motor[i]);
-  }
-#endif
-   
+#endif  
+
   OC1RS = motor[0]/3;
   OC2RS = motor[1]/3; 
   OC3RS = motor[2]/3; 
@@ -128,12 +117,9 @@ void initOutput() {
   OC2CONSET = 0x8000; // Enable OC2  
   OC3CONSET = 0x8000; // Enable OC3  
   OC4CONSET = 0x8000; // Enable OC4                     
-   
-  writeAllMotors(MINCOMMAND);
-  delay(300);
 
 #if defined(TRACE)
-  Serial.println("<<End initOutput");
+  Serial.println("<<End   initOutput");
 #endif 
 }
 
@@ -146,14 +132,24 @@ void initOutput() {
 
 void RunMotors() {
   int16_t maxMotor;
-  uint8_t i;
-  #define PIDMIX(X,Y,Z) rcCommand[THROTTLE] + axisPID[ROLL]*X + axisPID[PITCH]*Y + YAW_DIRECTION * axisPID[YAW]*Z
+  int i;
+#define PIDMIX(X,Y,Z) rcCommand[THROTTLE] + axisPID[ROLL]*X + axisPID[PITCH]*Y + YAW_DIRECTION * axisPID[YAW]*Z
 
     motor[0] = PIDMIX(-1,+1,-1); //REAR_R
     motor[1] = PIDMIX(-1,-1,+1); //FRONT_R
     motor[2] = PIDMIX(+1,+1,+1); //REAR_L
     motor[3] = PIDMIX(+1,-1,-1); //FRONT_L
 
+#if defined(TRACE)
+    Serial.print(">>>RunMotors: rcCommand[THROTTLE]:");Serial.print(rcCommand[THROTTLE]);Serial.print(" *** ");
+    Serial.print("axisPID[ROLL]:");Serial.print(axisPID[ROLL]);Serial.print(" *** ");
+    Serial.print("axisPID[PITCH]:");Serial.print(axisPID[PITCH]);Serial.print(" *** ");
+    Serial.print("axisPID[YAW]:");Serial.println(axisPID[YAW]);
+   
+    for (i = 0; i < 4; i++) { 
+        Serial.print(">>>RunMotors: motor[");Serial.print(i);Serial.print("]:");Serial.println(motor[i]);
+  }
+#endif
     maxMotor=motor[0];
     for(i=1; i< 4; i++)
       if (motor[i]>maxMotor) maxMotor=motor[i];

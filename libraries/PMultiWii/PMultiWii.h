@@ -18,18 +18,15 @@ extern imu_t imu;
 extern int16_t gyroZero[3];
 extern int16_t accZero[3];
 
-extern int16_t axisPID[3];
-extern int16_t motor[8];
-extern int16_t servo[8];
-
+extern double axisPID[3];
 
 extern int16_t rcData[RC_CHANS];
 extern int16_t rcSerial[8];
 extern int16_t rcCommand[4];
 
 
-  void MultiWii_setup();
-  void MultiWii_loop ();
+bool MultiWii_setup();
+void MultiWii_loop ();
 
 
 #endif /* MULTIWII_H_ */
