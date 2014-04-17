@@ -14,6 +14,7 @@
 
 #define ACC_1G             4096 // ACC_1G, depends on scale. For +/- 8g => 1g = 4096 => ACC_1G = 4096 
 #define G_FORCE            9.81
+#define PI                 3.14159265359
 
 uint8_t rawADC[6];
   
@@ -92,7 +93,6 @@ bool MPU_init() {
 #if defined(TRACE)	
   Serial.println(">>>Start  MPU_init");
 #endif    
-  // FIX ME change the I2C clock rate to 400kHz like multiwii ?
   ret=i2c_writeReg(MPU6050_ADDRESS, 0x6B, 0x80); //PWR_MGMT_1    -- DEVICE_RESET 1
   if (ret> 0) return false;
   delay(5);
@@ -114,7 +114,7 @@ bool Gyro_init() {
   Serial.println(">>>Start  Gyro_init");
 #endif 
   
-  ret=i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18); //GYRO_CONFIG   -- FS_SEL = 3: Full scale set to 2000 deg/sec
+  ret=i2c_writeReg(MPU6050_ADDRESS, 0x1B, 0x18); //GYRO_CONFIG   -- FS_SEL = 3: (Full scale set to +/- 2000 deg/sec)
   if (ret> 0) return false;
 
 #if defined(TRACE)	
@@ -131,10 +131,8 @@ bool ACC_init () {
   Serial.println(">>>Start  ACC_init");
 #endif     
 
-  i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);     //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0   //note something is wrong in the spec.
+  i2c_writeReg(MPU6050_ADDRESS, 0x1C, 0x10);     //ACCEL_CONFIG  -- AFS_SEL=2 (Full Scale = +/-8G)  ; ACCELL_HPF=0
   if (ret> 0) return false;
-  //note: something seems to be wrong in the spec here. With AFS=2 1G = 4096 but according to my measurement: 1G=2048 (and 2048/8 = 256)
-  //confirmed here: http://www.multiwii.com/forum/viewtopic.php?f=8&t=1080&start=10#p7480
 
 #if defined(TRACE)	
   Serial.println("<<<End OK ACC_init");
@@ -228,8 +226,9 @@ void GYRO_Common() {
   {
     /* Flying phase */
     for (axis = 0; axis < 3; axis++) {
-      imu.gyroADC[axis]  -= gyroZero[axis];  
- 
+      imu.gyroADC[axis] -= gyroZero[axis];  
+      imu.gyroADC[axis]  = imu.gyroADC[axis] * PI /180.0; // Convert from degree to radians
+      
       //anti gyro glitch, limit the variation between two consecutive readings
       if (previousGyroADC[axis] != 0) imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);  
       previousGyroADC[axis] = imu.gyroADC[axis];
@@ -241,21 +240,22 @@ void GYRO_Common() {
 #endif
    
     // compute Euler angles between [-PI;+PI]
-	e_pitch  = atan2((double)imu.accADC[PITCH],  pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[ROLL],  2), 0.5));
-	e_roll   = atan2((double)imu.accADC[ROLL],   pow(pow((double)imu.accADC[YAW] + 1.0, 2.0) + pow((double)imu.accADC[PITCH], 2), 0.5));
+	e_pitch  = atan2((double)imu.accADC[PITCH],  sqrt(pow((double)imu.accADC[YAW], 2.0) + pow((double)imu.accADC[ROLL],  2)));
+	e_roll   = atan2((double)imu.accADC[ROLL],   sqrt(pow((double)imu.accADC[YAW], 2.0) + pow((double)imu.accADC[PITCH], 2)));
 
 #if defined(TRACE)  
       Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
       Serial.print("e_roll:");Serial.println(e_roll);
 #endif   
-    // compute delta time DT for gyro integration
+    
+    // compute delta time DT in millis for gyro integration
     currentTime = millis();
     dt = currentTime-previousTime;
     previousTime = currentTime;
   
-    // integrate the gyros angular velocity to determine angles
-    i_pitch = imu.gyroData[0] * dt;
-    i_roll =  imu.gyroData[1] * dt;
+    // integrate the gyros angular velocity in deg/sec to determine angles
+    i_pitch = imu.gyroData[0] * dt / 1000.0;
+    i_roll =  imu.gyroData[1] * dt / 1000.0;
   
     // adjust angles Pitch & Roll using complementary filter between [-PI;+PI]
 	if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
@@ -275,13 +275,18 @@ void GYRO_Common() {
 	eay = (double)imu.accADC[ROLL]  * cos(c_angle[1]);
 	eaz = (double)imu.accADC[YAW]   * cos(c_angle[0]) * cos(c_angle[1]);
 
-	// Integrate acceleration to speed and convert in earth's X and Y axes meters per second
-	evx += eax * dt * G_FORCE;
-	evy += eay * dt * G_FORCE;
-	evz += eaz * dt * G_FORCE;
 #if defined(TRACE)  
-    Serial.print("evx:");Serial.println(evx);
-    Serial.print("evy:");Serial.println(evy);
+    Serial.print(">>>GYRO_Common: eax:");Serial.print(eax);Serial.print(" *** ");
+    Serial.print("eay:");Serial.print(eay);Serial.print(" *** ");
+    Serial.print("eaz:");Serial.println(eaz);
+#endif
+	// Integrate acceleration to speed and convert in earth's X and Y axes meters per second
+	evx += eax * G_FORCE *dt / 1000.0;
+	evy += eay * G_FORCE *dt / 1000.0;
+	evz += eaz * G_FORCE *dt / 1000.0;
+#if defined(TRACE)  
+    Serial.print(">>>GYRO_Common: evx:");Serial.print(evx);Serial.print(" *** ");
+    Serial.print("evy:");Serial.print(evy);Serial.print(" *** ");
     Serial.print("evz:");Serial.println(evz);
 #endif
 
@@ -301,12 +306,17 @@ void GYRO_Common() {
 
 void Gyro_getADC () {
    
-  i2c_getSixRawADC(MPU6050_ADDRESS, 0x43); // range: +/- 8192; +/- 2000 deg/sec
+  i2c_getSixRawADC(MPU6050_ADDRESS, 0x43); 
   
   imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-  //FIX ME divide by 4 like multiwii ?
+ 
+ //Convert raw value to real value based an selectivity defined at init: +/- 2000 deg/sec
+  imu.gyroADC[ROLL]  = imu.gyroADC[ROLL]  * 4000.0 / 65536; 
+  imu.gyroADC[PITCH] = imu.gyroADC[PITCH] * 4000.0 / 65536; 
+  imu.gyroADC[YAW]   = imu.gyroADC[YAW]   * 4000.0 / 65536; 
+
 #if defined(TRACE)  
     Serial.print(">>>Gyro_getADC: imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.gyroADC[PITCH]:");Serial.print(imu.gyroADC[PITCH]);Serial.print(" *** ");
@@ -379,6 +389,11 @@ void ACC_getADC () {
   imu.accADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.accADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.accADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
+  
+  //Convert raw value to real value based an selectivity defined at init: +/- 8g
+  imu.accADC[ROLL]  = imu.accADC[ROLL]  * 16.0 / 65536;
+  imu.accADC[PITCH] = imu.accADC[PITCH] * 16.0 / 65536;
+  imu.accADC[YAW]   = imu.accADC[YAW]   * 16.0 / 65536;
 
 #if defined(TRACE)  
     Serial.print(">>>ACC_getADC: imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
