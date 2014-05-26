@@ -10,7 +10,7 @@
 /***************             Global RX related variables           ********************/
 /**************************************************************************************/
 //RAW RC values will be store here
-volatile uint16_t rcValue[RC_CHANS] = {1502, 1502, 1502, 1502, 1502}; // interval [1000;2000]
+volatile uint16_t rcValue[RC_CHANS] = {1500, 1500, 1500, 1000, 1000}; // interval [1000;2000]
 
 
 /**************************************************************************************/
@@ -154,6 +154,7 @@ uint16_t readRawRC(uint8_t chan) {
 void computeRC() {
   static uint16_t rcData4Values[RC_CHANS][4], rcDataMean[RC_CHANS];
   static uint8_t rc4ValuesIndex = 0;
+  static uint8_t rcinit = 0;
   uint8_t axis;
   uint8_t chan,a;
   
@@ -162,20 +163,26 @@ void computeRC() {
 #endif 
 
     rc4ValuesIndex++;
-    if (rc4ValuesIndex == 4) rc4ValuesIndex = 0;
+    if (rc4ValuesIndex == 4) {rc4ValuesIndex = 0; rcinit = 1;}
     
     for (chan = 0; chan < RC_CHANS; chan++) { // read data from all channels
         rcData4Values[chan][rc4ValuesIndex] = readRawRC(chan);
-#if defined(TRACE2)  
+#if defined(TRACE)  
         Serial.print("rcData4Values[");Serial.print((int)chan);Serial.print("][");
         Serial.print((int)rc4ValuesIndex);Serial.print("]:");Serial.println(rcData4Values[chan][rc4ValuesIndex]);
 #endif
-        rcDataMean[chan] = 0;
-        for (a=0;a<4;a++) rcDataMean[chan] += rcData4Values[chan][a];  // make average on 4 values
+        if (rcinit == 1) {
+            rcDataMean[chan] = 0;
+            for (a=0;a<4;a++) rcDataMean[chan] += rcData4Values[chan][a];  // make average on 4 values
         
-        rcDataMean[chan]= (rcDataMean[chan]+2)>>2;
-        if ( rcDataMean[chan] < (uint16_t)rcData[chan] -3)  rcData[chan] = rcDataMean[chan]+2; // filter in current value outside +/- 3 previous value
-        if ( rcDataMean[chan] > (uint16_t)rcData[chan] +3)  rcData[chan] = rcDataMean[chan]-2;
+            rcDataMean[chan]= (rcDataMean[chan]+2)>>2;
+            if ( rcDataMean[chan] < (uint16_t)rcData[chan] -3)  rcData[chan] = rcDataMean[chan]+2; // filter in current value outside +/- 3 previous value
+            if ( rcDataMean[chan] > (uint16_t)rcData[chan] +3)  rcData[chan] = rcDataMean[chan]-2;
+        }
+        else
+        {
+            rcData[chan] = rcData4Values[chan][rc4ValuesIndex];  // not 4 reads yet
+        }
 #if defined(TRACE)  
         Serial.print("rcData[");Serial.print((int)chan);Serial.print("]:");Serial.println(rcData[chan]);
 #endif       

@@ -7,7 +7,6 @@
 #include "PMultiWii.h"
 #include "PSensors.h"
 
-
 /*** I2C address ***/
 #define MPU6050_ADDRESS     0x68 // address pin AD0 low (GND)
 //#define MPU6050_ADDRESS     0x69 // address pin AD0 high (VCC)
@@ -17,6 +16,7 @@
 #define PI                 3.14159265359
 
 uint8_t rawADC[6];
+uint8_t rawTemp[2];
   
 // ************************************************************************************************************
 // I2C general functions
@@ -65,6 +65,9 @@ void i2c_getSixRawADC(uint8_t add, uint8_t reg) {
   i2c_read_reg_to_buf(add, reg, &rawADC, 6);
 }
 
+void i2c_getTemperature(uint8_t add, uint8_t reg) {
+  i2c_read_reg_to_buf(add, reg, &rawTemp, 2);
+}
 
 uint8_t i2c_writeReg(uint8_t devAddr, uint8_t regAddr, uint8_t val) {
     Wire.beginTransmission(devAddr);
@@ -171,8 +174,12 @@ bool initSensors() {
 #endif    
     return false;
   }
-  
+
+  i2c_getTemperature(MPU6050_ADDRESS, 0x41);  
+  imu.temperature  = (rawTemp[0] << 8) | rawTemp[1];
+    
 #if defined(TRACE)	  
+  Serial.print("Temperature: "); Serial.println(((double)imu.temperature + 12412.0) / 340.0);
   Serial.println("<<End OK initSensors");
 #endif 
   return true;
@@ -185,7 +192,6 @@ bool initSensors() {
 // limit the variation between two consecutive readings (anti gyro glitch)
 // ************************************************************************
 void GYRO_Common() {
-  static int16_t previousGyroADC[3] = {0,0,0};
   static int32_t g[3];
   uint8_t axis;
   double e_pitch, e_roll;
@@ -227,69 +233,75 @@ void GYRO_Common() {
     /* Flying phase */
     for (axis = 0; axis < 3; axis++) {
       imu.gyroADC[axis] -= gyroZero[axis];  
-      imu.gyroADC[axis]  = imu.gyroADC[axis] * PI /180.0; // Convert from degree to radians
-      
-      //anti gyro glitch, limit the variation between two consecutive readings
-      if (previousGyroADC[axis] != 0) imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);  
-      previousGyroADC[axis] = imu.gyroADC[axis];
     }
+    
+    //Convert raw value to real value based an selectivity defined at init: +/- 2000 deg/sec
+    imu.dgyroADC[ROLL]  = imu.gyroADC[ROLL]  * 4000.0 / 65536; 
+    imu.dgyroADC[PITCH] = imu.gyroADC[PITCH] * 4000.0 / 65536; 
+    imu.dgyroADC[YAW]   = imu.gyroADC[YAW]   * 4000.0 / 65536; 
 #if defined(TRACE)  
-    Serial.print(">>>GYRO_Common: imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
-    Serial.print("imu.gyroADC[PITCH]:");Serial.print(imu.gyroADC[PITCH]);Serial.print(" *** ");
-    Serial.print("imu.gyroADC[YAW]:");Serial.println(imu.gyroADC[YAW]);
-#endif
-   
+    Serial.print(">>>GYRO_Common: imu.dgyroADC[ROLL]:");Serial.print(imu.dgyroADC[ROLL]);Serial.print(" *** ");
+    Serial.print("imu.dgyroADC[PITCH]:");Serial.print(imu.dgyroADC[PITCH]);Serial.print(" *** ");
+    Serial.print("imu.dgyroADC[YAW]:");Serial.println(imu.dgyroADC[YAW]);
+#endif 
+
     // compute Euler angles between [-PI;+PI]
-	e_pitch  = atan2((double)imu.accADC[PITCH],  sqrt(pow((double)imu.accADC[YAW], 2.0) + pow((double)imu.accADC[ROLL],  2)));
-	e_roll   = atan2((double)imu.accADC[ROLL],   sqrt(pow((double)imu.accADC[YAW], 2.0) + pow((double)imu.accADC[PITCH], 2)));
+	e_pitch  = atan2(imu.daccADC[PITCH],  sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[ROLL],  2)));
+	e_roll   = atan2(imu.daccADC[ROLL],   sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[PITCH], 2)));
 
 #if defined(TRACE)  
-      Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
-      Serial.print("e_roll:");Serial.println(e_roll);
+    Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
+    Serial.print("e_roll:");Serial.println(e_roll);
 #endif   
     
     // compute delta time DT in millis for gyro integration
     currentTime = millis();
-    dt = currentTime-previousTime;
-    previousTime = currentTime;
+    if (previousTime > 0) {
+        dt = currentTime-previousTime;
   
-    // integrate the gyros angular velocity in deg/sec to determine angles
-    i_pitch = imu.gyroData[0] * dt / 1000.0;
-    i_roll =  imu.gyroData[1] * dt / 1000.0;
-  
-    // adjust angles Pitch & Roll using complementary filter between [-PI;+PI]
-	if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
-	c_angle[0] = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
-	prev_c_pitch = c_angle[0];
-    
-    if (prev_c_roll == 0) prev_c_roll = e_roll;
-	c_angle[1]  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
-	prev_c_roll = c_angle[1];
+        // integrate the gyros angular velocity in deg/sec to determine angles
+        i_pitch = imu.dgyroADC[0] * PI/180.0 * (double)dt/1000.0;
+        i_roll =  imu.dgyroADC[1] * PI/180.0 * (double)dt/1000.0;
 #if defined(TRACE)  
-      Serial.print(">>>GYRO_Common: c_angle[0]:");Serial.print(c_angle[0]);Serial.print(" *** ");
-      Serial.print("c_angle[1]:");Serial.println(c_angle[1]);
+        Serial.print(">>>GYRO_Common: i_pitch:");Serial.print(i_pitch);Serial.print(" *** ");
+        Serial.print("i_roll:");Serial.print(i_roll);Serial.print(" *** ");
+        Serial.print("dt:");Serial.println(dt);
+#endif   
+        // adjust angles Pitch & Roll using complementary filter between [-PI;+PI]
+	    if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
+	    c_angle[0] = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
+	    prev_c_pitch = c_angle[0];
+    
+        if (prev_c_roll == 0) prev_c_roll = e_roll;
+	    c_angle[1]  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
+	    prev_c_roll = c_angle[1];
+#if defined(TRACE)  
+        Serial.print(">>>GYRO_Common: c_angle[0]:");Serial.print(c_angle[0]);Serial.print(" *** ");
+        Serial.print("c_angle[1]:");Serial.println(c_angle[1]);
 #endif  
 
-	// Convert the acceleration to earth coordinates
-	eax = (double)imu.accADC[PITCH] * cos(c_angle[0]);
-	eay = (double)imu.accADC[ROLL]  * cos(c_angle[1]);
-	eaz = (double)imu.accADC[YAW]   * cos(c_angle[0]) * cos(c_angle[1]);
+	    // Convert the acceleration to earth coordinates
+	    eax = imu.daccADC[PITCH] * cos(c_angle[0]);
+	    eay = imu.daccADC[ROLL]  * cos(c_angle[1]);
+	    eaz = imu.daccADC[YAW]   * cos(c_angle[0]) * cos(c_angle[1]);
 
 #if defined(TRACE)  
-    Serial.print(">>>GYRO_Common: eax:");Serial.print(eax);Serial.print(" *** ");
-    Serial.print("eay:");Serial.print(eay);Serial.print(" *** ");
-    Serial.print("eaz:");Serial.println(eaz);
+        Serial.print(">>>GYRO_Common: eax:");Serial.print(eax);Serial.print(" *** ");
+        Serial.print("eay:");Serial.print(eay);Serial.print(" *** ");
+        Serial.print("eaz:");Serial.println(eaz);
 #endif
-	// Integrate acceleration to speed and convert in earth's X and Y axes meters per second
-	evx += eax * G_FORCE *dt / 1000.0;
-	evy += eay * G_FORCE *dt / 1000.0;
-	evz += eaz * G_FORCE *dt / 1000.0;
+	    // Integrate acceleration to speed and convert in earth's X and Y axes meters per second
+	    evx += eax * G_FORCE * (double)dt/1000.0;
+	    evy += eay * G_FORCE * (double)dt/1000.0;
+	    evz += eaz * G_FORCE * (double)dt/1000.0;
 #if defined(TRACE)  
-    Serial.print(">>>GYRO_Common: evx:");Serial.print(evx);Serial.print(" *** ");
-    Serial.print("evy:");Serial.print(evy);Serial.print(" *** ");
-    Serial.print("evz:");Serial.println(evz);
+        Serial.print(">>>GYRO_Common: evx:");Serial.print(evx);Serial.print(" *** ");
+        Serial.print("evy:");Serial.print(evy);Serial.print(" *** ");
+        Serial.print("evz:");Serial.println(evz);
 #endif
-
+    }
+    previousTime = currentTime;
+  
   }
 
 }
@@ -311,17 +323,11 @@ void Gyro_getADC () {
   imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
- 
- //Convert raw value to real value based an selectivity defined at init: +/- 2000 deg/sec
-  imu.gyroADC[ROLL]  = imu.gyroADC[ROLL]  * 4000.0 / 65536; 
-  imu.gyroADC[PITCH] = imu.gyroADC[PITCH] * 4000.0 / 65536; 
-  imu.gyroADC[YAW]   = imu.gyroADC[YAW]   * 4000.0 / 65536; 
-
 #if defined(TRACE)  
-    Serial.print(">>>Gyro_getADC: imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
+    Serial.print(">>>Gyro_getADC(1): imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.gyroADC[PITCH]:");Serial.print(imu.gyroADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.gyroADC[YAW]:");Serial.println(imu.gyroADC[YAW]);
-#endif  
+#endif 
 
   GYRO_Common();
 }
@@ -368,7 +374,17 @@ void ACC_Common() {
     Serial.print(">>>ACC_Common: imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.accADC[PITCH]:");Serial.print(imu.accADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.accADC[YAW]:");Serial.println(imu.accADC[YAW]);
-#endif   
+#endif
+  
+    //Convert raw value to real value based an selectivity defined at init: +/- 8g
+    imu.daccADC[ROLL]  = imu.accADC[ROLL]  * 16.0 / 65536;
+    imu.daccADC[PITCH] = imu.accADC[PITCH] * 16.0 / 65536;
+    imu.daccADC[YAW]   = imu.accADC[YAW]   * 16.0 / 65536;
+#if defined(TRACE)  
+    Serial.print(">>>ACC_Common: imu.daccADC[ROLL]:");Serial.print(imu.daccADC[ROLL]);Serial.print(" *** ");
+    Serial.print("imu.daccADC[PITCH]:");Serial.print(imu.daccADC[PITCH]);Serial.print(" *** ");
+    Serial.print("imu.daccADC[YAW]:");Serial.println(imu.daccADC[YAW]);
+#endif    
   }
 }
 
@@ -389,17 +405,11 @@ void ACC_getADC () {
   imu.accADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.accADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.accADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-  
-  //Convert raw value to real value based an selectivity defined at init: +/- 8g
-  imu.accADC[ROLL]  = imu.accADC[ROLL]  * 16.0 / 65536;
-  imu.accADC[PITCH] = imu.accADC[PITCH] * 16.0 / 65536;
-  imu.accADC[YAW]   = imu.accADC[YAW]   * 16.0 / 65536;
-
 #if defined(TRACE)  
-    Serial.print(">>>ACC_getADC: imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
+    Serial.print(">>>ACC_getADC(1): imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.accADC[PITCH]:");Serial.print(imu.accADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.accADC[YAW]:");Serial.println(imu.accADC[YAW]);
-#endif        
+#endif
 
   ACC_Common();
   

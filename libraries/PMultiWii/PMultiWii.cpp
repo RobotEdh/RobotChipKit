@@ -57,7 +57,22 @@ bool MultiWii_setup() {
 #if defined(TRACE)
   Serial.println("<End OK Init");
 #endif 
+
+#if defined(TRACE)
+  Serial.println(">Start Init ESC");
+  Serial.println(">15 s to connect the ESC to power");
+#endif   
   
+  writeAllMotors(MINCOMMAND);
+  delay(15*1000); /* 15 s to connect the ESC to power */
+  writeAllMotors((MINCOMMAND+ MAXCOMMAND)/2);
+  delay(5*1000);
+  writeAllMotors(MINCOMMAND);
+  
+#if defined(TRACE)
+  Serial.println("<End Init ESC");
+#endif  
+
 /* START TESTCASE 1: spin up each blade individually for 10s each and check they all turn the right way  */
 #if defined(TRACE)
   Serial.println("START TESTCASE 1");
@@ -65,10 +80,11 @@ bool MultiWii_setup() {
 
   for(int i=0; i< 4; i++)
   {
-      writeOneMotor(i, MINCOMMAND);
+      writeOneMotor(i, (MINCOMMAND+ MAXCOMMAND)/2);
       delay(10*1000);
   }
-
+  writeAllMotors(MINCOMMAND);
+  
 #if defined(TRACE)
   Serial.println("END TESTCASE 1");
 #endif     
@@ -80,8 +96,9 @@ bool MultiWii_setup() {
   Serial.println("START TESTCASE 2");
 #endif  
 
-  writeAllMotors(MINCOMMAND);
+  writeAllMotors((MINCOMMAND+ MAXCOMMAND)/2);
   delay(10*1000); 
+  writeAllMotors(MINCOMMAND);
 
 #if defined(TRACE)
   Serial.println("END TESTCASE 2");
@@ -124,12 +141,13 @@ void MultiWii_loop () {
   static uint32_t rcTime  = 0;
   
   
-  if (currentTime > rcTime ) { // 50Hz: PPM frequency of the RC, no change happen within 20ms
+  if ((currentTime > rcTime )|| (rcTime  == 0)) { // 50Hz: PPM frequency of the RC, no change happen within 20ms except first time
     rcTime = currentTime + 20000;
     
     computeRC();
   }
-
+  currentTime = micros();
+  
   //**** Read IMU ****   
   ACC_getADC();
   

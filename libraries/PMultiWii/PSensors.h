@@ -11,6 +11,7 @@ void Gyro_getADC ();
 bool Gyro_init();
 
 void i2c_getSixRawADC(uint8_t add, uint8_t reg);
+void i2c_getTemperature(uint8_t add, uint8_t reg);
 void i2c_init();
 size_t i2c_read_reg_to_buf(uint8_t devAddr, uint8_t regAddr, void *buf, size_t size);
 uint8_t i2c_writeReg(uint8_t devAddr, uint8_t regAddr, uint8_t val);
