@@ -9,3 +9,19 @@ To install:
 7. Restart MPIDE
 8. You should see the new libraries under Sketch->Import LIbrary, under Contributed.
 9. Also you should see under File->Examples the chipKIT library examples directories.
+
+
+Fix issue Math lib ATAN2:
+-------------------------
+Go into your MPIDE install directory\hardware\pic32\boards.txt
+There are groupings of settings. Each group is for a different board type. Find the board type that you're using (say uno32), and find the two lines
+
+uno_pic32.compiler.c.flags=-O2::-c::-mno-smart-io::-w::-ffunction-sections::-fdata-sections::-G1024::-g::-mdebugger::-Wcast-align
+uno_pic32.compiler.cpp.flags=-O2::-c::-mno-smart-io::-w::-fno-exceptions::-ffunction-sections::-fdata-sections::-G1024::-g::-mdebugger::-Wcast-align
+
+and add 
+::-fno-short-double
+
+to the end of each of those lines. (obviously, the beginning of the line will be different for each board type)
+
+Then close all open MPIDE windows, and start it up again.

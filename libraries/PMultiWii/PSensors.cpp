@@ -17,6 +17,7 @@
 
 uint8_t rawADC[6];
 uint8_t rawTemp[2];
+
   
 // ************************************************************************************************************
 // I2C general functions
@@ -246,8 +247,8 @@ void GYRO_Common() {
 #endif 
 
     // compute Euler angles between [-PI;+PI]
-	e_pitch  = atan2(imu.daccADC[PITCH],  sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[ROLL],  2)));
-	e_roll   = atan2(imu.daccADC[ROLL],   sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[PITCH], 2)));
+	e_pitch  = atan2(imu.daccADC[PITCH],  sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[ROLL],  2.0)));
+	e_roll   = atan2(imu.daccADC[ROLL],   sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[PITCH], 2.0)));
 
 #if defined(TRACE)  
     Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
@@ -259,7 +260,7 @@ void GYRO_Common() {
     if (previousTime > 0) {
         dt = currentTime-previousTime;
   
-        // integrate the gyros angular velocity in deg/sec to determine angles
+        // integrate the gyros angular velocity in deg/sec to determine angles in radians
         i_pitch = imu.dgyroADC[0] * PI/180.0 * (double)dt/1000.0;
         i_roll =  imu.dgyroADC[1] * PI/180.0 * (double)dt/1000.0;
 #if defined(TRACE)  
@@ -300,6 +301,11 @@ void GYRO_Common() {
         Serial.print("evz:");Serial.println(evz);
 #endif
     }
+    else
+    {
+        c_angle[0] = 0;
+        c_angle[1] = 0;
+    }    
     previousTime = currentTime;
   
   }

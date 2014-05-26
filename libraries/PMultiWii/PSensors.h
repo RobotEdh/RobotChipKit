@@ -2,6 +2,7 @@
 #define SENSORS_H_
 
 extern double c_angle[2];
+double Patan2(double x, double y);
 
 void ACC_Common();
 void ACC_getADC ();
