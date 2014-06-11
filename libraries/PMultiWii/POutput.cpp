@@ -14,7 +14,7 @@ int16_t motor[4];
 /**************************************************************************************/
 void writeMotors() { // [936;1875] => [312;625]
 
-#if defined(TRACE)
+#if defined(TRACE8)
   for (int i = 0; i < 4; i++) { 
         Serial.print(">>>writeMotors: motor[");Serial.print(i);Serial.print("]:");Serial.println(motor[i]);
   }
@@ -140,7 +140,7 @@ void RunMotors() {
     motor[2] = PIDMIX(+1,+1,+1); //REAR_L
     motor[3] = PIDMIX(+1,-1,-1); //FRONT_L
 
-#if defined(TRACE)
+#if defined(TRACE8)
     Serial.print(">>>RunMotors: rcCommand[THROTTLE]:");Serial.print(rcCommand[THROTTLE]);Serial.print(" *** ");
     Serial.print("axisPID[ROLL]:");Serial.print(axisPID[ROLL]);Serial.print(" *** ");
     Serial.print("axisPID[PITCH]:");Serial.print(axisPID[PITCH]);Serial.print(" *** ");

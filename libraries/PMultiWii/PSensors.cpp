@@ -195,12 +195,12 @@ bool initSensors() {
 void GYRO_Common() {
   static int32_t g[3];
   uint8_t axis;
-  double e_pitch, e_roll;
-  double i_pitch, i_roll;
+  double e_roll, e_pitch;
+  double i_roll, i_pitch;
   double eax, eay, eaz;
   double evx, evy, evz;
-  static double prev_c_pitch = 0.0;
   static double prev_c_roll  = 0.0;
+  static double prev_c_pitch = 0.0;
   double a = 0.98;
   uint32_t currentTime;
   static uint32_t previousTime = 0;
@@ -240,19 +240,19 @@ void GYRO_Common() {
     imu.dgyroADC[ROLL]  = imu.gyroADC[ROLL]  * 4000.0 / 65536; 
     imu.dgyroADC[PITCH] = imu.gyroADC[PITCH] * 4000.0 / 65536; 
     imu.dgyroADC[YAW]   = imu.gyroADC[YAW]   * 4000.0 / 65536; 
-#if defined(TRACE)  
+#if defined(TRACE6)  
     Serial.print(">>>GYRO_Common: imu.dgyroADC[ROLL]:");Serial.print(imu.dgyroADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.dgyroADC[PITCH]:");Serial.print(imu.dgyroADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.dgyroADC[YAW]:");Serial.println(imu.dgyroADC[YAW]);
 #endif 
 
-    // compute Euler angles between [-PI;+PI]
-	e_pitch  = atan2(imu.daccADC[PITCH],  sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[ROLL],  2.0)));
-	e_roll   = atan2(imu.daccADC[ROLL],   sqrt(pow(imu.daccADC[YAW], 2.0) + pow(imu.daccADC[PITCH], 2.0)));
+    // compute Euler angles between [-PI;+PI], re-add gravity1G
+	e_roll   = atan2(imu.daccADC[ROLL],   sqrt(pow(imu.daccADC[YAW]+1, 2.0) + pow(imu.daccADC[PITCH], 2.0)));
+	e_pitch  = atan2(imu.daccADC[PITCH],  sqrt(pow(imu.daccADC[YAW]+1, 2.0) + pow(imu.daccADC[ROLL],  2.0)));
 
-#if defined(TRACE)  
-    Serial.print(">>>GYRO_Common: e_pitch:");Serial.print(e_pitch);Serial.print(" *** ");
-    Serial.print("e_roll:");Serial.println(e_roll);
+#if defined(TRACE6)  
+    Serial.print(">>>GYRO_Common: e_roll:");Serial.print(e_roll);Serial.print(" *** ");
+    Serial.print("e_pitch:");Serial.println(e_pitch);   
 #endif   
     
     // compute delta time DT in millis for gyro integration
@@ -261,24 +261,25 @@ void GYRO_Common() {
         dt = currentTime-previousTime;
   
         // integrate the gyros angular velocity in deg/sec to determine angles in radians
-        i_pitch = imu.dgyroADC[0] * PI/180.0 * (double)dt/1000.0;
-        i_roll =  imu.dgyroADC[1] * PI/180.0 * (double)dt/1000.0;
-#if defined(TRACE)  
-        Serial.print(">>>GYRO_Common: i_pitch:");Serial.print(i_pitch);Serial.print(" *** ");
-        Serial.print("i_roll:");Serial.print(i_roll);Serial.print(" *** ");
+        i_roll =          imu.dgyroADC[0] * PI/180.0 * (double)dt/1000.0;
+        i_pitch = -1.00 * imu.dgyroADC[1] * PI/180.0 * (double)dt/1000.0;
+#if defined(TRACE6)  
+        Serial.print(">>>GYRO_Common: i_roll:");Serial.print(i_roll);Serial.print(" *** ");
+        Serial.print("i_pitch:");Serial.print(i_pitch);Serial.print(" *** ");
         Serial.print("dt:");Serial.println(dt);
+        Serial.print(">>>GYRO_Common: prev_c_roll:");Serial.print(prev_c_roll);Serial.print(" *** ");
+        Serial.print("prev_c_pitch:");Serial.println(prev_c_pitch);
 #endif   
-        // adjust angles Pitch & Roll using complementary filter between [-PI;+PI]
-	    if (prev_c_pitch == 0) prev_c_pitch = e_pitch;
-	    c_angle[0] = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
-	    prev_c_pitch = c_angle[0];
-    
-        if (prev_c_roll == 0) prev_c_roll = e_roll;
-	    c_angle[1]  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
-	    prev_c_roll = c_angle[1];
+        // adjust angles Roll & Pitch using complementary filter between [-PI;+PI]
+        c_angle[0]  = a * (prev_c_roll  + i_roll)  + (1 - a) * e_roll;
+	    prev_c_roll = c_angle[0];
+	    	    
+	    c_angle[1] = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
+	    prev_c_pitch = c_angle[1];
+
 #if defined(TRACE)  
-        Serial.print(">>>GYRO_Common: c_angle[0]:");Serial.print(c_angle[0]);Serial.print(" *** ");
-        Serial.print("c_angle[1]:");Serial.println(c_angle[1]);
+        Serial.print(">>>GYRO_Common: c_angle[0] in°:");Serial.print(c_angle[0]*180.0/PI);Serial.print(" *** ");
+        Serial.print("c_angle[1] in°:");Serial.println(c_angle[1]*180.0/PI);
 #endif  
 
 	    // Convert the acceleration to earth coordinates
@@ -286,7 +287,7 @@ void GYRO_Common() {
 	    eay = imu.daccADC[ROLL]  * cos(c_angle[1]);
 	    eaz = imu.daccADC[YAW]   * cos(c_angle[0]) * cos(c_angle[1]);
 
-#if defined(TRACE)  
+#if defined(TRACE6)  
         Serial.print(">>>GYRO_Common: eax:");Serial.print(eax);Serial.print(" *** ");
         Serial.print("eay:");Serial.print(eay);Serial.print(" *** ");
         Serial.print("eaz:");Serial.println(eaz);
@@ -295,7 +296,7 @@ void GYRO_Common() {
 	    evx += eax * G_FORCE * (double)dt/1000.0;
 	    evy += eay * G_FORCE * (double)dt/1000.0;
 	    evz += eaz * G_FORCE * (double)dt/1000.0;
-#if defined(TRACE)  
+#if defined(TRACE6)  
         Serial.print(">>>GYRO_Common: evx:");Serial.print(evx);Serial.print(" *** ");
         Serial.print("evy:");Serial.print(evy);Serial.print(" *** ");
         Serial.print("evz:");Serial.println(evz);
@@ -329,7 +330,7 @@ void Gyro_getADC () {
   imu.gyroADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.gyroADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.gyroADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-#if defined(TRACE)  
+#if defined(TRACE6)  
     Serial.print(">>>Gyro_getADC(1): imu.gyroADC[ROLL]:");Serial.print(imu.gyroADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.gyroADC[PITCH]:");Serial.print(imu.gyroADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.gyroADC[YAW]:");Serial.println(imu.gyroADC[YAW]);
@@ -376,7 +377,7 @@ void ACC_Common() {
     for (axis = 0; axis < 3; axis++) {
       imu.accADC[axis]  -= accZero[axis];
     }
-#if defined(TRACE)  
+#if defined(TRACE6)  
     Serial.print(">>>ACC_Common: imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.accADC[PITCH]:");Serial.print(imu.accADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.accADC[YAW]:");Serial.println(imu.accADC[YAW]);
@@ -386,7 +387,7 @@ void ACC_Common() {
     imu.daccADC[ROLL]  = imu.accADC[ROLL]  * 16.0 / 65536;
     imu.daccADC[PITCH] = imu.accADC[PITCH] * 16.0 / 65536;
     imu.daccADC[YAW]   = imu.accADC[YAW]   * 16.0 / 65536;
-#if defined(TRACE)  
+#if defined(TRACE6)  
     Serial.print(">>>ACC_Common: imu.daccADC[ROLL]:");Serial.print(imu.daccADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.daccADC[PITCH]:");Serial.print(imu.daccADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.daccADC[YAW]:");Serial.println(imu.daccADC[YAW]);
@@ -411,7 +412,7 @@ void ACC_getADC () {
   imu.accADC[ROLL]  = (rawADC[0] << 8) | rawADC[1];
   imu.accADC[PITCH] = (rawADC[2] << 8) | rawADC[3];
   imu.accADC[YAW]   = (rawADC[4] << 8) | rawADC[5]; 
-#if defined(TRACE)  
+#if defined(TRACE6)  
     Serial.print(">>>ACC_getADC(1): imu.accADC[ROLL]:");Serial.print(imu.accADC[ROLL]);Serial.print(" *** ");
     Serial.print("imu.accADC[PITCH]:");Serial.print(imu.accADC[PITCH]);Serial.print(" *** ");
     Serial.print("imu.accADC[YAW]:");Serial.println(imu.accADC[YAW]);

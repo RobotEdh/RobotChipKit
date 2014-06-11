@@ -158,7 +158,7 @@ void computeRC() {
   uint8_t axis;
   uint8_t chan,a;
   
-#if defined(TRACE)
+#if defined(TRACE9)
     Serial.println(">computeRC");
 #endif 
 
@@ -167,7 +167,7 @@ void computeRC() {
     
     for (chan = 0; chan < RC_CHANS; chan++) { // read data from all channels
         rcData4Values[chan][rc4ValuesIndex] = readRawRC(chan);
-#if defined(TRACE)  
+#if defined(TRACE9)  
         Serial.print("rcData4Values[");Serial.print((int)chan);Serial.print("][");
         Serial.print((int)rc4ValuesIndex);Serial.print("]:");Serial.println(rcData4Values[chan][rc4ValuesIndex]);
 #endif
@@ -183,7 +183,7 @@ void computeRC() {
         {
             rcData[chan] = rcData4Values[chan][rc4ValuesIndex];  // not 4 reads yet
         }
-#if defined(TRACE)  
+#if defined(TRACE9)  
         Serial.print("rcData[");Serial.print((int)chan);Serial.print("]:");Serial.println(rcData[chan]);
 #endif       
     } // end read data from all channels
@@ -193,7 +193,7 @@ void computeRC() {
         rcCommand[axis] = min(abs(rcData[axis]-MIDRC),500);         // interval [#1000;#2000] 
         if (rcData[axis]<MIDRC) rcCommand[axis] = -rcCommand[axis]; // translated to interval [-500; +500]
            
-#if defined(TRACE) 
+#if defined(TRACE9) 
         Serial.print("rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
 #endif         
     }  // end for ROLL & PITCH & YAW
@@ -202,7 +202,7 @@ void computeRC() {
     rcCommand[THROTTLE] = constrain(rcData[THROTTLE],MINTHROTTLE,MAXTHROTTLE);  // interval  [#1000;#2000] restricted to interval [MINTHROTTLE; MAXTHROTTLE]
                                                                 // usually MINTHROTTLE = 1150, MAXTHROTTLE = 1850
           
-#if defined(TRACE) 
+#if defined(TRACE9) 
     Serial.print("rcCommand[");Serial.print((int)THROTTLE);Serial.print("]:");Serial.println(rcCommand[THROTTLE]);
 #endif
 }

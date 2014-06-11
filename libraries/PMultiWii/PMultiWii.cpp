@@ -39,6 +39,10 @@ bool MultiWii_setup() {
   Serial.begin(9600); // initialize serial 
   
 #if defined(TRACE)
+  Serial.println("********************* INIT ***********************");
+#endif
+  
+#if defined(TRACE)
   Serial.println(">Start Init");
 #endif 
   
@@ -60,11 +64,11 @@ bool MultiWii_setup() {
 
 #if defined(TRACE)
   Serial.println(">Start Init ESC");
-  Serial.println(">15 s to connect the ESC to power");
+  Serial.println(">10 s to connect the ESC to power");
 #endif   
   
   writeAllMotors(MINCOMMAND);
-  delay(15*1000); /* 15 s to connect the ESC to power */
+  delay(10*1000); /* 10 s to connect the ESC to power */
   writeAllMotors((MINCOMMAND+ MAXCOMMAND)/2);
   delay(5*1000);
   writeAllMotors(MINCOMMAND);
@@ -81,7 +85,7 @@ bool MultiWii_setup() {
   for(int i=0; i< 4; i++)
   {
       writeOneMotor(i, (MINCOMMAND+ MAXCOMMAND)/2);
-      delay(10*1000);
+      delay(5*1000);
   }
   writeAllMotors(MINCOMMAND);
   
@@ -91,13 +95,13 @@ bool MultiWii_setup() {
 /* END TESTCASE 1 */
 
 
-/* START TESTCASE 2: Spin all the motors together for 10s judging how much lift is provided  */
+/* START TESTCASE 2: Spin all the motors together for 5s judging how much lift is provided  */
 #if defined(TRACE)
   Serial.println("START TESTCASE 2");
 #endif  
 
   writeAllMotors((MINCOMMAND+ MAXCOMMAND)/2);
-  delay(10*1000); 
+  delay(5*1000); 
   writeAllMotors(MINCOMMAND);
 
 #if defined(TRACE)
@@ -107,7 +111,7 @@ bool MultiWii_setup() {
 
 /* CALIBRATE */  
 #if defined(TRACE)
-  Serial.println("Start Calibrate");
+  Serial.println("Start Calibrate MPU");
 #endif 
 
   calibratingG=512; 
@@ -121,7 +125,32 @@ bool MultiWii_setup() {
   }
 
 #if defined(TRACE)
-  Serial.println("End Calibrate");
+  Serial.println("End Calibrate MPU");
+#endif  
+
+  for(int k=3; k< 6; k++)
+  {
+#if defined(TRACE)
+     Serial.print("START TESTCASE ");Serial.println(k);
+#endif 
+     delay(10*1000);
+     for(int j=0; j< 5; j++)
+     {  
+       computeRC();
+       delay(20); 
+     }
+     // ROLL & PITCH
+     for(int i=0;i<2;i++)
+     {
+       Serial.print("rcCommand[");Serial.print(i);Serial.print("]:");Serial.println(rcCommand[i]);
+     }
+#if defined(TRACE)
+     Serial.print("END TESTCASE ");Serial.println(k);
+#endif  
+  }
+
+
+#if defined(TRACE)  
   Serial.println("********************* FLY ***********************");
 #endif  
 
@@ -152,9 +181,9 @@ void MultiWii_loop () {
   ACC_getADC();
   
   Gyro_getADC();
-  //**** PITCH & ROLL & YAW PID ****
+  //**** ROLL & PITCH & YAW PID ****
    
-  // PITCH & ROLL
+  // ROLL & PITCH
   for(axis=0;axis<2;axis++) {
   	
     error =  rcCommand[axis] - (int16_t)(c_angle[axis]*159.0); // convert c_angle from -pi;+pi to -500;+500
@@ -162,7 +191,7 @@ void MultiWii_loop () {
     axisPID[axis] =  (Kp[axis]*error) + (Ki[axis]*sum_error[axis]) + (Kd[axis]*(error - last_error[axis]));
     last_error[axis] = error;
 
-#if defined(TRACE)  
+#if defined(TRACE5)  
     Serial.print(">MultiWii_loop: c_angle[");Serial.print((int)axis);Serial.print("]:");Serial.println(c_angle[axis]);
     Serial.print(">MultiWii_loop: rcCommand[");Serial.print((int)axis);Serial.print("]:");Serial.println(rcCommand[axis]);
     Serial.print(">MultiWii_loop: error:");Serial.println(error);
@@ -173,7 +202,7 @@ void MultiWii_loop () {
   //YAW
   axisPID[YAW] = 0;
   
-#if defined(TRACE)  
+#if defined(TRACE5)  
   Serial.print(">MultiWii_loop: axisPID[");Serial.print((int)YAW);Serial.print("]:");Serial.println(axisPID[YAW]);
 #endif
 
