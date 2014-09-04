@@ -142,7 +142,9 @@ bool MultiWii_setup() {
      // ROLL & PITCH
      for(int i=0;i<2;i++)
      {
+#if defined(TRACE)
        Serial.print("rcCommand[");Serial.print(i);Serial.print("]:");Serial.println(rcCommand[i]);
+#endif        
      }
 #if defined(TRACE)
      Serial.print("END TESTCASE ");Serial.println(k);
