@@ -15,8 +15,13 @@
 // Author: Mike McCauley (mikem@airspayce.com)
 // Copyright (C) 2008 Mike McCauley
 // $Id: VirtualWire.cpp,v 1.14 2013/10/05 21:34:35 mikem Exp mikem $
+// updated for CHIPKIT PIC based shield by EDH 2014/12/02 eric.delahoupliere@free.fr
 
-#define CHIPKIT
+//********************************************************************************
+#define CHIPKIT // IMPORTANT: comment this line if you don't use a CHIPKIT shield
+//********************************************************************************
+
+
 
 #if defined(ARDUINO)
  #include <sys/attribs.h> //used for __ISR
@@ -61,7 +66,7 @@ static volatile uint8_t vw_tx_enabled = 0;
 static uint16_t vw_tx_msg_count = 0;
 
 // The digital IO pin number of the press to talk, enables the transmitter hardware
-static uint8_t vw_ptt_pin = 10;
+static uint8_t vw_ptt_pin = 14;
 static uint8_t vw_ptt_inverted = 0;
 
 // The digital IO pin number of the receiver data
@@ -405,9 +410,9 @@ void vw_setup(uint16_t speed)
     {
         return; // fault
     }
-
+    
  // Initialization TIMER2
-  T2CON = 0x0000 ;  // 0x0070=0000000000000000 
+  T2CON = 0x0000 ;  // 0x0000=0000000000000000 
   				    // ON=0 (Timer is disable for now)
                     // FRZ=0 (Continue operation even when CPU is in Debug Exception mode)
                     // SIDL=0 (Continue operation even in Idle mode)
@@ -424,22 +429,28 @@ void vw_setup(uint16_t speed)
                                            //010 = 1:4 prescale value
                                            //001 = 1:2 prescale value
                                            //000 = 1:1 prescale value
-  TMR2 = 0;    // start TIMER2 from 0...
-  PR2 = nticks;  // ...	until nticks => TIMER2 Period = (nticks+1)* prescale value/80 000 000  seconds
+
+  PR2 = nticks;  // TIMER2 Period = (nticks+1)* prescale value/80 000 000  seconds
         
   // Configure the control register OC1CON for the output compare channel 1
-  OC1CON = 0; // clear OC1
+  OC1CON = 0x0000; // clear OC1
+  OC1CONbits.OCTSEL = 0; // Select Timer 2 as output compare time base
   OC1CONbits.OCM = 0b011; // OCM=011: Compare event toggles OCx pin
 
   // Configure the compare register OC1R and compare register secondary OC1RS for the output compare channel 1
-  OC1RS = nticks; // set buffered cycle in counts
   OC1R = nticks;  // set initial cycle in counts
-  
-  // Enable Timer 2 and OC1              
+      
+  // Configure int 
+  IFS0CLR = 0x0040; // Clear the OC1 interrupt flag 
+  IEC0SET = 0x040; // Enable OC1 interrupt 
+  IPC1SET = 0x001C0000; // Set OC1 interrupt priority to 7
+  IPC1SET = 0x00030000; // Set Subpriority to 3, maximum
+   
+  // Enable Timer 2 and OC1    
   T2CONSET =  0x8000; // Enable Timer2
   OC1CONSET = 0x8000; // Enable OC1
  
-#else // ARDUINO
+  #else // ARDUINO
     // This is the path for most Arduinos
     // figure out prescaler value and counter match value
     prescaler = _timer_calc(speed, (uint16_t)-1, &nticks);    
@@ -473,6 +484,7 @@ void vw_setup(uint16_t speed)
     pinMode(vw_rx_pin, INPUT);
     pinMode(vw_ptt_pin, OUTPUT);
     digitalWrite(vw_ptt_pin, vw_ptt_inverted);
+ 
 }
 
 #elif defined(MCU_STM32F103RE) // Maple etc
@@ -510,7 +522,6 @@ void vw_tx_start()
     vw_tx_index = 0;
     vw_tx_bit = 0;
     vw_tx_sample = 0;
-
     // Enable the transmitter hardware
     digitalWrite(vw_ptt_pin, true ^ vw_ptt_inverted);
 
@@ -522,7 +533,7 @@ void vw_tx_start()
 void vw_tx_stop()
 {
     // Disable the transmitter hardware
-    digitalWrite(vw_ptt_pin, false ^ vw_ptt_inverted);
+    //digitalWrite(vw_ptt_pin, false ^ vw_ptt_inverted);
     digitalWrite(vw_tx_pin, false);
 
     // No more ticks for the transmitter
@@ -675,10 +686,12 @@ uint8_t vw_get_rx_bad()
 // This is the interrupt service routine called when timer1 overflows
 // Its job is to output the next bit from the transmitter (every 8 calls)
 // and to call the PLL code if the receiver is enabled
-//ISR(SIG_OUTPUT_COMPARE1A)
+
 #if defined (CHIPKIT) // Chipkit specific
 void __ISR(_OUTPUT_COMPARE_1_VECTOR,ipl7) OC1_IntHandler(void) { //priority 7 
     
+    IFS0CLR = 0x0040;// Clear the OC1 interrupt flag}
+
     if (vw_rx_enabled && !vw_tx_enabled)
 	vw_rx_sample = digitalRead(vw_rx_pin) ^ vw_rx_inverted;
     
@@ -709,9 +722,9 @@ void __ISR(_OUTPUT_COMPARE_1_VECTOR,ipl7) OC1_IntHandler(void) { //priority 7
 	vw_tx_sample = 0;
     
     if (vw_rx_enabled && !vw_tx_enabled)
-	vw_pll();
-
-    IFS0CLR = 0x00000010; // Be sure to clear the Timer 2 interrupt status
+	vw_pll(); 
+    
+ 
 }
 #elif defined (ARDUINO) // Arduino specific
 
