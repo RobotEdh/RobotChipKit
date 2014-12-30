@@ -140,7 +140,7 @@ void RunMotors() {
     motor[2] = PIDMIX(+1,+1,+1); //REAR_L
     motor[3] = PIDMIX(+1,-1,-1); //FRONT_L
 
-#if defined(TRACE8)
+#if defined(TRACE)
     Serial.print(">>>RunMotors: rcCommand[THROTTLE]:");Serial.print(rcCommand[THROTTLE]);Serial.print(" *** ");
     Serial.print("axisPID[ROLL]:");Serial.print(axisPID[ROLL]);Serial.print(" *** ");
     Serial.print("axisPID[PITCH]:");Serial.print(axisPID[PITCH]);Serial.print(" *** ");

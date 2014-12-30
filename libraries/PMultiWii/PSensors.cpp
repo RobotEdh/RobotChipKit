@@ -277,7 +277,7 @@ void GYRO_Common() {
 	    c_angle[1] = a * (prev_c_pitch + i_pitch) + (1 - a) * e_pitch;
 	    prev_c_pitch = c_angle[1];
 
-#if defined(TRACE)  
+#if defined(TRACE6)  
         Serial.print(">>>GYRO_Common: c_angle[0] in°:");Serial.print(c_angle[0]*180.0/PI);Serial.print(" *** ");
         Serial.print("c_angle[1] in°:");Serial.println(c_angle[1]*180.0/PI);
 #endif  
