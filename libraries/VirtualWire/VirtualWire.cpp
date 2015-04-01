@@ -133,6 +133,8 @@ static uint8_t symbols[] =
     0x23, 0x25, 0x26, 0x29, 0x2a, 0x2c, 0x32, 0x34
 };
 
+
+
 // Cant really do this as a real C++ class, since we need to have 
 // an ISR
 extern "C"
@@ -196,6 +198,8 @@ void vw_set_ptt_inverted(uint8_t inverted)
 // Then the average is computed over each bit period to deduce the bit value
 void vw_pll()
 {
+    //Serial.println("vw_pll");
+
     // Integrate each sample
     if (vw_rx_sample)
 	vw_rx_integrator++;
@@ -228,8 +232,12 @@ void vw_pll()
 	vw_rx_pll_ramp -= VW_RX_RAMP_LEN;
 	vw_rx_integrator = 0; // Clear the integral for the next cycle
 
+    //Serial.print("vw_rx_integrator: ");Serial.println((int)vw_rx_integrator);
+
 	if (vw_rx_active)
 	{
+	    //Serial.println("vw_rx_active");
+
 	    // We have the start symbol and now we are collecting message bits,
 	    // 6 per symbol, each which has to be decoded to 4 bits
 	    if (++vw_rx_bit_count >= 12)
@@ -273,6 +281,7 @@ void vw_pll()
 	// Not in a message, see if we have a start symbol
 	else if (vw_rx_bits == 0xb38)
 	{
+	    //Serial.println("vw_rx_bits == 0xb38");
 	    // Have start symbol, start collecting message
 	    vw_rx_active = true;
 	    vw_rx_bit_count = 0;
@@ -378,6 +387,7 @@ void vw_setup(uint16_t speed)
     uint16_t nticks; // number of prescaled ticks needed
     uint8_t prescaler; // Bit values for CS0[2:0]
 
+
 #ifdef __AVR_ATtiny85__
     // figure out prescaler value and counter match value
     prescaler = _timer_calc(speed, (uint8_t)-1, &nticks);
@@ -449,6 +459,8 @@ void vw_setup(uint16_t speed)
   // Enable Timer 2 and OC1    
   T2CONSET =  0x8000; // Enable Timer2
   OC1CONSET = 0x8000; // Enable OC1
+  
+ 
  
   #else // ARDUINO
     // This is the path for most Arduinos
@@ -484,7 +496,6 @@ void vw_setup(uint16_t speed)
     pinMode(vw_rx_pin, INPUT);
     pinMode(vw_ptt_pin, OUTPUT);
     digitalWrite(vw_ptt_pin, vw_ptt_inverted);
- 
 }
 
 #elif defined(MCU_STM32F103RE) // Maple etc
@@ -538,6 +549,7 @@ void vw_tx_stop()
 
     // No more ticks for the transmitter
     vw_tx_enabled = false;
+    //Serial.println("vw_tx_stop");
 }
 
 // Enable the receiver. When a message becomes available, vw_rx_done flag
@@ -591,6 +603,86 @@ uint8_t vw_wait_rx_max(unsigned long milliseconds)
     return vw_rx_done;
 }
 
+uint8_t vw_send_float(double number, uint8_t digits, uint8_t type, uint8_t source)
+{
+unsigned char buf[8 * sizeof(long)]; // Assumes 8-bit chars.
+unsigned int i = 0; 
+unsigned int idx = 0; 
+char s_buffer[VW_MAX_PAYLOAD];	// buffer used to send data
+             	
+	
+	// sen source
+	s_buffer[idx++] = source;
+
+	// send type
+	s_buffer[idx++] = '#';
+	s_buffer[idx++] = type;
+		
+	// Handle negative numbers
+	if (number < 0.0)
+	{
+        s_buffer[idx++] = '-';
+		number = -number;
+	}
+
+	// Round correctly so that print(1.999, 2) prints as "2.00"
+	double rounding = 0.5;
+	for (uint8_t i=0; i<digits; ++i)
+		rounding /= 10.0;
+
+	number += rounding;
+
+	// Extract the integer part of the number and print it
+	unsigned long int_part = (unsigned long)number;
+	double remainder = number - (double)int_part;
+	i = 0;
+	while (int_part > 0)
+	{
+		buf[i++] = int_part % 10;
+		int_part /= 10;
+	}
+
+	for (; i > 0; i--)
+	{
+		s_buffer[idx++] = ((char) '0' + buf[i - 1]);					
+	}
+	
+	
+
+	// Print the decimal point, but only if there are digits beyond
+	if (digits > 0)
+		s_buffer[idx++] = '.';		
+
+	// Extract digits from the remainder one at a time
+	while (digits-- > 0)
+	{
+		remainder *= 10.0;
+		int toPrint = int(remainder);
+		i = 0;
+	    while (toPrint > 0)
+	    {
+	        	buf[i++] = toPrint % 10;
+		        toPrint /= 10;
+	    }
+
+	    for (; i > 0; i--)
+	    {
+		        s_buffer[idx++] = ((char) '0' + buf[i - 1]);					
+	    }		
+		remainder -= toPrint;
+	}
+	 
+	// end with >
+	s_buffer[idx++] = '>';
+ 
+	vw_send((uint8_t *)s_buffer, idx);
+
+    vw_wait_tx(); // Wait until the whole message is gone
+	
+	return true;
+}
+
+
 // Wait until transmitter is available and encode and queue the message
 // into vw_tx_buf
 // The message is raw bytes, with no packet structure imposed
@@ -601,7 +693,7 @@ uint8_t vw_send(uint8_t* buf, uint8_t len)
     uint8_t index = 0;
     uint16_t crc = 0xffff;
     uint8_t *p = vw_tx_buf + VW_HEADER_LEN; // start of the message area
-    uint8_t count = len + 3; // Added byte count and FCS to get total number of bytes
+    uint8_t count = len + 2 + 1; // Added byte count and FCS to get total number of bytes
 
     if (len > VW_MAX_PAYLOAD)
 	return false;
@@ -616,8 +708,11 @@ uint8_t vw_send(uint8_t* buf, uint8_t len)
 
     // Encode the message into 6 bit symbols. Each byte is converted into 
     // 2 6-bit symbols, high nybble first, low nybble second
+    //Serial.print(" --> s_buffer: "); 
+
     for (i = 0; i < len; i++)
     {
+    //Serial.print(buf[i],HEX);
 	crc = _crc_ccitt_update(crc, buf[i]);
 	p[index++] = symbols[buf[i] >> 4];
 	p[index++] = symbols[buf[i] & 0xf];
@@ -653,11 +748,14 @@ uint8_t vw_have_message()
 uint8_t vw_get_message(uint8_t* buf, uint8_t* len)
 {
     uint8_t rxlen;
-    
+    //Serial.println("vw_get_message");
+  
     // Message available?
     if (!vw_rx_done)
 	return false;
     
+    //Serial.println("vw_rx_done");
+ 
     // Wait until vw_rx_done is set before reading vw_rx_len
     // then remove bytecount and FCS
     rxlen = vw_rx_len - 3;
@@ -666,11 +764,36 @@ uint8_t vw_get_message(uint8_t* buf, uint8_t* len)
     if (*len > rxlen)
 	*len = rxlen;
     memcpy(buf, vw_rx_buf + 1, *len);
-    
+    //Serial.print((int)buf);
+
     vw_rx_done = false; // OK, got that message thanks
     
     // Check the FCS, return goodness
     return (vw_crc(vw_rx_buf, vw_rx_len) == 0xf0b8); // FCS OK?
+}
+
+
+uint8_t vw_get_float(uint8_t* value, uint8_t* len, uint8_t* source, uint8_t* type)
+{
+    uint8_t buf[VW_MAX_MESSAGE_LEN];
+    uint8_t buflen = VW_MAX_MESSAGE_LEN;
+
+    if (vw_get_message(buf, &buflen)) // Non-blocking
+    {
+        *source = buf[0];
+    
+        if (buf[1] != '#') return false;
+        *type = buf[2];
+        
+        uint8_t i = 0;
+        while (buf[i+3] != '>') i++;
+        if (*len > i) *len = i;       
+        memcpy(value, buf + 3, *len);
+        
+        return true;
+    }
+    else return false;
+  
 }
 
 uint8_t vw_get_rx_good()
