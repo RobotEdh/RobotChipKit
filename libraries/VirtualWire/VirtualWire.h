@@ -228,6 +228,13 @@
 /// but each byte is transmitted high nybble first
 #define VW_HEADER_LEN 8
 
+#define VW_MAX_VALUE_LEN VW_MAX_MESSAGE_LEN-3-4
+
+/// Define the type of data transmitted
+#define VW_TEMPERATURE_DATA_TYPE 250
+#define VW_LIGHT_DATA_TYPE       251
+
+
 // Cant really do this as a real C++ class, since we need to have 
 // an ISR
 extern "C"
@@ -297,10 +304,19 @@ extern "C"
     /// \return true if a message is available, false if the wait timed out.
     extern uint8_t vw_wait_rx_max(unsigned long milliseconds);
 
+    /// Send a float with the given precision. Returns almost immediately,
+    /// and message will be sent at the right timing by interrupts
+    /// \param[in] double to transmit
+    /// \param[in] rounding factor
+    /// \param[in] type of data transmitted (temperature, humidity...)
+    /// \param[in] source (1, 2...)
+    /// \return true if the message was accepted for transmission
+     extern uint8_t vw_send_float(double number, uint8_t digits, uint8_t type, uint8_t source);
+
     /// Send a message with the given length. Returns almost immediately,
     /// and message will be sent at the right timing by interrupts
     /// \param[in] buf Pointer to the data to transmit
-    /// \param[in] len Number of octetes to transmit
+    /// \param[in] len Number of octets to transmit
     /// \return true if the message was accepted for transmission, false if the message is too long (>VW_MAX_MESSAGE_LEN - 3)
     extern uint8_t vw_send(uint8_t* buf, uint8_t len);
 
@@ -314,6 +330,13 @@ extern "C"
     /// \param[in,out] len Available space in buf. Will be set to the actual number of octets read
     /// \return true if there was a message and the checksum was good
     extern uint8_t vw_get_message(uint8_t* buf, uint8_t* len);
+
+   /// If a message is available (good checksum or not), copies
+    /// up to *len octets to value.
+    /// \param[in] buf Pointer to location to save the read data (must be at least *len bytes.
+    /// \param[in,out] len Available space in buf. Will be set to the actual number of octets read
+    /// \return true if there was a message and the checksum was good and the format was correct
+     extern uint8_t vw_get_float(uint8_t* value, uint8_t* len, uint8_t* source, uint8_t* type);
 
     /// Returns the count of good messages received
     /// Caution,: this is an 8 bit count and can easily overflow
