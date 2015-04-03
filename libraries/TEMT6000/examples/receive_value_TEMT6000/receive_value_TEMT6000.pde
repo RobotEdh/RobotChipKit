@@ -20,8 +20,7 @@ void loop()
     uint8_t len = VW_MAX_VALUE_LEN;
     uint8_t source;
     uint8_t type;
-   
-    Serial.println("Loop");
+
     
     // Wait at most 200ms for a reply
     if (vw_wait_rx_max(200))
