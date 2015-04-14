@@ -611,7 +611,7 @@ unsigned int idx = 0;
 char s_buffer[VW_MAX_PAYLOAD];	// buffer used to send data
              	
 	
-	// sen source
+	// send source
 	s_buffer[idx++] = source;
 
 	// send type
