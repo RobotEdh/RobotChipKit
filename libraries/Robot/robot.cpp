@@ -43,11 +43,17 @@ int robot_begin()
   Serial.println("Start Robot Init");
    
   // initialize the lcd 
-  lcd.init();                      
-  lcd.backlight();
-  lcd.print("Start Robot Init");
-  Serial.println("Init LCD OK");
-   
+  ret = lcd.init();
+  if (ret == 0) {                      
+      lcd.backlight();
+      lcd.print("Start Robot Init");
+      Serial.println("Init LCD OK");
+  }    
+  else {
+      Serial.print("Init LCD KO, error: ");
+      Serial.println(ret);    
+  }
+ 
   pinMode(Led_Yellow, OUTPUT);     // set the pin as output
   blink(Led_Yellow);  
   pinMode(Led_Red, OUTPUT);        // set the pin as output

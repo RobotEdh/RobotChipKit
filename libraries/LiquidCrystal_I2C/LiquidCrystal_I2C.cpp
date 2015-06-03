@@ -59,15 +59,18 @@ LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t l
   _backlightval = LCD_NOBACKLIGHT;
 }
 
-void LiquidCrystal_I2C::init(){
-	init_priv();
+uint8_t LiquidCrystal_I2C::init(){
+	return init_priv();
 }
 
-void LiquidCrystal_I2C::init_priv()
+uint8_t LiquidCrystal_I2C::init_priv()
 {
+	uint8_t ret;
+	
 	Wire.begin();
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
-	begin(_cols, _rows);
+	ret = begin(_cols, _rows);
+	if (ret != 0) return (ret);
 	
 	// create custom chars
     uint8_t bell[8]     = {0x4, 0xe, 0xe, 0xe, 0x1f,0x0, 0x4};
@@ -93,7 +96,9 @@ void LiquidCrystal_I2C::init_priv()
     home();  
 }
 
-void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
+uint8_t LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
+    uint8_t ret;
+    
 	if (lines > 1) {
 		_displayfunction |= LCD_2LINE;
 	}
@@ -110,28 +115,32 @@ void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	delay(50); 
   
 	// Now we pull both RS and R/W low to begin commands
-	expanderWrite(_backlightval);	// reset expanderand turn backlight off (Bit 8 =1)
+	ret = expanderWrite(_backlightval);	// reset expanderand turn backlight off (Bit 8 =1)
+    if (ret != 0) return (ret);	
 	delay(1000);
 
   	//put the LCD into 4 bit mode
 	// this is according to the hitachi HD44780 datasheet
 	// figure 24, pg 46
 	
-	  // we start in 8bit mode, try to set 4 bit mode
-   write4bits(0x03 << 4);
-   delayMicroseconds(4500); // wait min 4.1ms
+    // we start in 8bit mode, try to set 4 bit mode
+    ret = write4bits(0x03 << 4);
+    if (ret != 0) return (ret);
+    delayMicroseconds(4500); // wait min 4.1ms
    
-   // second try
-   write4bits(0x03 << 4);
-   delayMicroseconds(4500); // wait min 4.1ms
+    // second try
+    ret = write4bits(0x03 << 4);
+    if (ret != 0) return (ret);
+    delayMicroseconds(4500); // wait min 4.1ms
    
-   // third go!
-   write4bits(0x03 << 4); 
-   delayMicroseconds(150);
+    // third go!
+    ret = write4bits(0x03 << 4); 
+    if (ret != 0) return (ret);
+    delayMicroseconds(150);
    
-   // finally, set to 4-bit interface
-   write4bits(0x02 << 4); 
-
+    // finally, set to 4-bit interface
+    ret = write4bits(0x02 << 4); 
+    if (ret != 0) return (ret);
 
 	// set # lines, font size, etc.
 	command(LCD_FUNCTIONSET | _displayfunction);  
@@ -267,30 +276,44 @@ inline void LiquidCrystal_I2C::command(uint8_t value) {
 /************ low level data pushing commands **********/
 
 // write either command or data
-void LiquidCrystal_I2C::send(uint8_t value, uint8_t mode) {
+uint8_t LiquidCrystal_I2C::send(uint8_t value, uint8_t mode) {
+    uint8_t ret;
+    
 	uint8_t highnib=value&0xf0;
 	uint8_t lownib=(value<<4)&0xf0;
-       write4bits((highnib)|mode);
-	write4bits((lownib)|mode); 
+    ret = write4bits((highnib)|mode);
+    if (ret != 0) return (ret);
+    	    
+	return write4bits((lownib)|mode); 
 }
 
-void LiquidCrystal_I2C::write4bits(uint8_t value) {
-	expanderWrite(value);
-	pulseEnable(value);
+uint8_t LiquidCrystal_I2C::write4bits(uint8_t value) {
+	uint8_t ret;
+	
+	ret = expanderWrite(value);
+	if (ret != 0) return (ret);
+	    
+	return pulseEnable(value);
 }
 
-void LiquidCrystal_I2C::expanderWrite(uint8_t _data){                                        
+uint8_t LiquidCrystal_I2C::expanderWrite(uint8_t _data){                                        
 	Wire.beginTransmission(_Addr);
 	printIIC((int)(_data) | _backlightval);
-	Wire.endTransmission();   
+	return Wire.endTransmission(); 
 }
 
-void LiquidCrystal_I2C::pulseEnable(uint8_t _data){
-	expanderWrite(_data | En);	// En high
+uint8_t LiquidCrystal_I2C::pulseEnable(uint8_t _data){
+	uint8_t ret;
+	
+	ret = expanderWrite(_data | En);	// En high
+	if (ret != 0) return (ret);
+	    
 	delayMicroseconds(1);		// enable pulse must be >450ns
 	
-	expanderWrite(_data & ~En);	// En low
+	ret = expanderWrite(_data & ~En);	// En low
 	delayMicroseconds(50);		// commands need > 37us to settle
+	
+	return ret;
 } 
 
 
