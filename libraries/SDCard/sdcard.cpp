@@ -30,7 +30,6 @@ int initSDCard(void){
 		}  	  	
   		else
   		{   
-  			Serial.println("Initialization SD-Card OK");
   			return SUCCESS;    			
         } 
     }
@@ -40,7 +39,7 @@ int initSDCard(void){
 
 int infoSDCard(void){
     	
-   	Serial.print("\nSD-Card type is ");
+   	Serial.print("SD-Card type is ");
    	switch(card.type()){
     	    case SD_CARD_TYPE_SD1:
       		    Serial.print("SD1");
@@ -126,6 +125,7 @@ int infoSDCard(void){
 			// list all files in the card with date and size			    
 		    Serial.println("\nFiles found on the card (name, date and size in bytes): ");
 			root.ls(LS_R | LS_DATE | LS_SIZE);
+			Serial.println("");
 	}				
     return SUCCESS;		
 }

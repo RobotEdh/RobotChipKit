@@ -9,12 +9,13 @@ extern IPv4 ipServer = {192,168,0,15};
 extern unsigned short portServer = 44300;
 
 // Specify the SSID
-extern const char * szSsid = "WIFICOTEAU";
+extern const char * szSsid = "WIFICOTEAU2";
 
 // WPA2 key
-//You can find a tool to pre-calculate your PSK key at http://www.wireshark.org/tools/wpa-psk.html1.
-//kitesurf9397+ WIFICOTEAU => 5d04ff38a46a0266990b98eb651959000bc52fe84ab902a25e95f2338a2d71f4
-DWIFIcK::WPA2KEY key = {0x5d,0x04,0xff,0x38,0xa4,0x6a,0x02,0x66,0x99,0x0b,0x98,0xeb,0x65,0x19,0x59,0x00,0x0b,0xc5,0x2f,0xe8,0x4a,0xb9,0x02,0xa2,0x5e,0x95,0xf2,0x33,0x8a,0x2d,0x71,0xf4};
+//You can find a tool to pre-calculate your PSK key at http://www.wireshark.org/tools/wpa-psk.html.
+//kitesurf9397+ WIFICOTEAU2 => e0c1337f19334617316c4abdeed61c47e096e2bfa87cdb3db93864950c4a2295
+DWIFIcK::WPA2KEY key = {0xe0 ,0xc1 ,0x33 ,0x7f ,0x19 ,0x33 ,0x46 ,0x17 ,0x31 ,0x6c ,0x4a ,0xbd ,0xee ,0xd6 ,0x1c ,0x47 ,0xe0 ,0x96 ,0xe2 ,0xbf ,0xa8 ,0x7c ,0xdb ,0x3d ,0xb9 ,0x38 ,0x64 ,0x95 ,0x0c ,0x4a ,0x22 ,0x95};
+
 
 // SD variables
 extern SdFile root;   // SD Root
@@ -166,7 +167,7 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
                         Serial.print(scanInfo.ssidMAC[j], HEX);
                     }
 
-                    Serial.print("Beacon Period: ");
+                    Serial.print("\nBeacon Period: ");
                     Serial.println(scanInfo.beconPeriod, DEC);    
 
                     Serial.print("dtimPeriod: ");
@@ -174,6 +175,8 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
 
                     Serial.print("atimWindow: ");
                     Serial.println(scanInfo.atimWindow, DEC); 
+                    
+                    Serial.println("");
                 }
                 else
                 {

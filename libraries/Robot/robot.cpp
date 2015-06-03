@@ -40,12 +40,14 @@ int robot_begin()
 {
   int ret = SUCCESS;
  
+  Serial.println("Start Robot Init");
+   
   // initialize the lcd 
   lcd.init();                      
   lcd.backlight();
   lcd.print("Start Robot Init");
-  
-  Serial.println("Start Robot Init"); 
+  Serial.println("Init LCD OK");
+   
   pinMode(Led_Yellow, OUTPUT);     // set the pin as output
   blink(Led_Yellow);  
   pinMode(Led_Red, OUTPUT);        // set the pin as output
@@ -62,6 +64,8 @@ int robot_begin()
   Serial.println("Init Tilt&Pan servos OK");
 
   // initialize the camera
+   Serial.println(" ");
+   Serial.println("Begin Init Camera...");
   ret=JPEGCamera.begin();
   if (ret != SUCCESS)
   {  
@@ -72,11 +76,13 @@ int robot_begin()
   {
         Serial.println("Init Camera OK");
   }      
- 
+  Serial.println(" ");
+  
   digitalWrite(Led_Red, LOW);     // turn off led red
   
   Serial.println("End Robot Init");
   Serial.println("");
+  
   lcd.setCursor(0,1); 
   lcd.print("End   Robot Init");
   

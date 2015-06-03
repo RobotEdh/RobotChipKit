@@ -32,6 +32,7 @@ int motor_begin()
   pinMode(EnableMotorLeft2Pin, OUTPUT);   // set the analogig pin as output for PWM
   
   stop();
+  lcd.print("Init motors OK");
   Serial.println("Init motors OK"); 
 
   // initialize the pin connected to the Contact sensors 
@@ -54,7 +55,7 @@ int motor_begin()
   int revision = CMPS03.CMPS03_revision();
   if (revision < 0) {
      Serial.print("Init compass K0 ->Error I2C: ");
-     Serial.print(revision);    
+     Serial.println(revision);    
   }
   else
   {  
