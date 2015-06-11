@@ -40,7 +40,7 @@ int robot_begin()
 {
   int ret = SUCCESS;
  
-  Serial.println("Start Robot Init");
+  Serial.println("Begin Robot Init");
    
   // initialize the lcd 
   ret = lcd.init();
@@ -82,16 +82,17 @@ int robot_begin()
   {
         Serial.println("Init Camera OK");
   }      
-  Serial.println(" ");
-  
+   
   digitalWrite(Led_Red, LOW);     // turn off led red
-  
-  Serial.println("End Robot Init");
-  Serial.println("");
-  
+   
   lcd.setCursor(0,1); 
   lcd.print("End   Robot Init");
-  
+ 
+  Serial.println(" ");
+  Serial.println("End Robot Init");
+  Serial.println("**************");
+  Serial.println("");
+ 
   return SUCCESS;
   
 } 

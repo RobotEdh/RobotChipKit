@@ -18,8 +18,11 @@ Servo IRServo;               // The Servo class used for IR sensor
 
 int motor_begin()
 {
+  
+  Serial.println("Begin Motor Init");
+
   lcd.clear();
-  lcd.print("Start Motor Init");
+  lcd.print("Begin Motor Init");
   
   // H bridge setup
   pinMode(InMotorRight1Pin, OUTPUT);      // set the pin as output
@@ -72,11 +75,15 @@ int motor_begin()
   attachInterrupt(EncoderTickLeftINT, IntrTickLeft, FALLING);    // set left tick interrupt
   
   interrupts(); // enable all interrupts
-  	
-  Serial.println("End Motor Init");
-  Serial.println("");
+  
   lcd.setCursor(0,1); 
   lcd.print("End   Motor Init");
+  
+  Serial.println("");
+  Serial.println("End Motor Init");
+  Serial.println("**************");
+  Serial.println("");
+
   return SUCCESS;
   
 }

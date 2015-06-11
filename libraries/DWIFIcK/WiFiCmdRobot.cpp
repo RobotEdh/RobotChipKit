@@ -43,6 +43,9 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
     int cNetworks = 0;
     int iNetwork = 0; 
     int ret=SUCCESS;
+    
+     Serial.println("Begin WiFiCmdRobot Init");
+ 
   
     // initialize the SD-Card    
     ret = initSDCard();
@@ -65,9 +68,9 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
         Serial.println(ret);
     }
     
-    Serial.println("Start WIFI Init"); 
+    Serial.println("Begin WIFI Init"); 
     lcd.clear();
-    lcd.print("Start WIFI Init");
+    lcd.print("Begin WIFI Init");
            
     // set my default wait time to nothing
     DNETcK::setDefaultBlockTime(DNETcK::msImmediate); 
@@ -301,11 +304,14 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
    
     tcpServer.startListening(portServer);
 
-    Serial.println("End WIFI Init");
-    Serial.println("");
     lcd.setCursor(0,1); 
     lcd.print("End   WIFI Init");
     
+    Serial.println("");
+    Serial.println("End WiFiCmdRobot Init");
+    Serial.println("*********************");
+    Serial.println("");
+
     return SUCCESS;                        
 }
 
