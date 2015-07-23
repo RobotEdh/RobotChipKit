@@ -27,16 +27,28 @@ const unsigned char transferFunctionLUT3V[]  =
 		 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 //256
 	};
 
-
-void GP2Y0A21YK_init(int pin)
+// Constructor
+GP2Y0A21YKClass::GP2Y0A21YKClass ()
 {
- pinMode(pin, INPUT);   // define pin as input
+}
+
+void GP2Y0A21YKClass::GP2Y0A21YK_init()
+{
+ 
+ return GP2Y0A21YK_init(GP2Y0A21YK_PIN_DEFAULT);
+}
+
+void GP2Y0A21YKClass::GP2Y0A21YK_init(int pin)
+{
+ 
+ this->_GP2Y0A21YK_Pin = pin;
+ pinMode(this->_GP2Y0A21YK_Pin, INPUT);   // define pin as input
  
  return; 
 }  
 
   
-int GP2Y0A21YK_getDistanceCentimeter(int pin)
+int GP2Y0A21YKClass::GP2Y0A21YK_getDistanceCentimeter()
 {
 // return average distance or -1 if out of range (<15 cm or > 70 cm)
 
@@ -45,10 +57,11 @@ int GP2Y0A21YK_getDistanceCentimeter(int pin)
  int nb = 0;
  int val;
 
+ if (!this->_GP2Y0A21YK_Pin) return -1;            // pin is not initialized
 
  for (int i=0;i<average;i++)
  {
-   val = (*((char *) (transferFunctionLUT3V + (int)(analogRead(pin)/4))));
+   val = (*((char *) (transferFunctionLUT3V + (int)(analogRead(this->_GP2Y0A21YK_Pin)/4))));
         
    if (val > 0) {
       sum=sum + val;
@@ -57,5 +70,5 @@ int GP2Y0A21YK_getDistanceCentimeter(int pin)
  }
 
  if (nb > 0) return((int)(sum/nb));
- else        return (-1);   
+ else        return -2;   
 }

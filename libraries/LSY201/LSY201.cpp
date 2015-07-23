@@ -396,7 +396,7 @@ int JPEGCameraClass::makePicture (int n)
   char filename[12+1];
   
   // Open the file
-  sprintf(filename, "PICT%02d.jpg", n);
+  sprintf(filename, "PICT%d.jpg", n);
   if (!FilePicture.open(&root, filename, O_CREAT|O_WRITE|O_TRUNC)) return FILE_OPEN_ERROR;  
   
   //Take a picture

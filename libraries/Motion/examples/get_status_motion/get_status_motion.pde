@@ -1,12 +1,13 @@
 #include <Motion.h>
 
+MotionClass Motion;
 
 void setup()
 {
   
   Serial.begin(9600); // initialize serial port
   
-  Motion_init(Motion_Pin); // initialize the pin connected to the sensor
+  Motion.Motion_init(); // initialize the default pin 3 connected to the sensor
  
 }
 
@@ -19,7 +20,7 @@ void loop()
   Serial.print(" --> get status of infrared motion sensor: "); 
   
   startTime = micros();
-  status = Motion_status(Motion_Pin);
+  status = Motion.Motion_status();
   stopTime = micros();
   elapsedTime = stopTime - startTime; // take 1 us
   

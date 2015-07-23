@@ -8,7 +8,8 @@
 #ifndef MOTOR_h
 #define MOTOR_h
 
-#include <wiring.h> // used for analogic read function (core lib)
+#include <WProgram.h> // used for pin definition
+#include <wiring.h>   // used for analogic read function (core lib)
 #include <PID.h>
 
 #define SUCCESS 0
@@ -23,7 +24,22 @@
 #define SDCARD_ERROR -9
 
 #define CMD_SIZE 3
-#define RESP_SIZE 8
+#define RESP_SIZE 11
+    
+const char szField[RESP_SIZE][30]={    
+"motor_state",
+"SpeedMotorRight",
+"SpeedMotorLeft",
+"TickRight",
+"TickLeft",
+"direction",
+"distance",
+"temperature",
+"brightness",
+"alert",
+"no_picture"
+};
+     
 
 #define CMD_START         0x01
 #define CMD_STOP          0x02
@@ -34,6 +50,7 @@
 #define CMD_CHECK_AROUND  0x07
 #define CMD_MOVE_TILT_PAN 0x08
 #define CMD_GO            0x09
+#define CMD_ALERT         0x10
 
 #define STATE_STOP 0x00
 #define STATE_GO   0x01
@@ -71,9 +88,8 @@
 #define EncoderTickLeftPin  21
 
 
-#define IRSERVO_Pin 36   // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
-/* Power +5V */
-/* Ground    */
+#define IRSERVO_Pin 36            // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
+#define GP2Y0A21YK_PIN A0        // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
 
 #define ContactRightPin 37   // Contact sensor Right pin connected to digital pin J9-01 (PMD0/RE0)
 #define ContactLeftPin  38   // Contact sensor Left pin connected to digital pin J8-18 (SCK1/IC3/PMCS2/PMA15/RD10)
@@ -92,7 +108,7 @@ int motor_begin();
 /*              Servo.write                                                   */                                
 /*              delay                                                         */ 
 /*              TiltPan_begin                                                 */                               
-/*              CMPS03.CMPS03_begin                                           */                           
+/*              CMPS03.CMPS03_init                                            */                           
 /*              attachInterrupt                                               */ 
 /*              interrupts                                                    */ 
 /*              stop                                                          */

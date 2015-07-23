@@ -20,7 +20,7 @@ class TMP102Class
     
   TMP102Class();
   
-  void TMP102_begin (void); 
+  void TMP102_init (void); 
  /* initialize I2C, must NOT be called if I2C is already initialized           */                                            
  /* input:       none                                                          */
  /* output:      none                                                          */                             

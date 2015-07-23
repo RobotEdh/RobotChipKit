@@ -16,7 +16,7 @@ void setup()
   Serial.begin(9600); // initialize serial port 9600 bits/secs
   vw_setup(2000);	 // initialize Virtual wire 2000 bits/secs
   
-  TMP102.TMP102_begin();  // Init I2C for the Temperature sensor
+  TMP102.TMP102_init();  // Init I2C for the Temperature sensor
 }
 
 

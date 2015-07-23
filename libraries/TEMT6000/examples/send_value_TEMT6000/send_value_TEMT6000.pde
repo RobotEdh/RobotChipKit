@@ -1,8 +1,8 @@
 #include <VirtualWire.h> // RF transmission library
-
 #include <wiring.h>
-
 #include <TEMT6000.h>
+ 
+TEMT6000Class TEMT6000;
  
 void setup()
 { 
@@ -14,7 +14,7 @@ void setup()
     vw_setup(2000);	 // Bits per sec
 
     Serial.println("Init TEMT6000");
-    TEMT6000_init(TEMT6000_Pin); // initialize the pin connected to the sensor
+    TEMT6000.TEMT6000_init(); // initialize the default pin A0 connected to the sensor
 }
 
 
@@ -25,7 +25,7 @@ void loop()
   
   Serial.println("--> read light value of TEMT6000: "); 
  
-  value = TEMT6000_getLight(TEMT6000_Pin);
+  value = TEMT6000.TEMT6000_getLight();
  
   Serial.print("Source: "); Serial.println(source);
   Serial.print("value: ");

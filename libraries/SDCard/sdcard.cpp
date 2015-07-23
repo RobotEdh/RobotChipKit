@@ -1,6 +1,10 @@
 #include <sdcard.h>
 #include <SD.h>       
-  
+
+#ifndef PICEDH_SdFat_h
+#error You need to copy the PICEDH_SD utility lib in hardware_pic32libraries_SD
+#endif
+
 Sd2Card card;       // SD Card       
 SdVolume volume;    // SD Volume
 SdFile root;        // SD Root

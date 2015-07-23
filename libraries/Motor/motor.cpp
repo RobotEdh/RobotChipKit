@@ -4,7 +4,8 @@
 #include <Servo.h>      // Servo
 #include <LiquidCrystal_I2C.h> // LCD
 
-extern LiquidCrystal_I2C lcd;
+LiquidCrystal_I2C lcd(0x20,16,2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
+
 int SpeedMotorRight = 0;      // Duty cycle PWM motor right between 0 and SPEEDMAX( 255)
 int SpeedMotorLeft = 0;       // Duty cycle PWM motor left between 0 and SPEEDMAX (255)
 
@@ -13,6 +14,7 @@ volatile int TickRight = 0;
 volatile int TickLeft = 0;
 
 CMPS03Class CMPS03;          // The Compass class
+GP2Y0A21YKClass GP2Y0A21YK;   // The IR sensor class
 Servo IRServo;               // The Servo class used for IR sensor
 
 
@@ -44,7 +46,7 @@ int motor_begin()
   Serial.println("Init Contact sensors OK");
     
   // initialize the pin connected to the IR sensor 
-  GP2Y0A21YK_init(GP2Y0A21YK_Pin); 
+  GP2Y0A21YK.GP2Y0A21YK_init(GP2Y0A21YK_PIN); 
   Serial.println("Init IR sensor OK");
 
   // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
@@ -393,7 +395,7 @@ int go(unsigned long timeout, int pid_ind)
             
        if (millis() - current > 1*1000) { // check every 1 second
              current = millis();
-             distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance minimum
+             distance = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter(); // Check distance minimum
 
              if ((distance > 0) && (distance < DISTANCE_MIN))
              {
@@ -431,12 +433,12 @@ int check_around()
        
     IRServo.write(0);    // turn servo left
     delay(15*90);        // waits the servo to reach the position 
-    distance_left = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance on right side
+    distance_left = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter(); // Check distance on right side
     if ((distance_left > 0) && (distance_left < DISTANCE_MIN)) distance_left = 0;  // Robot need a min distance to turn
        
     IRServo.write(180);  // turn servo right
     delay(15*180);       // waits the servo to reach the position 
-    distance_right = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin); // Check distance on left side
+    distance_right = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter(); // Check distance on left side
     if ((distance_right > 0) && (distance_right < DISTANCE_MIN)) distance_right = 0;  // Robot need a min distance to turn
   
     IRServo.write(90);   // reset servo position

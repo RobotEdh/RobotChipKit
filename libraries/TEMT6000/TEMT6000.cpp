@@ -6,18 +6,28 @@
 
 #include <TEMT6000.h>
 
-
-void TEMT6000_init(int pin)
+// Constructor
+TEMT6000Class::TEMT6000Class ()
 {
- pinMode(pin, INPUT);   // define pin as input
+}
  
- return; 
+void TEMT6000Class::TEMT6000_init ()
+{
+
+ TEMT6000_init(TEMT6000_PIN_DEFAULT); 
+}
+ 
+void TEMT6000Class::TEMT6000_init (int pin)
+{
+
+ this->_TEMT6000_Pin = pin;
+ pinMode(this->_TEMT6000_Pin, INPUT);   // define pin as input
+ 
+ return;
 }
   
-int TEMT6000_getLight(int pin)
+int TEMT6000Class::TEMT6000_getLight()
 {
-
- return (analogRead(pin));       // read analog input pin 
-
-
+ if (!this->_TEMT6000_Pin) return -1;            // pin is not initialized
+ return (analogRead(this->_TEMT6000_Pin));       // read analog input pin 
 }

@@ -256,6 +256,7 @@ public:
 
     static unsigned long setDefaultBlockTime(unsigned long msDefaultBlockTime); 
     static bool isStatusAnError(STATUS status);
+    static char* getError(STATUS status);
 
     friend class TcpClient;
     friend class UdpClient;

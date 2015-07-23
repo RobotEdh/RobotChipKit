@@ -3,12 +3,14 @@
 #include <GP2Y0A21YK.h>
 
 
+GP2Y0A21YKClass GP2Y0A21YK;
+
 void setup()
 {
   
   Serial.begin(9600); // initialize serial port
   
-  GP2Y0A21YK_init(GP2Y0A21YK_Pin); // initialize the pin connected to the sensor
+  GP2Y0A21YK.GP2Y0A21YK_init(); // initialize the default pin A0 connected to the sensor
  
 }
 
@@ -21,7 +23,7 @@ void loop()
   Serial.print(" --> read distance from GP2Y0A21K"); 
   
   startTime = micros();
-  distance = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
+  distance = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
   stopTime = micros();
   elapsedTime = stopTime - startTime; // take 26 us
   

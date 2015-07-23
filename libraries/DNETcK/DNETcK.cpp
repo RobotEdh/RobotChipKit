@@ -767,4 +767,83 @@ bool DNETcK::isStatusAnError(DNETcK::STATUS status)
     }
 }
 
-
+char* DNETcK::getError(DNETcK::STATUS status)
+{
+    switch(status)
+    {
+    case None                            : return("None                            ");
+    case Success                         : return("Success                         ");
+    case UDPCacheToSmall                 : return("UDPCacheToSmall                 ");
+                                         
+     // Initialization status            
+    case NetworkNotInitialized           : return("NetworkNotInitialized           ");
+    case NetworkInitialized              : return("NetworkInitialized              ");
+    case DHCPNotBound                    : return("DHCPNotBound                    ");
+                                         
+     // Epoch status                     
+    case TimeSincePowerUp                : return("TimeSincePowerUp                ");
+    case TimeSinceEpoch                  : return("TimeSinceEpoch                  ");
+                                         
+     // DNS status                       
+    case DNSIsBusy                       : return("DNSIsBusy                       ");
+    case DNSResolving                    : return("DNSResolving                    ");
+    case DNSLookupSuccess                : return("DNSLookupSuccess                ");
+    case DNSUninitialized                : return("DNSUninitialized                ");
+    case DNSResolutionFailed             : return("DNSResolutionFailed             ");
+    case DNSHostNameIsNULL               : return("DNSHostNameIsNULL               ");
+    case DNSRecursiveExit                : return("DNSRecursiveExit                ");
+                                         
+     // TCP connect state machine sta    
+    case NotConnected                    : return("NotConnected                    ");
+    case WaitingConnect                  : return("WaitingConnect                  ");
+    case WaitingReConnect                : return("WaitingReConnect                ");
+    case Connected                       : return("Connected                       ");
+                                         
+     // other connection status          
+    case LostConnect                     : return("LostConnect                     ");
+    case ConnectionAlreadyDefined        : return("ConnectionAlreadyDefined        ");
+    case SocketError                     : return("SocketError                     ");
+    case WaitingMACLinkage               : return("WaitingMACLinkage               ");
+    case LostMACLinkage                  : return("LostMACLinkage                  ");
+                                         
+     // write status                     
+    case WriteTimeout                    : return("WriteTimeout                    ");
+                                         
+     // read status                      
+    case NoDataToRead                    : return("NoDataToRead                    ");
+                                         
+     // Listening status                 
+    case NeedToCallStartListening        : return("NeedToCallStartListening        ");
+    case NeedToResumeListening           : return("NeedToResumeListening           ");
+    case AlreadyStarted                  : return("AlreadyStarted                  ");
+    case AlreadyListening                : return("AlreadyListening                ");
+    case Listening                       : return("Listening                       ");
+    case ExceededMaxPendingAllowed       : return("ExceededMaxPendingAllowed       ");
+    case MoreCurrentlyPendingThanAllowed : return("MoreCurrentlyPendingThanAllowed ");
+    case ClientPointerIsNULL             : return("ClientPointerIsNULL             ");
+    case SocketAlreadyAssignedToClient   : return("SocketAlreadyAssignedToClient   ");
+    case NoPendingClients                : return("NoPendingClients                ");
+    case IndexOutOfBounds                : return("IndexOutOfBounds                ");
+                                         
+     // UDP endpoint resolve state ma    
+    case EndPointNotSet                  : return("EndPointNotSet                  ");
+                                         
+     // DNSResolving                     
+    case ARPResolving                    : return("ARPResolving                    ");
+    case AcquiringSocket                 : return("AcquiringSocket                 ");
+    case Finalizing                      : return("Finalizing                      ");
+    case EndPointResolved                : return("EndPointResolved                ");
+                                         
+     // DNSResolutionFailed              
+    case ARPResolutionFailed             : return("ARPResolutionFailed             ");
+     // SocketError                      
+                                         
+     // WiFi Stuff below here            
+    case WFStillScanning                 : return("WFStillScanning                 ");
+    case WFUnableToGetConnectionID       : return("WFUnableToGetConnectionID       ");
+    case WFInvalideConnectionID          : return("WFInvalideConnectionID          ");
+    case WFAssertHit                     : return("WFAssertHit                     ");
+    
+    default                              : return("unknown error                   ");            
+    }
+}

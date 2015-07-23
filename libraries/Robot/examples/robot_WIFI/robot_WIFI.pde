@@ -15,7 +15,8 @@
 #include <TiltPan.h>           // Tilt&Pan
 #include <LSY201.h>            // Camera
 #include <LiquidCrystal_I2C.h> // LCD
-
+#include <Motion.h>            // Motion
+#include <TEMT6000.h>          // Lux
  
 
 WiFiCmdRobot Server;    

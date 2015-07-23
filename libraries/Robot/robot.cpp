@@ -3,15 +3,22 @@
 #include <GP2Y0A21YK.h>        // IR sensor
 #include <CMPS03.h>            // Compas
 #include <TMP102.h>            // Temperature
+#include <TEMT6000.h>          // Brightness
 #include <Servo.h>             // Servo
 #include <TiltPan.h>           // Tilt&Pan
 #include <LSY201.h>            // Camera
 #include <LiquidCrystal_I2C.h> // LCD
 
-
+int HPos = 90;
+int VPos = 90;
 int motor_state = STATE_STOP;
+int alert_status = 0;
 
-LiquidCrystal_I2C lcd(0x20,16,2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
+extern GP2Y0A21YKClass GP2Y0A21YK;  // The IR sensor class
+extern LiquidCrystal_I2C lcd;       // The LCD class
+       TMP102Class TMP102;          // The Temperature class  
+       TEMT6000Class TEMT6000;      // The Brightness class  
+
 
 JPEGCameraClass JPEGCamera;  // The Camera class  
 int no_picture = 0;          // Picture number
@@ -28,6 +35,7 @@ void blink(int led)
 
 void buzz(int buzzNb)
 {  
+  return;
   for (int i=0;i<buzzNb;i++){
       digitalWrite(buzzPin, HIGH);
       delay(1);
@@ -70,8 +78,8 @@ int robot_begin()
   Serial.println("Init Tilt&Pan servos OK");
 
   // initialize the camera
-   Serial.println(" ");
-   Serial.println("Begin Init Camera...");
+  Serial.println(" ");
+  Serial.println("Begin Init Camera...");
   ret=JPEGCamera.begin();
   if (ret != SUCCESS)
   {  
@@ -81,7 +89,12 @@ int robot_begin()
   else
   {
         Serial.println("Init Camera OK");
-  }      
+  }    
+  
+  // initialize the brightness sensor   
+  TEMT6000.TEMT6000_init(TEMT6000_Pin); // initialize the pin connected to the sensor
+  Serial.println("Init Brightness sensor OK");
+     
    
   digitalWrite(Led_Red, LOW);     // turn off led red
    
@@ -100,8 +113,7 @@ int robot_begin()
 
 int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
 {    
- CMPS03Class CMPS03;   // The Compass class
- TMP102Class TMP102;   // The Temperature class  
+ CMPS03Class CMPS03;     // The Compass class
  int resp_len = 0;
  unsigned long timeout = 0;
  unsigned long start = 0;
@@ -169,8 +181,10 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      lcd.print((int)cmd[1]);
      lcd.print(" Y: ");
      lcd.print((int)cmd[2]);
-          
-     TiltPan_move(cmd[1], cmd[2]);
+     
+     HPos = (int)cmd[1];
+     VPos = (int)cmd[2];     
+     TiltPan_move(HPos, VPos);
      break; 
                     
  case CMD_TURN_RIGHT:
@@ -247,11 +261,17 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      // byte 5: direction
      resp[5] = CMPS03.CMPS03_read();
      // byte 6: distance
-     resp[6] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
+     resp[6] = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
-     resp_len = 7+1;
-    
+     // byte 8: brightness
+     resp[8] = TEMT6000.TEMT6000_getLight();
+     // byte 9: alert status
+     resp[9] = alert_status;
+     // byte 10: picture number
+     resp[10] = no_picture;
+     resp_len = 10+1;
+     
      if (resp[0] == STATE_GO) {
          lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);
      }    
@@ -266,6 +286,130 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
     
      break; 
 
+ case CMD_ALERT:    
+     Serial.println("CMD_ALERT");
+     alert_status = cmd[1];
+
+     lcd.setCursor(0,1);   
+     lcd.print("Alert"); 
+        
+     if (motor_state == STATE_GO) {
+        Serial.println("Stop"); 
+        stop();
+        motor_state = STATE_STOP;
+     }
+   
+     // Make 3 pictures
+     if ((HPos != 90) || (VPos !=90))
+     { 
+        HPos = 90;
+        VPos = 90;
+        TiltPan_move(HPos, VPos);
+     }
+     
+     Serial.print("makePicture, no_picture: ");
+     no_picture++;
+     Serial.println(no_picture);
+     lcd.print("PICTURE ");
+     
+     ret = JPEGCamera.makePicture (no_picture);
+     if (ret == SUCCESS)
+     { 
+        lcd.setCursor(0,1);
+        lcd.print("picture: "); lcd.print(no_picture);
+     }
+     else
+     {
+        Serial.print("makePicture error: "); Serial.println(ret);
+        lcd.setCursor(0,1); 
+        lcd.print("error: "); lcd.print(ret);       
+        error = 1;
+     }
+             
+     if (ret == SUCCESS)
+     { 
+        HPos = 0;
+        VPos = 90;
+        TiltPan_move(HPos, VPos);
+
+        Serial.print("makePicture, no_picture: ");
+        no_picture++;
+        Serial.println(no_picture);
+        lcd.print("PICTURE ");
+        
+        ret = JPEGCamera.makePicture (no_picture);
+
+        lcd.setCursor(0,1);
+        lcd.print("picture: "); lcd.print(no_picture);
+     }
+     else
+     {
+        Serial.print("makePicture error: "); Serial.println(ret);
+        lcd.setCursor(0,1); 
+        lcd.print("error: "); lcd.print(ret);       
+        error = 1;
+     }
+      
+     if (ret == SUCCESS)
+     { 
+        HPos = 180;
+        VPos = 90;
+        TiltPan_move(HPos, VPos);
+     
+        Serial.print("makePicture, no_picture: ");
+        no_picture++;
+        Serial.println(no_picture);
+        lcd.print("PICTURE ");
+        
+        ret = JPEGCamera.makePicture (no_picture);
+
+        lcd.setCursor(0,1);
+        lcd.print("picture: "); lcd.print(no_picture);
+     }
+     else
+     {
+        Serial.print("makePicture error: "); Serial.println(ret);
+        lcd.setCursor(0,1); 
+        lcd.print("error: "); lcd.print(ret);       
+        error = 1;
+     }
+     
+     
+     HPos = 90;
+     VPos = 90;
+     TiltPan_move(HPos, VPos);
+              
+     // byte 0: motor_state
+     resp[0] = motor_state;
+     // byte 1: SpeedMotorRight
+     resp[1] = get_SpeedMotorRight();
+     // byte 2: SpeedMotorLeft
+     resp[2] = get_SpeedMotorLeft();
+     // byte 3: TickRight
+     resp[3] = get_TickRight();
+     // byte 4: TickLeft
+     resp[4] = get_TickLeft();
+     // byte 5: direction
+     resp[5] = CMPS03.CMPS03_read();
+     // byte 6: distance
+     resp[6] = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
+     // byte 7: temperature
+     resp[7] = TMP102.TMP102_read();
+     // byte 8: brightness
+     resp[8] = TEMT6000.TEMT6000_getLight();
+     // byte 9: alert status
+     resp[9] = alert_status;
+     // byte 10: picture number
+     resp[10] = no_picture;
+     resp_len = 10+1;
+     
+     alert_status = 0; // reset alert
+        
+     buzz(5);
+     blink(Led_Red);     
+    
+     break; 
+     
  case CMD_PICTURE: 
      Serial.print("CMD_PICTURE, no_picture: ");
      no_picture++;
@@ -461,11 +605,17 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      // byte 5: direction
      resp[5] = CMPS03.CMPS03_read();
      // byte 6: distance
-     resp[6] = GP2Y0A21YK_getDistanceCentimeter(GP2Y0A21YK_Pin);
+     resp[6] = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
-     resp_len = 7+1;
-     
+     // byte 8: brightness
+     resp[8] = TEMT6000.TEMT6000_getLight();
+     // byte 9: alert status
+     resp[9] = alert_status;
+     // byte 10: picture number
+     resp[10] = no_picture;
+     resp_len = 10+1;
+         
      if (error == 0) {
          if (resp[0] == STATE_GO) {
              lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);

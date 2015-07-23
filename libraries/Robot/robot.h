@@ -1,6 +1,7 @@
 #ifndef ROBOT_h
 #define ROBOT_h
 
+#include <WProgram.h> // used for pin definition
 #include <inttypes.h> // used for uint8_t type
 #include <motor.h>
 
@@ -8,6 +9,7 @@
 #define Led_Red    17   // Led Red connected to digital pin J4-05(SDA3A/SDI3A/U3ARX/PMA9/CN17/RF4)
 
 #define buzzPin    39   // Buzzerconnected to digital pin J8-15(PMRD/CN14/RD5)
+#define TEMT6000_Pin A1 // Brightness Sensor TEMT6000 analogic pin J5-02 A1 (PGEC1/AN1/CN3/RB1)   Use ADC module channel 2
 
 void blink(int led);
 /* Description: blink a led                                                   */                                            

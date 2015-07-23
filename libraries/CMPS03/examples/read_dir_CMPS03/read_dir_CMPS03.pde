@@ -19,7 +19,7 @@ void setup()
   
   Serial.begin(9600); // initialize serial port
   
-  revision = CMPS03.CMPS03_begin();
+  revision = CMPS03.CMPS03_init();
   
   if (revision < 0) {
      Serial.print("Error I2c: ");

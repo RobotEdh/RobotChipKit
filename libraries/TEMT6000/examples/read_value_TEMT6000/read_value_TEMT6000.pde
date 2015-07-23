@@ -2,13 +2,14 @@
 
 #include <TEMT6000.h>
 
+TEMT6000Class TEMT6000;
 
 void setup()
 {
   
   Serial.begin(9600); // initialize serial port
   
-  TEMT6000_init(TEMT6000_Pin); // initialize the pin connected to the sensor
+  TEMT6000.TEMT6000_init(); // initialize the default pin A0 connected to the sensor
  
 }
 
@@ -21,7 +22,7 @@ void loop()
   Serial.print(" --> read light value of TEMT6000: "); 
   
   startTime = micros();
-  value = TEMT6000_getLight(TEMT6000_Pin);
+  value = TEMT6000.TEMT6000_getLight();
   stopTime = micros();
   elapsedTime = stopTime - startTime; // take 5 us
   

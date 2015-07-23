@@ -11,27 +11,37 @@
 #include <wiring.h> // used for digital read function (core lib)
 
 
-#define Motion_Pin 7   // Ambient Light Sensor TEMT6000 digital pin 7
-/* Digital interface is provided on pin   7 */
+#define MOTION_PIN_DEFAULT 3   // Default Infrared motion sensor digital pin 3
+/* Digital interface is provided on pin   3 */
 /* Power +5V is set on pin VCC              */
 /* Ground    is set on pin GND              */
 
+class MotionClass
+{  
+  public:
+    
+  MotionClass();
 
-void Motion_init(int pin);
-/* Description: Initialize the Infrared motion sensor                         */                                            
-/* input:       pin                                                           */ 
-/*                  = pin connected to the Infrared motion sensor             */                       
-/* output:      none                                                          */
-/* lib:         none                                                          */
+  void Motion_init();
+  void Motion_init(int pin);
+  /* Description: Initialize the Infrared motion sensor                         */                                            
+  /* input:       pin                                                           */ 
+  /*                  = pin connected to the Infrared motion sensor             */                       
+  /* output:      none                                                          */
+  /* lib:         none                                                          */
 
-int Motion_status(int pin);
-/* Description: Get light using Infrared motion sensor                        */
-/*              connected to 5V                                               */
-/* input:       pin                                                           */ 
-/*                  = pin connected to the Infrared motion sensor             */    
-/* output:      return                                                        */                            
-/*                 0 = no motion                                              */
-/*                 1 = motion                                                 */
-/* lib:         digitalRead                                                   */
+  int Motion_status();
+  /* Description: Get light using Infrared motion sensor                        */
+  /*              connected to 5V                                               */  
+  /* output:      return                                                        */                            
+  /*                 0 = no motion                                              */
+  /*                 1 = motion                                                 */
+  /*                -1 = pin not initialized                                    */
+  /* lib:         digitalRead                                                   */
+
+ private:
+ int _Motion_Pin;
+ 
+};
 
 #endif

@@ -2,9 +2,9 @@
 #include <Wire.h>       // I2C protocol for Compass
 
 #include <motor.h>
-#include <GP2Y0A21YK.h> // IR sensor
-#include <CMPS03.h>     // Compass
-
+#include <GP2Y0A21YK.h>        // IR sensor
+#include <CMPS03.h>            // Compass
+#include <LiquidCrystal_I2C.h> // LCD
 
 void printTicks()
 {
