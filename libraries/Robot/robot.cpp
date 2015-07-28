@@ -8,6 +8,8 @@
 #include <TiltPan.h>           // Tilt&Pan
 #include <LSY201.h>            // Camera
 #include <LiquidCrystal_I2C.h> // LCD
+#include <Micro.h>             // Micro
+#include <MPU6050.h>           // MPU6050
 
 int HPos = 90;
 int VPos = 90;
@@ -17,8 +19,9 @@ int alert_status = 0;
 extern GP2Y0A21YKClass GP2Y0A21YK;  // The IR sensor class
 extern LiquidCrystal_I2C lcd;       // The LCD class
        TMP102Class TMP102;          // The Temperature class  
-       TEMT6000Class TEMT6000;      // The Brightness class  
-
+       TEMT6000Class TEMT6000;      // The Brightness class
+       MicroClass Micro;            // The Micro class  
+       MPU6050 MPU6050;             // The accel+gyro class
 
 JPEGCameraClass JPEGCamera;  // The Camera class  
 int no_picture = 0;          // Picture number
@@ -95,7 +98,15 @@ int robot_begin()
   TEMT6000.TEMT6000_init(TEMT6000_Pin); // initialize the pin connected to the sensor
   Serial.println("Init Brightness sensor OK");
      
-   
+  // initialize the electret micro   
+  Micro.Micro_init(MICRO_Pin); // initialize the pin connected to the micro
+  Serial.println("Init Micro OK");
+ 
+  // initializa the MPU6050
+  MPU6050.initialize();
+  if(MPU6050.testConnection()) Serial.println("MPU6050 connection failed");
+
+ 
   digitalWrite(Led_Red, LOW);     // turn off led red
    
   lcd.setCursor(0,1); 
@@ -268,9 +279,13 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      resp[8] = TEMT6000.TEMT6000_getLight();
      // byte 9: alert status
      resp[9] = alert_status;
-     // byte 10: picture number
-     resp[10] = no_picture;
-     resp_len = 10+1;
+     // byte 10: noise
+     resp[10] = Micro.Micro_getNoise();
+     // byte 11: acc_z
+     resp[11] = MPU6050.getAccelerationZ();          
+     // byte 12: picture number
+     resp[12] = no_picture;
+     resp_len = 12+1;
      
      if (resp[0] == STATE_GO) {
          lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);
@@ -399,10 +414,13 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      resp[8] = TEMT6000.TEMT6000_getLight();
      // byte 9: alert status
      resp[9] = alert_status;
-     // byte 10: picture number
-     resp[10] = no_picture;
-     resp_len = 10+1;
-     
+     // byte 10: noise
+     resp[10] = Micro.Micro_getNoise();
+     // byte 11: acc_z
+     resp[11] = MPU6050.getAccelerationZ();          
+     // byte 12: picture number
+     resp[12] = no_picture;
+     resp_len = 12+1;     
      alert_status = 0; // reset alert
         
      buzz(5);
@@ -612,10 +630,14 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      resp[8] = TEMT6000.TEMT6000_getLight();
      // byte 9: alert status
      resp[9] = alert_status;
-     // byte 10: picture number
-     resp[10] = no_picture;
-     resp_len = 10+1;
-         
+     // byte 10: noise
+     resp[10] = Micro.Micro_getNoise();
+     // byte 11: acc_z
+     resp[11] = MPU6050.getAccelerationZ();          
+     // byte 12: picture number
+     resp[12] = no_picture;
+     resp_len = 12+1;
+              
      if (error == 0) {
          if (resp[0] == STATE_GO) {
              lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);

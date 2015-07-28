@@ -46,6 +46,9 @@ uint32_t t_infos = 0;
 
 MotionClass Motion;   // The Motion class
 
+int noise = 0;
+int acc_z = 0;
+
 int temperature = 0;
 int previous_temperature = 0;
 int tab_temperature[NB_TEMPERATURE] = {0};
@@ -604,6 +607,8 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
     if (resp_len > 8) {
          temperature = resp[7];
          lux         = resp[8];
+         noise       = resp[9];
+         acc_z       = resp[10];
     }     
     
     digitalWrite(Led_Yellow, LOW);               // turn off led yellow
@@ -1068,6 +1073,12 @@ int WiFiCmdRobot::Check_Alert ()
   Serial.print("Motion: "); Serial.println(motion_status);
   if(motion_status == 1) return ALERT_MOTION;
  
+  // Check noise
+  if (noise > THR_NOISE) return ALERT_NOISE;
+
+  // Check noise
+  if (acc_z > THR_ACC_Z) return ALERT_ACC_Z;
+    
   // Check Temperature Variation
   if (temperature != previous_temperature) {
       previous_temperature = temperature;  

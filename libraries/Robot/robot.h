@@ -8,8 +8,9 @@
 #define Led_Yellow 16   // Led Yellow connected to digital pin J4-06(SCL3A/SDO3A/U3ATX/PMA8/CN18/RF5)
 #define Led_Red    17   // Led Red connected to digital pin J4-05(SDA3A/SDI3A/U3ARX/PMA9/CN17/RF4)
 
-#define buzzPin    39   // Buzzerconnected to digital pin J8-15(PMRD/CN14/RD5)
-#define TEMT6000_Pin A1 // Brightness Sensor TEMT6000 analogic pin J5-02 A1 (PGEC1/AN1/CN3/RB1)   Use ADC module channel 2
+#define buzzPin      39   // Buzzerconnected to digital pin J8-15(PMRD/CN14/RD5)
+#define TEMT6000_Pin A1   // Brightness Sensor TEMT6000 analogic pin J5-02 A1 (PGEC1/AN1/CN3/RB1)   Use ADC module channel 2
+#define MICRO_Pin    A2   // Electret micro             analogic pin J5-03 A1 (AN2/C2IN-/CN4/RB2)   Use ADC module channel 2
 
 void blink(int led);
 /* Description: blink a led                                                   */                                            

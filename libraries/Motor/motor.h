@@ -24,7 +24,7 @@
 #define SDCARD_ERROR -9
 
 #define CMD_SIZE 3
-#define RESP_SIZE 11
+#define RESP_SIZE 13
     
 const char szField[RESP_SIZE][30]={    
 "motor_state",
@@ -37,6 +37,8 @@ const char szField[RESP_SIZE][30]={
 "temperature",
 "brightness",
 "alert",
+"noise",
+"acc_z",
 "no_picture"
 };
      
@@ -60,26 +62,26 @@ const char szField[RESP_SIZE][30]={
 #define SPEEDTURN     80     // speed at turn 
 #define SPEEDBACK     50     // speed at turn back
 
-#define DIRECTION_LEFT 1
+#define DIRECTION_LEFT  1
 #define DIRECTION_RIGHT 2
 
-#define BOTH_MOTOR 0
-#define LEFT_MOTOR 1
+#define BOTH_MOTOR  0
+#define LEFT_MOTOR  1
 #define RIGHT_MOTOR 2
 
 #define DISTANCE_MIN 50 // 50 cm before stopping, must be > 20cm which is lower range of IR sensor and
                         // must be > 30cm which is the distance run by the motor in 1 second between 2 checks
 
-#define InMotorRight1Pin  30      // In pin of Motor controller #1 for motor right #1 connected to digital pin J9-08(PMD7/RE7)
+#define InMotorRight1Pin    30    // In pin of Motor controller #1 for motor right #1 connected to digital pin J9-08(PMD7/RE7)
 #define EnableMotorRight1Pin 3    // Enable pin of Motor controller #1 for motor right #1 connected to PWM pin J14-07(SDO1/OC1/INT0/RD0)   Use TIMER_OC1
     
-#define InMotorRight2Pin  31      // In pin of Motor controller #1 for motor right #2 connected to digital pin J9-07(PMD6/RE6)
+#define InMotorRight2Pin    31    // In pin of Motor controller #1 for motor right #2 connected to digital pin J9-07(PMD6/RE6)
 #define EnableMotorRight2Pin 5    // Enable pin of Motor controller #1 for motor right #2 connected to PWM pin J14-11(OC2/RD1)   Use TIMER_OC2
     
-#define InMotorLeft1Pin  32       // In pin of Motor controller #2 for motor left #1 connected to digital pin J9-06(PMD5/RE5)
+#define InMotorLeft1Pin    32     // In pin of Motor controller #2 for motor left #1 connected to digital pin J9-06(PMD5/RE5)
 #define EnableMotorLeft1Pin 6     // Enable pin of Motor controller #2 for motor left #1 connected to PWM pin J14-13(OC3/RD2)    Use TIMER_OC3
     
-#define InMotorLeft2Pin  33       // In pin of Motor controller #2 for motor left #2 connected to digital pin J9-05(PMD4/RE4)
+#define InMotorLeft2Pin    33     // In pin of Motor controller #2 for motor left #2 connected to digital pin J9-05(PMD4/RE4)
 #define EnableMotorLeft2Pin 9     // Enable pin of Motor controller #2 for motor left #2 connected to PWM pin J3-03(OC4/RD3)    Use TIMER_OC4
     
 #define EncoderTickRightINT  4   // INT used by the encoder for motor right connected to interrupt pin INT4 J4-02(AETXEN/SDA1/INT4/RA15)  Use INT4
@@ -88,7 +90,7 @@ const char szField[RESP_SIZE][30]={
 #define EncoderTickLeftPin  21
 
 
-#define IRSERVO_Pin 36            // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
+#define IRSERVO_Pin    36        // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
 #define GP2Y0A21YK_PIN A0        // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
 
 #define ContactRightPin 37   // Contact sensor Right pin connected to digital pin J9-01 (PMD0/RE0)

@@ -7,8 +7,8 @@
 #include <sdcard.h>
 #include <SD.h> 
 
-#define SUCCESS 0
-#define FILE_OPEN_ERROR -1000
+#define SUCCESS              0
+#define FILE_OPEN_ERROR  -1000
 #define FILE_CLOSE_ERROR -1001
 
 
@@ -16,11 +16,15 @@
 #define ALERT_MOTION      1
 #define ALERT_LUX         2
 #define ALERT_TEMPERATURE 3
+#define ALERT_NOISE       4
+#define ALERT_ACC_Z       5
 
 #define NB_LUX 6
 #define VAR_LUX 100
 #define NB_TEMPERATURE 6
 #define VAR_TEMPERATURE 2
+#define THR_NOISE 520
+#define THR_ACC_Z 2
 
 #define PAYLOAD_SIZE 80
 

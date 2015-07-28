@@ -17,6 +17,8 @@
 #include <LiquidCrystal_I2C.h> // LCD
 #include <Motion.h>            // Motion
 #include <TEMT6000.h>          // Lux
+#include <Micro.h>             // Micro
+#include <MPU6050.h>           // MPU6050
  
 
 WiFiCmdRobot Server;    
