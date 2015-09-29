@@ -103,8 +103,17 @@ int robot_begin()
   Serial.println("Init Micro OK");
  
   // initializa the MPU6050
-  MPU6050.initialize();
-  if(MPU6050.testConnection()) Serial.println("MPU6050 connection failed");
+  ret=MPU6050.initialize();
+  if (ret != SUCCESS)
+  {  
+        Serial.print("Error Init MPU6050, error: ");
+        Serial.println(ret);
+  }        
+  else
+  {
+        Serial.println("Init MPU6050 OK");
+  }
+  Serial.println(MPU6050.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
  
   digitalWrite(Led_Red, LOW);     // turn off led red

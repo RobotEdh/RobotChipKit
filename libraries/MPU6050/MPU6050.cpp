@@ -162,8 +162,6 @@ int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
                 Wire.beginTransmission(devAddr);
                 Wire.send(regAddr);
                 int ret = Wire.endTransmission();
-                Serial.print("readBytes ret: ");Serial.println(ret);
-                Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
                 if (ret != 0) return -1;                
                 
                 delay(1);
@@ -188,8 +186,6 @@ for (uint8_t k = 0; k < length * 2; k += min(length * 2, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
                 Wire.send(regAddr);
                 int ret = Wire.endTransmission();
-                Serial.print("readWords ret: ");Serial.println(ret);
-                Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
                 if (ret != 0) return -1;               
                 
                 delay(1);
@@ -383,11 +379,12 @@ MPU6050::MPU6050(uint8_t address) {
  * the clock source to use the X Gyro for reference, which is slightly better than
  * the default internal clock source.
  */
-void MPU6050::initialize() {
-    if(!setClockSource(MPU6050_CLOCK_PLL_XGYRO)) return;
-    if(!setFullScaleGyroRange(MPU6050_GYRO_FS_250)) return;
-    if(!setFullScaleAccelRange(MPU6050_ACCEL_FS_2)) return;
+int MPU6050::initialize() {
+    if(!setClockSource(MPU6050_CLOCK_PLL_XGYRO)) return -1;
+    if(!setFullScaleGyroRange(MPU6050_GYRO_FS_250)) return -2;
+    if(!setFullScaleAccelRange(MPU6050_ACCEL_FS_2)) return -3;
     setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
+    return 0;
 }
 
 /** Verify the I2C connection.
@@ -3019,6 +3016,7 @@ void MPU6050::setFIFOByte(uint8_t data) {
  */
 uint8_t MPU6050::getDeviceID() {
     I2Cdev::readBits(devAddr, MPU6050_RA_WHO_AM_I, MPU6050_WHO_AM_I_BIT, MPU6050_WHO_AM_I_LENGTH, buffer);
+
     return buffer[0];
 }
 /** Set Device ID.

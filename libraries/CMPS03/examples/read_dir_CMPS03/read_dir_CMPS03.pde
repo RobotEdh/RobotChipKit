@@ -2,11 +2,11 @@
 
 #include <CMPS03.h>
  
-/* I2C interface is provided on pins:                                   */
-/*         1 = Power +5V                                                */
-/*         2 = SCL connected to J3-09 (SCL2/RA2)                        */
-/*         3 = SDA connected to J3-11 (SDA2/RA3)                        */
-/*         9 = Ground                                                   */
+/* I2C interface is provided on pins:                                          */
+/*         1 = Power +5V                                                       */
+/*         2 = SCL1 in standard but SCL2 on MAX32 following change made by EDH */
+/*         3 = SDA  in standard but SDA2 on MAX32 following change made by EDH */
+/*         9 = Ground  */
 
 
 
