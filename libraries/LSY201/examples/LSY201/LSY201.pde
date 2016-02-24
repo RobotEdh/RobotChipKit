@@ -1,5 +1,6 @@
 #include <LSY201.h>
 #include <SD.h>
+#include <sdcard.h>
 
 //Create an instance of the SD file
 File myFile;
@@ -27,11 +28,11 @@ void setup()
   int count;
 
   Serial.begin(9600);
-  if (!SD.begin(4)) Serial.println("\n\n\ninitialization failed!"); else Serial.println("\n\n\ninitialization OK!");
+  if (!SD.begin(4)) Serial.println("\n\n\ninitialization SD card failed!"); else Serial.println("\n\n\ninitialization card OK!");
   myFile = SD.open("test63.jpg", FILE_WRITE);
  
   ret=JPEGCamera.begin();
-  Serial.print ("begin, ret:");
+  Serial.print ("Camera begin, ret:");
   Serial.print (ret);
   Serial.println ();
 

@@ -36,7 +36,7 @@ THE SOFTWARE.
 
 #include "MPU6050.h"
 #include <Wire.h>     // used for I2C protocol (lib)
-
+#define I2CDEV_SERIAL_DEBUG
 
 /** Default timeout value for read operations.
 * Set this to 0 to disable timeout detection.
@@ -155,25 +155,51 @@ int8_t I2Cdev::readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data, uint16
  * @return Number of bytes read (-1 indicates failure)
  */
 int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, uint16_t timeout) {
+   #ifdef I2CDEV_SERIAL_DEBUG
+        Serial.print("I2C (0x");
+        Serial.print(devAddr, HEX);
+        Serial.print(") reading ");
+        Serial.print(length, DEC);
+        Serial.print(" bytes from 0x");
+        Serial.print(regAddr, HEX);
+        Serial.print("...");
+    #endif
+
     int8_t count = 0;
+    int8_t ret = 0;
     uint32_t t1 = millis();
     
     for (uint8_t k = 0; k < length; k += min(length, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
                 Wire.send(regAddr);
-                int ret = Wire.endTransmission();
-                if (ret != 0) return -1;                
-                
-                delay(1);
-                Wire.requestFrom(devAddr, (uint8_t)min(length - k, BUFFER_LENGTH));
+                ret = Wire.endTransmission();
+   #ifdef I2CDEV_SERIAL_DEBUG
+        Serial.print("endTransmission, ret: ");
+        Serial.print((int)ret, DEC);;
+        Serial.print("...");
+    #endif                
+                if (ret != 0) return -10; 
+                ret = Wire.requestFrom(devAddr, (uint8_t)min(length - k, BUFFER_LENGTH));
+                if (ret == 0) {Serial.print("+++");return -12;}
 
                 for (; Wire.available() && (timeout == 0 || millis() - t1 < timeout); count++) {
                     data[count] = Wire.receive();
+                    #ifdef I2CDEV_SERIAL_DEBUG
+                        Serial.print(data[count], HEX);
+                        if (count + 1 < length) Serial.print(" ");
+                    #endif
                 }
+                            
     } 
     
     // check for timeout
     if (timeout > 0 && millis() - t1 >= timeout && count < length) count = -1; // timeout
+
+    #ifdef I2CDEV_SERIAL_DEBUG
+        Serial.print(". Done (");
+        Serial.print(count, DEC);
+        Serial.println(" read).");
+    #endif
 
     return count;           
 } 
@@ -181,16 +207,18 @@ int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
 int8_t I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data, uint16_t timeout) {
     int8_t count = 0;
     uint32_t t1 = millis();
+    uint8_t ret = 0;
     
 for (uint8_t k = 0; k < length * 2; k += min(length * 2, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
                 Wire.send(regAddr);
-                int ret = Wire.endTransmission();
+                ret = Wire.endTransmission();
                 if (ret != 0) return -1;               
                 
                 delay(1);
-                Wire.requestFrom(devAddr, (uint8_t)(length * 2)); // length=words, this wants bytes
-
+                ret=Wire.requestFrom(devAddr, (uint8_t)(length * 2)); // length=words, this wants bytes
+                if (ret == 0) return ret; 
+                
                 bool msb = true; // starts with MSB, then LSB
                 for (; Wire.available() && count < length && (timeout == 0 || millis() - t1 < timeout);) {
                     if (msb) {
@@ -222,7 +250,13 @@ for (uint8_t k = 0; k < length * 2; k += min(length * 2, BUFFER_LENGTH)) {
  */
 bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data) {
     uint8_t b;
-    readByte(devAddr, regAddr, &b);
+    int8_t r = readByte(devAddr, regAddr, &b);
+    
+    #ifdef I2CDEV_SERIAL_DEBUG
+        Serial.print("r:  ");
+        Serial.print((int)r, DEC);
+        Serial.print("...");
+    #endif
     b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
     return writeByte(devAddr, regAddr, b);
 }
@@ -335,8 +369,6 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
     }
  
     int ret = Wire.endTransmission();
-    Serial.print("writeBytes ret: ");Serial.println(ret);
-    Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
     return ret == 0;       
 }  
 
@@ -350,8 +382,6 @@ bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16
     }
     
     int ret = Wire.endTransmission();
-    Serial.print("writeWords ret: ");Serial.println(ret);
-    Serial.print("devAddr: ");Serial.println((int)devAddr,HEX);
     return ret == 0; 
 }
 
@@ -360,6 +390,12 @@ bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16
  */
 MPU6050::MPU6050() {
     devAddr = MPU6050_DEFAULT_ADDRESS;
+    acc_calib_x = 0;
+    acc_calib_y = 0;
+    acc_calib_z = 0;
+    gyro_calib_x = 0;
+    gyro_calib_y = 0;
+    gyro_calib_z = 0;
 }
 
 /** Specific address constructor.
@@ -373,20 +409,103 @@ MPU6050::MPU6050(uint8_t address) {
 }
 
 /** Power on and prepare for general usage.
- * This will activate the device and take it out of sleep mode (which must be done
- * after start-up). This function also sets both the accelerometer and the gyroscope
- * to their most sensitive settings, namely +/- 2g and +/- 250 degrees/sec, and sets
- * the clock source to use the X Gyro for reference, which is slightly better than
- * the default internal clock source.
  */
-int MPU6050::initialize() {
-    if(!setClockSource(MPU6050_CLOCK_PLL_XGYRO)) return -1;
-    if(!setFullScaleGyroRange(MPU6050_GYRO_FS_250)) return -2;
-    if(!setFullScaleAccelRange(MPU6050_ACCEL_FS_2)) return -3;
+int MPU6050::initialize(uint8_t Accel_FS, uint8_t Gyro_FS) {
+   
+    Serial.println(">>Wire begin");
+    if(!Wire.begin()) return -1;  
+    
+    Serial.println(">>reset");
+    if(!reset()) return -1; 
+    delay(50); // A small delay of ~50ms may be desirable after triggering a reset
+   
+    Serial.println(">>setClockSource");
+    if(!setClockSource(MPU6050_CLOCK_PLL_ZGYRO)) return -1; // Wake up device and select GyroZ clock (better performance)
+
+    Serial.println(">>setDLPFMode");
+    setDLPFMode(MPU6050_DLPF_BW_20);  // Bandwidth GYROSCOPE 20Hz
+    /** The DLPF_CFG parameter sets the digital low pass filter configuration. It
+     * also determines the internal sampling rate used by the device as shown in
+     * the table below.
+     *          |   ACCELEROMETER    |           GYROSCOPE
+     * DLPF_CFG | Bandwidth | Delay  | Bandwidth | Delay  | Sample Rate
+     * ---------+-----------+--------+-----------+--------+-------------
+     * 0        | 260Hz     | 0ms    | 256Hz     | 0.98ms | 8kHz
+     * 1        | 184Hz     | 2.0ms  | 188Hz     | 1.9ms  | 1kHz
+     * 2        | 94Hz      | 3.0ms  | 98Hz      | 2.8ms  | 1kHz
+     * 3        | 44Hz      | 4.9ms  | 42Hz      | 4.8ms  | 1kHz
+     * 4        | 21Hz      | 8.5ms  | 20Hz      | 8.3ms  | 1kHz
+     * 5        | 10Hz      | 13.8ms | 10Hz      | 13.4ms | 1kHz
+     * 6        | 5Hz       | 19.0ms | 5Hz       | 18.6ms | 1kHz
+     * 7        |   -- Reserved --   |   -- Reserved --   | Reserved
+     */
+    
+    Serial.println(">>setRate");
+    setRate (4); // Sample rate = 200Hz = 5ms   Fsample= 1Khz/(4+1) = 200Hz 
+    /** The Sample Rate is generated by dividing the gyroscope output rate by SMPLRT_DIV:
+     *
+     * Sample Rate = Gyroscope Output Rate / (1 + SMPLRT_DIV)
+     *
+     * where Gyroscope Output Rate = 8kHz when the DLPF is disabled (DLPF_CFG = 0 or
+     * 7), and 1kHz when the DLPF is enabled (see Register 26).
+     *
+     * Note: The accelerometer output rate is 1kHz. This means that for a Sample
+     * Rate greater than 1kHz, the same accelerometer sample may be output to the
+     * FIFO, DMP, and sensor registers more than 
+     */
+     
+    Serial.println(">>setFullScaleGyroRange");
+    if(!setFullScaleGyroRange(Gyro_FS)) return -2;
+        
+    Serial.println(">>setFullScaleAccelRange");
+    if(!setFullScaleAccelRange(Accel_FS)) return -3;
+        
+    Serial.println(">>setSleepEnabled");
     setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
-    return 0;
+    
+    delay(2000);
+
+    return 0;  
 }
 
+int MPU6050::initialize() {
+    return initialize(MPU6050_ACCEL_FS_4, MPU6050_GYRO_FS_2000);  // Accel scale 4g & Gyro scale 2000º/s
+}
+
+void MPU6050::calibAcceleration() {
+    int16_t x, y, z;
+    int32_t X=0, Y=0, Z=0;
+    
+    for (uint16_t i = 0; i < 512; i++) {
+       getAcceleration(&x, &y, &z);
+       X+=x;
+       Y+=y;
+       Z+=z;
+       delay(5);
+   }
+    
+    acc_calib_x = X>>9;
+    acc_calib_y = Y>>9;
+    acc_calib_z = Z>>9;
+}
+
+void MPU6050::calibRotation() {
+    int16_t x, y, z;
+    int32_t X=0, Y=0, Z=0;
+    
+    for (uint16_t i = 0; i < 512; i++) {
+       getRotation(&x, &y, &z);
+       X+=x;
+       Y+=y;
+       Z+=z;
+       delay(5);
+   }
+    
+    gyro_calib_x = X>>9;
+    gyro_calib_y = Y>>9;
+    gyro_calib_z = Z>>9;
+}
+    
 /** Verify the I2C connection.
  * Make sure the device is connected and responds as expected.
  * @return True if connection is valid, false otherwise
@@ -2098,10 +2217,35 @@ void MPU6050::getMotion6(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int
  */
 void MPU6050::getAcceleration(int16_t* x, int16_t* y, int16_t* z) {
     I2Cdev::readBytes(devAddr, MPU6050_RA_ACCEL_XOUT_H, 6, buffer);
-    *x = (((int16_t)buffer[0]) << 8) | buffer[1];
-    *y = (((int16_t)buffer[2]) << 8) | buffer[3];
-    *z = (((int16_t)buffer[4]) << 8) | buffer[5];
+    *x = ((((int16_t)buffer[0]) << 8) | buffer[1]) - acc_calib_x;
+    *y = ((((int16_t)buffer[2]) << 8) | buffer[3]) - acc_calib_y;
+    *z = ((((int16_t)buffer[4]) << 8) | buffer[5]) - acc_calib_z;
 }
+
+void MPU6050::getAcceleration_g(double* dx, double* dy, double* dz) {
+    int16_t x, y, z, sensibilityAcc;
+    
+    getAcceleration(&x, &y, &z);
+    
+    sensibilityAcc = 4<<getFullScaleAccelRange();
+
+/* range
+ * 0 = +/- 2g *4
+ * 1 = +/- 4g *8
+ * 2 = +/- 8g *16
+ * 3 = +/- 16g *32
+ */  
+    *dx = (double)(x * sensibilityAcc) /65534.0;
+    *dy = (double)(y * sensibilityAcc) /65534.0;
+    *dz = (double)(z * sensibilityAcc) /65534.0 - 1.0;     //Normalize g = -1 
+}
+
+void MPU6050::getAccelerationCalib(int16_t* x, int16_t* y, int16_t* z) {
+    *x = acc_calib_x;
+    *y = acc_calib_y;
+    *z = acc_calib_z;
+}
+
 /** Get X-axis accelerometer reading.
  * @return X-axis acceleration measurement in 16-bit 2's complement format
  * @see getMotion6()
@@ -2109,7 +2253,7 @@ void MPU6050::getAcceleration(int16_t* x, int16_t* y, int16_t* z) {
  */
 int16_t MPU6050::getAccelerationX() {
     I2Cdev::readBytes(devAddr, MPU6050_RA_ACCEL_XOUT_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]) - acc_calib_x;
 }
 /** Get Y-axis accelerometer reading.
  * @return Y-axis acceleration measurement in 16-bit 2's complement format
@@ -2118,7 +2262,7 @@ int16_t MPU6050::getAccelerationX() {
  */
 int16_t MPU6050::getAccelerationY() {
     I2Cdev::readBytes(devAddr, MPU6050_RA_ACCEL_YOUT_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]) - acc_calib_y;
 }
 /** Get Z-axis accelerometer reading.
  * @return Z-axis acceleration measurement in 16-bit 2's complement format
@@ -2127,7 +2271,7 @@ int16_t MPU6050::getAccelerationY() {
  */
 int16_t MPU6050::getAccelerationZ() {
     I2Cdev::readBytes(devAddr, MPU6050_RA_ACCEL_ZOUT_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]) - acc_calib_z;
 }
 
 // TEMP_OUT_* registers
@@ -2177,10 +2321,34 @@ int16_t MPU6050::getTemperature() {
  */
 void MPU6050::getRotation(int16_t* x, int16_t* y, int16_t* z) {
     I2Cdev::readBytes(devAddr, MPU6050_RA_GYRO_XOUT_H, 6, buffer);
-    *x = (((int16_t)buffer[0]) << 8) | buffer[1];
-    *y = (((int16_t)buffer[2]) << 8) | buffer[3];
-    *z = (((int16_t)buffer[4]) << 8) | buffer[5];
+    *x = ((((int16_t)buffer[0]) << 8) | buffer[1]) - gyro_calib_x;
+    *y = ((((int16_t)buffer[2]) << 8) | buffer[3]) - gyro_calib_y;
+    *z = ((((int16_t)buffer[4]) << 8) | buffer[5]) - gyro_calib_z;
 }
+
+void MPU6050::getRotation_degree_sec(double* dx, double* dy, double* dz) {
+    int16_t x, y, z, sensibilityGyro;
+    
+    getRotation(&x, &y, &z);
+    
+    sensibilityGyro = 500<<getFullScaleGyroRange();
+/* range
+ * 0 = +/- 250 degrees/sec *500
+ * 1 = +/- 500 degrees/sec *1000
+ * 2 = +/- 1000 degrees/sec *2000
+ * 3 = +/- 2000 degrees/sec *4000
+*/  
+    *dx = (double)(x * sensibilityGyro) /65534.0;
+    *dy = (double)(y * sensibilityGyro) /65534.0;
+    *dz = (double)(z * sensibilityGyro) /65534.0;
+}
+
+void MPU6050::getRotationCalib(int16_t* x, int16_t* y, int16_t* z) {
+    *x = gyro_calib_x;
+    *y = gyro_calib_y;
+    *z = gyro_calib_z;
+}
+
 /** Get X-axis gyroscope reading.
  * @return X-axis rotation measurement in 16-bit 2's complement format
  * @see getMotion6()
@@ -2188,7 +2356,7 @@ void MPU6050::getRotation(int16_t* x, int16_t* y, int16_t* z) {
  */
 int16_t MPU6050::getRotationX() {
     I2Cdev::readBytes(devAddr, MPU6050_RA_GYRO_XOUT_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]) - gyro_calib_x;
 }
 /** Get Y-axis gyroscope reading.
  * @return Y-axis rotation measurement in 16-bit 2's complement format
@@ -2197,7 +2365,7 @@ int16_t MPU6050::getRotationX() {
  */
 int16_t MPU6050::getRotationY() {
     I2Cdev::readBytes(devAddr, MPU6050_RA_GYRO_YOUT_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]) - gyro_calib_y;
 }
 /** Get Z-axis gyroscope reading.
  * @return Z-axis rotation measurement in 16-bit 2's complement format
@@ -2206,7 +2374,7 @@ int16_t MPU6050::getRotationY() {
  */
 int16_t MPU6050::getRotationZ() {
     I2Cdev::readBytes(devAddr, MPU6050_RA_GYRO_ZOUT_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]) - gyro_calib_z;
 }
 
 // EXT_SENS_DATA_* registers
@@ -2223,6 +2391,7 @@ int16_t MPU6050::getRotationZ() {
  * External sensor data registers, along with the gyroscope measurement
  * registers, accelerometer measurement registers, and temperature measurement
  * registers, are composed of two sets of registers: an internal register set
+ 
  * and a user-facing read register set.
  *
  * The data within the external sensors' internal register set is always updated
@@ -2676,8 +2845,8 @@ void MPU6050::resetSensors() {
  * @see MPU6050_RA_PWR_MGMT_1
  * @see MPU6050_PWR1_DEVICE_RESET_BIT
  */
-void MPU6050::reset() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_DEVICE_RESET_BIT, true);
+bool MPU6050::reset() {
+    return I2Cdev::writeBit(devAddr, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_DEVICE_RESET_BIT, true);
 }
 /** Get sleep mode status.
  * Setting the SLEEP bit in the register puts the device into very low power
@@ -3016,7 +3185,6 @@ void MPU6050::setFIFOByte(uint8_t data) {
  */
 uint8_t MPU6050::getDeviceID() {
     I2Cdev::readBits(devAddr, MPU6050_RA_WHO_AM_I, MPU6050_WHO_AM_I_BIT, MPU6050_WHO_AM_I_LENGTH, buffer);
-
     return buffer[0];
 }
 /** Set Device ID.

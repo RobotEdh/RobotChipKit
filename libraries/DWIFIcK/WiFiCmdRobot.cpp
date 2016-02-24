@@ -436,7 +436,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
        Serial.println(ret);	
        
        // Send last 3 pictures
-       for(int j=resp[10]-2; j<=resp[10]; j++)
+       /*for(int j=resp[10]-2; j<=resp[10]; j++)
        {
           Serial.println("Call WiFiSendFastPicture");
           ret = WiFiCmdRobot::WiFiSendFastPicture(j);
@@ -449,7 +449,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
               ret = WiFiCmdRobot::WiFiCmdRobot_init_TCPIP();
           }
        }
-            
+       */   
        Serial.println("Call WiFiSendInfos");              
        ret= WiFiSendInfos();    
     
@@ -607,8 +607,8 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
     if (resp_len > 8) {
          temperature = resp[7];
          lux         = resp[8];
-         noise       = resp[9];
-         acc_z       = resp[10];
+         noise       = resp[10];
+         acc_z       = resp[11];
     }     
     
     digitalWrite(Led_Yellow, LOW);               // turn off led yellow
@@ -1074,12 +1074,15 @@ int WiFiCmdRobot::Check_Alert ()
   if(motion_status == 1) return ALERT_MOTION;
  
   // Check noise
+  Serial.print("noise: "); Serial.print(noise);Serial.print(" -- THR_NOISE: "); Serial.println(THR_NOISE);
   if (noise > THR_NOISE) return ALERT_NOISE;
 
-  // Check noise
+  // Check acceleration
+  Serial.print("acc_z: "); Serial.print(acc_z);Serial.print(" -- THR_ACC_Z: "); Serial.println(THR_ACC_Z);
   if (acc_z > THR_ACC_Z) return ALERT_ACC_Z;
     
   // Check Temperature Variation
+  Serial.print("temperature: "); Serial.print(temperature);Serial.print(" -- previous_temperature: "); Serial.print(previous_temperature);Serial.print(" -- VAR_TEMPERATURE: "); Serial.println(VAR_TEMPERATURE);
   if (temperature != previous_temperature) {
       previous_temperature = temperature;  
       if (VAR_TEMPERATURE > abs(avg_temperature -temperature) && tab_temperature[NB_TEMPERATURE-1] != 0) {
@@ -1096,6 +1099,7 @@ int WiFiCmdRobot::Check_Alert ()
   }
          
   // Check Lux Variation
+  Serial.print("lux: "); Serial.print(lux);Serial.print(" -- previous_lux: "); Serial.print(previous_lux);Serial.print(" -- VAR_LUX: "); Serial.println(VAR_LUX);
   if (lux != previous_lux) {
       previous_lux = lux;  
       if (VAR_LUX > abs(avg_lux -lux) && tab_lux[NB_LUX-1] != 0) {

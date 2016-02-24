@@ -51,9 +51,16 @@ int motor_begin()
 
   // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
   IRServo.attach(IRSERVO_Pin);  
-  // reset the servo position
-  IRServo.write(90);  // reset servo position
-  delay(15);          // waits 15ms for the servo to reach the position  
+ 
+  // test the servo position
+  IRServo.write(0);    // turn servo left
+  delay(15*90);        // waits the servo to reach the position 
+       
+  IRServo.write(180);  // turn servo right
+  delay(15*180);       // waits the servo to reach the position 
+  
+  IRServo.write(90);   // reset servo position
+  delay(15*90);        // waits the servo to reach the position 
   Serial.println("Init IR servo OK");  
     
   // Get the revision number of the compass 
@@ -362,7 +369,7 @@ int go(unsigned long timeout, int pid_ind)
  int direction = 0; /* direction between 0-254, 0: North */
  int inputpin = HIGH; 
  
- TickLeft = 0;  // reset ticks
+ TickLeft  = 0;  // reset ticks
  TickRight = 0;
  
  unsigned long start = millis();
@@ -385,11 +392,13 @@ int go(unsigned long timeout, int pid_ind)
     
        // Check Contacts sensors, HIGH in normal situation
        inputpin = digitalRead(ContactRightPin);  // read input value
-       if (inputpin == LOW) { 
-           return OBSTACLE_RIGHT;   
+       if (inputpin == LOW) {
+            Serial.print("-->obstacle right");
+            return OBSTACLE_RIGHT;   
        }  
        inputpin = digitalRead(ContactLeftPin);  // read input value
        if (inputpin == LOW) { 
+           Serial.print("-->obstacle left");
            return OBSTACLE_LEFT;   
        }
             
@@ -397,15 +406,13 @@ int go(unsigned long timeout, int pid_ind)
              current = millis();
              distance = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter(); // Check distance minimum
 
+             Serial.print("-->distance: ");
+             Serial.println(distance);
+
              if ((distance > 0) && (distance < DISTANCE_MIN))
              {
                    return OBSTACLE;       
              }
-             else
-             {
-                   Serial.print("-->distance: ");
-                   Serial.println(distance);
-             }     
         }     
        
  }  // end while (millis() - start < timeout)

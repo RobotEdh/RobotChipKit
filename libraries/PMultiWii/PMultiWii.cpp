@@ -185,7 +185,7 @@ void MultiWii_loop () {
   }
   currentTime = micros();
   cycleTime = currentTime - previousTime;
-  previousTime = currentTime 
+  previousTime = currentTime ;
   //**** Read IMU ****   
   ACC_getADC();
   

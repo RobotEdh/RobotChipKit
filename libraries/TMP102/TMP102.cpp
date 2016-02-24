@@ -17,28 +17,23 @@ TMP102Class::TMP102Class ()
 void TMP102Class::TMP102_init()
 {
     Wire.begin(); // setup I2C
-
-	return;
 } 
  
 
 double TMP102Class::TMP102_read ()
 {   
+    uint8_t ret = 0;
+    
     Wire.beginTransmission(TMP102_ADDRESS);  
-	Wire.send((int)0);                            // use register 0 : temperature
+	Wire.write((uint8_t)0);                       // use register 0 : temperature
 	
-	int ret = Wire.endTransmission();             // 0: success
-                                                  // 1: length to long for buffer
-                                                  // 2: address send, NACK received -> bad address
-                                                  // 3: data send, NACK received -> bad register
-                                                  // 4: other error (lost bus arbitration, bus error, ..) -> missing 1Ok pull-down resistor on SDA & SDL pins
-	if (ret != 0) return (-1 * ret);
+	ret = Wire.endTransmission(); 
 	
 	delay(1);
 	
-	Wire.requestFrom(TMP102_ADDRESS, (int)2);     // request 2 bytes
-	int msb = Wire.receive(); // receive high byte (full degrees)
-	int lsb = Wire.receive(); // receive low byte (fraction degrees) 
+	ret = Wire.requestFrom(TMP102_ADDRESS, (int)2);     // request 2 bytes
+	uint8_t msb = Wire.read(); // receive high byte (full degrees)
+	uint8_t lsb = Wire.read(); // receive low byte (fraction degrees) 
     int Temperature = ((msb << 8) | lsb) >> 4; 
     double celsius = (double)Temperature*0.0625;
     return celsius;

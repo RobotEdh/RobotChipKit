@@ -14,7 +14,7 @@ CMPS03Class::CMPS03Class ()
 {
 }
  
-int CMPS03Class::CMPS03_init ()
+void CMPS03Class::CMPS03_init ()
 {
     Wire.begin(); // setup I2C
 } 
@@ -22,38 +22,32 @@ int CMPS03Class::CMPS03_init ()
     
 int CMPS03Class::CMPS03_revision ()
 {
+    uint8_t ret = 0;
+    
     Wire.beginTransmission(CMPS03_ADDRESS); 
-	Wire.send((int)0);                            // use register 0: revision
+	Wire.write((uint8_t)0);                            // use register 0: revision
 	
-	int ret = Wire.endTransmission();             // 0: success
-                                                  // 1: length to long for buffer
-                                                  // 2: address send, NACK received -> bad address
-                                                  // 3: data send, NACK received -> bad register
-                                                  // 4: other error (lost bus arbitration, bus error, ..) -> missing 1Ok pull-down resistor on SDA & SDL pins
-	if (ret != 0) return (-1 * ret);
+	ret = Wire.endTransmission();           
 	    
 	delay(1);
 	
-	Wire.requestFrom(CMPS03_ADDRESS, (int)1);     // request 1 byte
-	int value = Wire.receive();
-	return value;
+	ret = Wire.requestFrom(CMPS03_ADDRESS, (int)1);     // request 1 byte
+	uint8_t value = Wire.read();
+	return (int)value;
 }
 
 int CMPS03Class::CMPS03_read ()
 {   
+    uint8_t ret = 0;
+ 
     Wire.beginTransmission(CMPS03_ADDRESS);  
-	Wire.send((int)1);                            // use register 1 : direction
+	Wire.write((uint8_t)1);                            // use register 1 : direction
 	
-	int ret = Wire.endTransmission();             // 0: success
-                                                  // 1: length to long for buffer
-                                                  // 2: address send, NACK received -> bad address
-                                                  // 3: data send, NACK received -> bad register
-                                                  // 4: other error (lost bus arbitration, bus error, ..) -> missing 1Ok pull-down resistor on SDA & SDL pins
-	if (ret != 0) return (-1 * ret);
-	
+	ret = Wire.endTransmission();      
+		
 	delay(1);
 	
-	Wire.requestFrom(CMPS03_ADDRESS, (int)1);     // request 1 byte
-	int value = Wire.receive();
-	return value;
+	ret = Wire.requestFrom(CMPS03_ADDRESS, (int)1);     // request 1 byte
+	uint8_t value = Wire.read();
+	return (int)value;
 }

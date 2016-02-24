@@ -19,17 +19,13 @@ void setup()
   
   Serial.begin(9600); // initialize serial port
   
-  revision = CMPS03.CMPS03_init();
+ CMPS03.CMPS03_init();
   
-  if (revision < 0) {
-     Serial.print("Error I2c: ");
-     Serial.println(revision);    
-  }
-  else
-  {  
-     Serial.print("Revision: ");
-     Serial.println(revision);
-  }  
+  revision = CMPS03.CMPS03_revision();
+ 
+  Serial.print("Revision: ");
+  Serial.println(revision);
+  
   delay(500); //make it readable 
 }
 
@@ -41,15 +37,9 @@ void loop()
   Serial.print(" --> read direction from CMPS03"); 
 
   direction = CMPS03.CMPS03_read();
-  if (direction < 0) {
-     Serial.print("\nError I2c: ");
-     Serial.print(direction);    
-  }
-  else
-  {  
+ 
   Serial.print("\nDirection: ");
   Serial.print(direction); 
-  }  
  
   delay(500); //make it readable
   

@@ -66,7 +66,6 @@ uint8_t LiquidCrystal_I2C::init(){
 uint8_t LiquidCrystal_I2C::init_priv()
 {
 	uint8_t ret;
-	
 	Wire.begin();
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
 	ret = begin(_cols, _rows);
@@ -98,8 +97,7 @@ uint8_t LiquidCrystal_I2C::init_priv()
 
 uint8_t LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
     uint8_t ret;
-    
-	if (lines > 1) {
+ 	if (lines > 1) {
 		_displayfunction |= LCD_2LINE;
 	}
 	_numlines = lines;
@@ -116,6 +114,7 @@ uint8_t LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
   
 	// Now we pull both RS and R/W low to begin commands
 	ret = expanderWrite(_backlightval);	// reset expanderand turn backlight off (Bit 8 =1)
+
     if (ret != 0) return (ret);	
 	delay(1000);
 
@@ -298,8 +297,9 @@ uint8_t LiquidCrystal_I2C::write4bits(uint8_t value) {
 
 uint8_t LiquidCrystal_I2C::expanderWrite(uint8_t _data){                                        
 	Wire.beginTransmission(_Addr);
-	printIIC((int)(_data) | _backlightval);
-	return Wire.endTransmission(); 
+	Wire.write(((uint8_t)(_data) | _backlightval));
+	uint8_t ret = Wire.endTransmission();
+	return 0; 
 }
 
 uint8_t LiquidCrystal_I2C::pulseEnable(uint8_t _data){

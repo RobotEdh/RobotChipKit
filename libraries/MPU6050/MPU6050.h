@@ -432,8 +432,12 @@ class MPU6050 {
         MPU6050(uint8_t address);
 
         int initialize();
-        bool testConnection();
+        int initialize(uint8_t Accel_FS, uint8_t Gyro_FS);
 
+        bool testConnection();
+        void calibAcceleration();
+        void calibRotation();
+ 
         // AUX_VDDIO register
         uint8_t getAuxVDDIOLevel();
         void setAuxVDDIOLevel(uint8_t level);
@@ -610,6 +614,10 @@ class MPU6050 {
         int16_t getAccelerationX();
         int16_t getAccelerationY();
         int16_t getAccelerationZ();
+        void getAcceleration_g(double* dx, double* dy, double* dz);
+        void getAccelerationCalib(int16_t* x, int16_t* y, int16_t* z);
+
+
 
         // TEMP_OUT_* registers
         int16_t getTemperature();
@@ -619,6 +627,9 @@ class MPU6050 {
         int16_t getRotationX();
         int16_t getRotationY();
         int16_t getRotationZ();
+        void getRotation_degree_sec(double* dx, double* dy, double* dz);
+        void getRotationCalib(int16_t* x, int16_t* y, int16_t* z);
+
 
         // EXT_SENS_DATA_* registers
         uint8_t getExternalSensorByte(int position);
@@ -667,7 +678,7 @@ class MPU6050 {
         void resetSensors();
 
         // PWR_MGMT_1 register
-        void reset();
+        bool reset();
         bool getSleepEnabled();
         void setSleepEnabled(bool enabled);
         bool getWakeCycleEnabled();
@@ -1010,6 +1021,12 @@ class MPU6050 {
     private:
         uint8_t devAddr;
         uint8_t buffer[14];
+        int16_t acc_calib_x;
+        int16_t acc_calib_y;
+        int16_t acc_calib_z;
+        int16_t gyro_calib_x;
+        int16_t gyro_calib_y;
+        int16_t gyro_calib_z;
 };
 
 #endif /* _MPU6050_H_ */

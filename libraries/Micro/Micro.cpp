@@ -29,5 +29,5 @@ void MicroClass::Micro_init (int pin)
 int MicroClass::Micro_getNoise()
 {
  if (!this->_Micro_Pin) return -1;            // pin is not initialized
- return (analogRead(this->_Micro_Pin));       // read analog input pin 
+ return (analogRead(this->_Micro_Pin)-760);       // read analog input pin 
 }

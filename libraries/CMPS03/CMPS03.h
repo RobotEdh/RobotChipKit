@@ -27,7 +27,7 @@ class CMPS03Class
     
   CMPS03Class();
   
-  int CMPS03_init (void); 
+  void CMPS03_init (void); 
  /* initialize I2C, must NOT be called if I2C is already initialized           */                                            
  /* input:       none                                                          */
  /* output:      none                                                          */                             

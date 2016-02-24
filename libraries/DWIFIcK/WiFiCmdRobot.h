@@ -24,7 +24,7 @@
 #define NB_TEMPERATURE 6
 #define VAR_TEMPERATURE 2
 #define THR_NOISE 520
-#define THR_ACC_Z 2
+#define THR_ACC_Z 1500
 
 #define PAYLOAD_SIZE 80
 

@@ -7,7 +7,7 @@
 
 #ifndef Motion_h
 #define Motion_h
-
+#include "WProgram.h"
 #include <wiring.h> // used for digital read function (core lib)
 
 

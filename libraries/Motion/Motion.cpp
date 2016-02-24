@@ -22,6 +22,7 @@ void MotionClass::Motion_init (int pin)
 
  this->_Motion_Pin = pin;
  pinMode(this->_Motion_Pin, INPUT);   // define pin as input
+
  delay (2000);                       // wait 1-2 seconds for the sensor to get a snapshot of the still room
  
  return;

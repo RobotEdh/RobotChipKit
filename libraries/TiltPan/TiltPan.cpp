@@ -10,13 +10,19 @@ void TiltPan_begin(int Hpin, int Vpin)
   HServo.attach(Hpin);   
   // reset the servo position
   HServo.write(90);    // reset servo position
-  delay(15);           // waits 15ms for the servo to reach the position 
+  delay(1500);         // waits 1500ms for the servo to reach the position 
 
   // initialize the PWM pin connected to the servo used for the Vertical Tilt&Pan and initialize the associate Timer interrupt
   VServo.attach(Vpin);   
   // reset the servo position
   VServo.write(90);    // reset servo position
-  delay(15);           // waits 15ms for the servo to reach the position 
+  delay(1500);         // waits 1500ms for the servo to reach the position 
+
+  TiltPan_move (40,160);
+  TiltPan_move (40,70);
+  TiltPan_move (140,70);
+  TiltPan_move (140,160);
+  TiltPan_move (90,90);
 
 
   return;      
@@ -35,10 +41,10 @@ void TiltPan_move(uint8_t HPos, uint8_t VPos)
     if ((HPos > 120) && (VPos < 70)) VPos = 70;     
            
     HServo.write(HPos);  // moves Horizontal servo to position HPos
-    delay(15);           // waits 15ms for the servo to reach the position 
+    delay(1500);         // waits 1500ms for the servo to reach the position 
     
     VServo.write(VPos);  // moves Vertical servo to position VPos
-    delay(15);           // waits 15ms for the servo to reach the position 
+    delay(1500);         // waits 1500ms for the servo to reach the position 
         
     return;      
 }

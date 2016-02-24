@@ -39,7 +39,7 @@ static const char *PWR_ON_MSG = "Init end\x0d\x0a";
 
 //SD card
 extern SdFile root;        // SD Root     
-extern SdFile FilePicture; // SD File
+       SdFile FilePicture; // SD File
    
 // Constructor
 JPEGCameraClass::JPEGCameraClass()
@@ -49,7 +49,6 @@ JPEGCameraClass::JPEGCameraClass()
 //Initialize the serial1 port and call reset ()
 int JPEGCameraClass::begin(void)
 {
-	return 0;
 	//Camera baud rate is 38400
 	Serial1.begin(38400);
 	
@@ -72,23 +71,20 @@ int JPEGCameraClass::uint8Compare(const uint8_t *a1, const uint8_t *a2, int len)
 int JPEGCameraClass::sendCommand(const uint8_t * command, uint8_t* response, int wlen, int rlen)
 {
 	int ibuf=-1;
-	
-	delay(3);
- 
+
 	while(Serial1.available() > 0) {
 	    ibuf = Serial1.read();
-	    } // waiting for data in the serial buffer
+    } // waiting for data in the serial buffer
  
 	//Send each character in the command string to the camera through the camera serial port
 	for(int i=0; i<wlen; i++){
 		Serial1.write(*command++);
 	}
- 
+
 	//Get the response from the camera and add it to the response string
 	for(int i=0; i<rlen; i++)
 	{
-     	unsigned long start = millis();
-		while((Serial1.available() == 0)  &&  (millis() - start < 1000)); // waiting for data in the serial buffer for 1s max
+		while(Serial1.available() == 0); // waiting for data in the serial buffer
 		ibuf = Serial1.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
@@ -142,13 +138,13 @@ int JPEGCameraClass::reset()
 	int ret=0;
 	uint8_t response[4];
 	int ibuf=-1;
-    
+
  	//Flush out any data currently in the serial buffer
 	Serial1.flush();
 
  	ret = sendCommand(RESET_CAMERA, response, 4, 4);
 
-	if (ret != 0) return -1;
+	if (ret != 0) return ret;
 	if (uint8Compare(response,RESET_CAMERA_OK,4) != 0) return -2;   
   
     // Wait for Init end
@@ -159,7 +155,7 @@ int JPEGCameraClass::reset()
 		    while(Serial1.available() == 0); // waiting for data in the serial buffer
 		    ibuf = Serial1.read();
 		    if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
-		    Serial.print(ibuf,BYTE);    // display the init message
+		    Serial.write(byte(ibuf));    // display the init message
             cnt++;
             if (cnt > 128) return -5;
           } while (ibuf != PWR_ON_MSG[k]);
@@ -397,7 +393,6 @@ int JPEGCameraClass::makePicture (int n)
   int count=0;         // nb bytes read
   char filename[12+1];
   
-  return 0;
   // Open the file
   sprintf(filename, "PICT%d.jpg", n);
   if (!FilePicture.open(&root, filename, O_CREAT|O_WRITE|O_TRUNC)) return FILE_OPEN_ERROR;  

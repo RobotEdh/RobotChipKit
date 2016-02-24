@@ -8,8 +8,10 @@
 #include <TiltPan.h>           // Tilt&Pan
 #include <LSY201.h>            // Camera
 #include <LiquidCrystal_I2C.h> // LCD
+#include <Motion.h>            // Motion
 #include <Micro.h>             // Micro
-#include <MPU6050.h>           // MPU6050
+#include <sdcard.h>            // SD Card
+#include <SD.h> 
 
 int HPos = 90;
 int VPos = 90;
@@ -20,14 +22,20 @@ extern GP2Y0A21YKClass GP2Y0A21YK;  // The IR sensor class
 extern LiquidCrystal_I2C lcd;       // The LCD class
        TMP102Class TMP102;          // The Temperature class  
        TEMT6000Class TEMT6000;      // The Brightness class
-       MicroClass Micro;            // The Micro class  
-       MPU6050 MPU6050;             // The accel+gyro class
+       MotionClass Motion;          // The Motion class
+       MicroClass Micro;            // The Micro class
+         
 
 JPEGCameraClass JPEGCamera;  // The Camera class  
 int no_picture = 0;          // Picture number
 
 void blink(int led)
 {
+  // turn off all leds
+  digitalWrite(Led_Blue, LOW);  
+  digitalWrite(Led_Red  , LOW);  
+
+  // blink the resquested led
   for (int i=0;i<5;i++){
         digitalWrite(led, HIGH);  // turn on led
         delay(500);
@@ -38,7 +46,6 @@ void blink(int led)
 
 void buzz(int buzzNb)
 {  
-  return;
   for (int i=0;i<buzzNb;i++){
       digitalWrite(buzzPin, HIGH);
       delay(1);
@@ -65,9 +72,9 @@ int robot_begin()
       Serial.println(ret);    
   }
  
-  pinMode(Led_Yellow, OUTPUT);     // set the pin as output
-  blink(Led_Yellow);  
-  pinMode(Led_Red, OUTPUT);        // set the pin as output
+  pinMode(Led_Blue, OUTPUT);     // set the pin as output
+  blink(Led_Blue);  
+  pinMode(Led_Red, OUTPUT);      // set the pin as output
   blink(Led_Red);  
   Serial.println("Init Leds OK");
     
@@ -97,27 +104,40 @@ int robot_begin()
   // initialize the brightness sensor   
   TEMT6000.TEMT6000_init(TEMT6000_Pin); // initialize the pin connected to the sensor
   Serial.println("Init Brightness sensor OK");
-     
+  
+  // initialize the temperature sensor   
+  TMP102.TMP102_init();
+  Serial.println("Init Temperature sensor OK");
+  
+  // initialize the motion sensor  
+  Motion.Motion_init(MOTION_PIN); // initialize the pin connected to the sensor
+  Serial.println("Init Motion sensor OK");
+
   // initialize the electret micro   
-  Micro.Micro_init(MICRO_Pin); // initialize the pin connected to the micro
-  Serial.println("Init Micro OK");
- 
-  // initializa the MPU6050
-  ret=MPU6050.initialize();
+  //Micro.Micro_init(MICRO_Pin); // initialize the pin connected to the micro
+  //Serial.println("Init Micro OK");
+
+  // initialize the SD-Card    
+  ret = initSDCard();
   if (ret != SUCCESS)
   {  
-        Serial.print("Error Init MPU6050, error: ");
+        Serial.print("Error Init SD-Card, error: ");
         Serial.println(ret);
-  }        
+  }                                                                    
   else
   {
-        Serial.println("Init MPU6050 OK");
+        Serial.println("Init SD-Card OK");
   }
-  Serial.println(MPU6050.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+    
+  // get infos from SD-Card  
+  ret=infoSDCard();
+  if (ret != SUCCESS)
+  {  
+        Serial.print("Error Infos SD-Card, error: ");
+        Serial.println(ret);
+  }
 
  
-  digitalWrite(Led_Red, LOW);     // turn off led red
-   
   lcd.setCursor(0,1); 
   lcd.print("End   Robot Init");
  
@@ -194,6 +214,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      resp_len = 0+1;
      
  case CMD_MOVE_TILT_PAN:
+     blink(Led_Blue);     
      Serial.print("CMD_MOVE_TILT_PAN, X Y: "); Serial.print((int)cmd[1]);Serial.println((int)cmd[2]);   
      lcd.print("MOVE TILT&PAN");
      lcd.setCursor(0,1); 
@@ -265,52 +286,68 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      }
      break;            
      
- case CMD_INFOS:    
+ case CMD_INFOS: 
+     blink(Led_Blue);     
      Serial.println("CMD_INFOS");
      
      // byte 0: motor_state
      resp[0] = motor_state;
+     Serial.print("motor_state: ");Serial.println((int)resp[0]);
      // byte 1: SpeedMotorRight
      resp[1] = get_SpeedMotorRight();
+     Serial.print("SpeedMotorRight: ");Serial.println((int)resp[1]);
      // byte 2: SpeedMotorLeft
      resp[2] = get_SpeedMotorLeft();
+     Serial.print("SpeedMotorLeft: ");Serial.println((int)resp[2]);
      // byte 3: TickRight
      resp[3] = get_TickRight();
+     Serial.print("TickRight: ");Serial.println((int)resp[3]);
      // byte 4: TickLeft
      resp[4] = get_TickLeft();
+     Serial.print("TickLeft: ");Serial.println((int)resp[4]);
      // byte 5: direction
      resp[5] = CMPS03.CMPS03_read();
+     Serial.print("direction: ");Serial.println((int)resp[5]);
      // byte 6: distance
      resp[6] = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
+     Serial.print("distance: ");Serial.println((int)resp[6]);
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
+     Serial.print("temperature: ");Serial.println((int)resp[7]);
      // byte 8: brightness
      resp[8] = TEMT6000.TEMT6000_getLight();
-     // byte 9: alert status
-     resp[9] = alert_status;
+     Serial.print("brightness: ");Serial.println((int)resp[8]);
+     // byte 9: motion
+     resp[9] = Motion.Motion_status();;
+     Serial.print("motion: ");Serial.println((int)resp[9]);
      // byte 10: noise
-     resp[10] = Micro.Micro_getNoise();
-     // byte 11: acc_z
-     resp[11] = MPU6050.getAccelerationZ();          
+     //resp[10] = Micro.Micro_getNoise();
+     //Serial.print("noise: ");Serial.println((int)resp[10]);
+     // byte 11: alert status
+     resp[11] = alert_status;
+     Serial.print("alert status: ");Serial.println((int)resp[11]);
      // byte 12: picture number
      resp[12] = no_picture;
+     Serial.print("no_picture: ");Serial.println((int)resp[12]);
+
      resp_len = 12+1;
      
      if (resp[0] == STATE_GO) {
-         lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);
+         lcd.print((int)resp[1]);lcd.print((char)126);lcd.print((byte)lcd_pipe);lcd.print((int)resp[2]);lcd.print((char)127);
      }    
      else
      {
          lcd.print("STOPPED");
      }
      lcd.setCursor(0,1);   
-     lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
-     lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
+     lcd.print((int)resp[7]); lcd.print((byte)lcd_celcius);lcd.print((byte)lcd_pipe);   
+     lcd.print((int)resp[6]); lcd.print("cm");lcd.print((byte)lcd_pipe);
      lcd.print((int)resp[5]); lcd.print((char)223); //degree    
     
      break; 
 
  case CMD_ALERT:    
+     blink(Led_Red);     
      Serial.println("CMD_ALERT");
      alert_status = cmd[1];
 
@@ -405,31 +442,46 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
               
      // byte 0: motor_state
      resp[0] = motor_state;
+     Serial.print("motor_state: ");Serial.println((int)resp[0]);
      // byte 1: SpeedMotorRight
      resp[1] = get_SpeedMotorRight();
+     Serial.print("SpeedMotorRight: ");Serial.println((int)resp[1]);
      // byte 2: SpeedMotorLeft
      resp[2] = get_SpeedMotorLeft();
+     Serial.print("SpeedMotorLeft: ");Serial.println((int)resp[2]);
      // byte 3: TickRight
      resp[3] = get_TickRight();
+     Serial.print("TickRight: ");Serial.println((int)resp[3]);
      // byte 4: TickLeft
      resp[4] = get_TickLeft();
+     Serial.print("TickLeft: ");Serial.println((int)resp[4]);
      // byte 5: direction
      resp[5] = CMPS03.CMPS03_read();
+     Serial.print("direction: ");Serial.println((int)resp[5]);
      // byte 6: distance
      resp[6] = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
+     Serial.print("distance: ");Serial.println((int)resp[6]);
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
+     Serial.print("temperature: ");Serial.println((int)resp[7]);
      // byte 8: brightness
      resp[8] = TEMT6000.TEMT6000_getLight();
-     // byte 9: alert status
-     resp[9] = alert_status;
+     Serial.print("brightness: ");Serial.println((int)resp[8]);
+     // byte 9: motion
+     resp[9] = Motion.Motion_status();;
+     Serial.print("motion: ");Serial.println((int)resp[9]);
      // byte 10: noise
-     resp[10] = Micro.Micro_getNoise();
-     // byte 11: acc_z
-     resp[11] = MPU6050.getAccelerationZ();          
+     //resp[10] = Micro.Micro_getNoise();
+     //Serial.print("noise: ");Serial.println((int)resp[10]);
+     // byte 11: alert status
+     resp[11] = alert_status;
+     Serial.print("alert status: ");Serial.println((int)resp[11]);
      // byte 12: picture number
      resp[12] = no_picture;
-     resp_len = 12+1;     
+     Serial.print("no_picture: ");Serial.println((int)resp[12]);
+
+     resp_len = 12+1;
+  
      alert_status = 0; // reset alert
         
      buzz(5);
@@ -438,6 +490,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      break; 
      
  case CMD_PICTURE: 
+     blink(Led_Blue);     
      Serial.print("CMD_PICTURE, no_picture: ");
      no_picture++;
      Serial.println(no_picture);
@@ -476,6 +529,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      break;
 
  case CMD_GO: 
+     blink(Led_Blue);     
      Serial.print("CMD_GO, nb seconds: ");
      Serial.print((int)cmd[1]);
      Serial.print("\tPID: ");
@@ -501,7 +555,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
               motor_state = STATE_STOP;
      	      error = 1;
      	                   
-              Serial.print("CMD_GO error"); Serial.println(ret);
+              Serial.print("CMD_GO error: "); Serial.println(ret);
               Serial.println("Stop");              
               lcd.setCursor(0,1); 
               lcd.print("error: "); lcd.print(ret);                
@@ -514,8 +568,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
               
               buzz(3);
               blink(Led_Red);     
-              Serial.println("CMD_GO Obstacle");
-              Serial.println(ret);
+              Serial.print("CMD_GO Obstacle: ");Serial.println(ret);
               Serial.println("Stop");
               lcd.setCursor(0,1); 
               if (ret == OBSTACLE_LEFT)        lcd.print("OBSTACLE LEFT");
@@ -548,7 +601,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
                       motor_state = STATE_STOP;                   	  
                    	  error = 1;
                    	                     	  
-                   	  Serial.print("turn error"); Serial.println(ret);
+                   	  Serial.print("turn error: "); Serial.println(ret);
                       Serial.println("Stop");                                         	  
                    	  lcd.clear();                   	  
                    	  lcd.print("turn left");
@@ -571,7 +624,7 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
                       motor_state = STATE_STOP;  
                    	  error = 1;
                    	                     	 
-                   	  Serial.print("turn error"); Serial.println(ret);
+                   	  Serial.print("turn error: "); Serial.println(ret);
                    	  Serial.println("Stop"); 
                    	  lcd.clear();                   	  
                    	  lcd.print("turn right");
@@ -621,43 +674,59 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
      
      // byte 0: motor_state
      resp[0] = motor_state;
+     Serial.print("motor_state: ");Serial.println((int)resp[0]);
      // byte 1: SpeedMotorRight
      resp[1] = get_SpeedMotorRight();
+     Serial.print("SpeedMotorRight: ");Serial.println((int)resp[1]);
      // byte 2: SpeedMotorLeft
      resp[2] = get_SpeedMotorLeft();
+     Serial.print("SpeedMotorLeft: ");Serial.println((int)resp[2]);
      // byte 3: TickRight
      resp[3] = get_TickRight();
+     Serial.print("TickRight: ");Serial.println((int)resp[3]);
      // byte 4: TickLeft
      resp[4] = get_TickLeft();
+     Serial.print("TickLeft: ");Serial.println((int)resp[4]);
      // byte 5: direction
      resp[5] = CMPS03.CMPS03_read();
+     Serial.print("direction: ");Serial.println((int)resp[5]);
      // byte 6: distance
      resp[6] = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
+     Serial.print("distance: ");Serial.println((int)resp[6]);
      // byte 7: temperature
      resp[7] = TMP102.TMP102_read();
+     Serial.print("temperature: ");Serial.println((int)resp[7]);
      // byte 8: brightness
      resp[8] = TEMT6000.TEMT6000_getLight();
-     // byte 9: alert status
-     resp[9] = alert_status;
+     Serial.print("brightness: ");Serial.println((int)resp[8]);
+     // byte 9: motion
+     resp[9] = Motion.Motion_status();;
+     Serial.print("motion: ");Serial.println((int)resp[9]);
      // byte 10: noise
-     resp[10] = Micro.Micro_getNoise();
-     // byte 11: acc_z
-     resp[11] = MPU6050.getAccelerationZ();          
+     //resp[10] = Micro.Micro_getNoise();
+     //Serial.print("noise: ");Serial.println((int)resp[10]);
+     // byte 11: alert status
+     resp[11] = alert_status;
+     Serial.print("alert status: ");Serial.println((int)resp[11]);
      // byte 12: picture number
      resp[12] = no_picture;
+     Serial.print("no_picture: ");Serial.println((int)resp[12]);
+
+     resp_len = 12+1;
+  
      resp_len = 12+1;
               
      if (error == 0) {
          if (resp[0] == STATE_GO) {
-             lcd.print((int)resp[1]);lcd.print((char)126);lcd.print(lcd_pipe,BYTE);lcd.print((int)resp[2]);lcd.print((char)127);
+             lcd.print((int)resp[1]);lcd.print((char)126);lcd.print((byte)lcd_pipe);lcd.print((int)resp[2]);lcd.print((char)127);
          }    
          else
          {
              lcd.print("STOPPED");
          }
          lcd.setCursor(0,1);   
-         lcd.print((int)resp[7]); lcd.print(lcd_celcius,BYTE);lcd.print(lcd_pipe,BYTE);   
-         lcd.print((int)resp[6]); lcd.print("cm");lcd.print(lcd_pipe,BYTE);
+         lcd.print((int)resp[7]); lcd.print((byte)lcd_celcius);lcd.print((byte)lcd_pipe);   
+         lcd.print((int)resp[6]); lcd.print("cm");lcd.print((byte)lcd_pipe);
          lcd.print((int)resp[5]); lcd.print((char)223); //degree   
      } 
            
@@ -673,7 +742,8 @@ int CmdRobot (uint16_t cmd [3], int16_t *resp, int *presp_len)
  *presp_len = resp_len;
     
  if (error == 1) {
-    digitalWrite(Led_Red, HIGH); // turn on led red
+    blink(Led_Red);
+    blink(Led_Red);
     buzz(7);
  }
  buzz (1);                       
