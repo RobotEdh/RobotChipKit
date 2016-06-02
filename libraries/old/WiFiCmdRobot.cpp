@@ -1,13 +1,12 @@
 #include <WiFiCmdRobot.h>
 #include <robot.h>
 #include <LiquidCrystal_I2C.h> // LCD
-#include <Motion.h>            // Motion
 
 extern LiquidCrystal_I2C lcd;
 
 // SD variables
-extern SdFile root;   // SD Root
-SdFile FilePicture;   // SD File
+extern SdFile root;          // SD Root
+extern SdFile FilePicture;   // SD File
 
 
 // Specify the SSID
@@ -43,67 +42,6 @@ int resp_len = 0;
    
 uint32_t timeout_infos = 10; // 10s
 uint32_t t_infos = 0;
-
-MotionClass Motion;   // The Motion class
-
-int noise = 0;
-int acc_z = 0;
-
-int temperature = 0;
-int previous_temperature = 0;
-int tab_temperature[NB_TEMPERATURE] = {0};
-unsigned long avg_temperature = 0;
-
-int lux = 0;
-int previous_lux = 0;
-int tab_lux[NB_LUX] = {0};
-unsigned long avg_lux = 0;
-
-int WiFiCmdRobot::WiFiCmdRobot_init_Alerts() {
-    int ret=SUCCESS;
- 
-    Serial.println("Begin WiFiCmdRobot_init_Alerts");
-  
-    // initialize Motion   
-    Motion.Motion_init(MOTION_PIN); // initialize the pin connected to the sensor
-    Serial.println("Init Motion OK");
-
-    Serial.println("End WiFiCmdRobot_init_Alerts");
-   
-    return SUCCESS;   // Continue if error  
-}
-
-
-int WiFiCmdRobot::WiFiCmdRobot_init_SDCard() {
-    int ret=SUCCESS;
- 
-    Serial.println("Begin WiFiCmdRobot_init_SDCard");
-  
-    // initialize the SD-Card    
-    ret = initSDCard();
-    if (ret != SUCCESS)
-    {  
-        Serial.print("Error Init SD-Card, error: ");
-        Serial.println(ret);
-    }                                                                    
-    else
-    {
-        Serial.println("Init SD-Card OK");
-        Serial.println("");
-    }
-    
-    // get infos from SD-Card  
-    ret=infoSDCard();
-    if (ret != SUCCESS)
-    {  
-        Serial.print("Error Infos SD-Card, error: ");
-        Serial.println(ret);
-    }
-
-    Serial.println("End WiFiCmdRobot_init_SDCard");
-   
-    return SUCCESS;   // Continue if error  
-}
 
 
 int WiFiCmdRobot::WiFiCmdRobot_scan() {
@@ -302,17 +240,9 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
     int ret=SUCCESS;
     
     Serial.println("Begin WiFiCmdRobot_begin");
- 
-    Serial.println("Begin WIFI Init"); 
     lcd.clear();
     lcd.print("Begin WIFI Init");
-          
-    // Init SD Card
-    ret = WiFiCmdRobot::WiFiCmdRobot_init_SDCard();
-        
-    //Init Alerts
-    ret = WiFiCmdRobot::WiFiCmdRobot_init_Alerts();
-        
+             
     // Start a WIFI scan
     ret = WiFiCmdRobot::WiFiCmdRobot_scan();
         
@@ -402,8 +332,8 @@ int WiFiCmdRobot::WiFiCmdRobot_begin() {
     lcd.print("End   WIFI Init");
     
     Serial.println("");
-    Serial.println("End WiFiCmdRobot Init");
-    Serial.println("*********************");
+    Serial.println("End WiFiCmdRobot_begin");
+    Serial.println("**********************");
     Serial.println("");
 
     return SUCCESS;                        
@@ -417,9 +347,14 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
     unsigned long start = 0;
     int ret=SUCCESS;
 
-    digitalWrite(Led_Yellow, HIGH);               // turn on led yellow
-
-    alert_status = WiFiCmdRobot::Check_Alert();  
+    Serial.println("Call command CHECK");
+  	cmd[0] = CMD_CHECK;
+    cmd[1] = 0;
+    cmd[2] = 0;
+    ret = robot_command (cmd, resp, &resp_len);
+    
+    Serial.print("Call robot_command, ret: "); Serial.println(ret);	
+    alert_status = resp[0];  
     Serial.print("Alert: "); Serial.println(alert_status);
     
     if(alert_status)
@@ -430,13 +365,13 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
        cmd[1] = alert_status;
        cmd[2] = 0;
        cmd_GO[0]= 0; //reset GO command  
-       ret = CmdRobot (cmd, resp, &resp_len);
+       ret = robot_command (cmd, resp, &resp_len);
       
-       Serial.print("Call CmdRobot, ret: ");
+       Serial.print("Call robot_command, ret: ");
        Serial.println(ret);	
        
        // Send last 3 pictures
-       /*for(int j=resp[10]-2; j<=resp[10]; j++)
+       for(int j=resp[10]-2; j<=resp[10]; j++)
        {
           Serial.println("Call WiFiSendFastPicture");
           ret = WiFiCmdRobot::WiFiSendFastPicture(j);
@@ -449,7 +384,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
               ret = WiFiCmdRobot::WiFiCmdRobot_init_TCPIP();
           }
        }
-       */   
+          
        Serial.println("Call WiFiSendInfos");              
        ret= WiFiSendInfos();    
     
@@ -465,7 +400,6 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
     {
        Serial.print("Listening on port: ");
        Serial.println(this_portServer, DEC);
-       digitalWrite(Led_Yellow, HIGH);               // turn on led yellow
         
        // wait for a connection until timeout
        conx = 0;
@@ -556,9 +490,9 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
           cmd[0] = cmd_GO[0];
           cmd[1] = t_GO;
           cmd[2] = cmd_GO[2];   
-          ret = CmdRobot (cmd, resp, &resp_len);
+          ret = robot_command (cmd, resp, &resp_len);
        
-          Serial.print("Call CmdRobot, ret: ");
+          Serial.print("Call robot_command, ret: ");
           Serial.print(ret);
           Serial.print(" / resp_len: ");
           Serial.println(resp_len);        
@@ -571,9 +505,9 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
           cmd[0] = CMD_STOP;  // Stop after GO
           cmd[1] = 0;
           cmd[2] = 0;   
-          ret = CmdRobot (cmd, resp, &resp_len);
+          ret = robot_command (cmd, resp, &resp_len);
        
-          Serial.print("Call CmdRobot, ret: ");
+          Serial.print("Call robot_command, ret: ");
           Serial.print(ret);
           Serial.print(" / resp_len: ");
           Serial.println(resp_len);        
@@ -585,9 +519,9 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
           cmd[0] = CMD_INFOS;
           cmd[1] = 0;
           cmd[2] = 0;
-          ret = CmdRobot (cmd, resp, &resp_len);
+          ret = robot_command (cmd, resp, &resp_len);
        
-          Serial.print("Call CmdRobot, ret: ");
+          Serial.print("Call robot_command, ret: ");
           Serial.println(ret);
           
           Serial.println("Call WIFI send INFOS");
@@ -604,15 +538,7 @@ int WiFiCmdRobot::WiFiCmdRobot_main() {
           }
     }
     
-    if (resp_len > 8) {
-         temperature = resp[7];
-         lux         = resp[8];
-         noise       = resp[10];
-         acc_z       = resp[11];
-    }     
-    
-    digitalWrite(Led_Yellow, LOW);               // turn off led yellow
-          
+         
     return SUCCESS;    
 }
 
@@ -770,13 +696,13 @@ int WiFiCmdRobot::Cmd (String s)
        }                                    
        if (szcmd == "TURN_RIGHT")
        {
-               cmd[0] = CMD_TURN_RIGHT;
+               cmd[0] = CMD_TURN;
                cmd[1] = iparam[0];
-               cmd[2] = 0;
+               cmd[2] = 1;
        }                                    
        if (szcmd == "TURN_LEFT")
        {
-               cmd[0] = CMD_TURN_LEFT;
+               cmd[0] = CMD_TURN;
                cmd[1] = iparam[0];
                cmd[2] = 0;
        }                                           
@@ -802,9 +728,9 @@ int WiFiCmdRobot::Cmd (String s)
                cmd[2] = cmd_GO[2];
        } 
        
-       ret = CmdRobot (cmd, resp, &resp_len);
+       ret = robot_command (cmd, resp, &resp_len);
        
-       Serial.print("Call CmdRobot, ret: ");
+       Serial.print("Call robot_command, ret: ");
        Serial.print(ret);
        Serial.print(" / resp_len: ");
        Serial.println(resp_len); 
@@ -904,6 +830,7 @@ int WiFiCmdRobot::WiFiSendPicture (int16_t n)
   if (!FilePicture.close()) return FILE_CLOSE_ERROR;  
   
   return SUCCESS;
+  
 }
 
 int WiFiCmdRobot::WiFiSendFastPicture (int16_t n)
@@ -1063,59 +990,6 @@ int WiFiCmdRobot::WiFiSendInfos ()
   return SUCCESS;              
 } 
 
-int WiFiCmdRobot::Check_Alert ()
-{
-  int motion_status = 0;
-  int i = 0;
-  
-  // Check motion
-  motion_status = Motion.Motion_status();  
-  Serial.print("Motion: "); Serial.println(motion_status);
-  if(motion_status == 1) return ALERT_MOTION;
- 
-  // Check noise
-  Serial.print("noise: "); Serial.print(noise);Serial.print(" -- THR_NOISE: "); Serial.println(THR_NOISE);
-  if (noise > THR_NOISE) return ALERT_NOISE;
-
-  // Check acceleration
-  Serial.print("acc_z: "); Serial.print(acc_z);Serial.print(" -- THR_ACC_Z: "); Serial.println(THR_ACC_Z);
-  if (acc_z > THR_ACC_Z) return ALERT_ACC_Z;
     
-  // Check Temperature Variation
-  Serial.print("temperature: "); Serial.print(temperature);Serial.print(" -- previous_temperature: "); Serial.print(previous_temperature);Serial.print(" -- VAR_TEMPERATURE: "); Serial.println(VAR_TEMPERATURE);
-  if (temperature != previous_temperature) {
-      previous_temperature = temperature;  
-      if (VAR_TEMPERATURE > abs(avg_temperature -temperature) && tab_temperature[NB_TEMPERATURE-1] != 0) {
-          return ALERT_TEMPERATURE;
-      }    
-  
-      avg_temperature = 0;
-      for (i=NB_TEMPERATURE;i<2;i--) { 
-          tab_temperature[i-1] = tab_temperature[i-2];
-          avg_temperature += tab_temperature[i-1];
-      }
-      tab_temperature[0]=temperature;
-      avg_temperature = (avg_temperature+temperature)/NB_TEMPERATURE;
-  }
-         
-  // Check Lux Variation
-  Serial.print("lux: "); Serial.print(lux);Serial.print(" -- previous_lux: "); Serial.print(previous_lux);Serial.print(" -- VAR_LUX: "); Serial.println(VAR_LUX);
-  if (lux != previous_lux) {
-      previous_lux = lux;  
-      if (VAR_LUX > abs(avg_lux -lux) && tab_lux[NB_LUX-1] != 0) {
-          return ALERT_LUX;
-      }    
-  
-      avg_lux = 0;
-      for (i=NB_LUX;i<2;i--) { 
-          tab_lux[i-1] = tab_lux[i-2];
-          avg_lux += tab_lux[i-1];
-      }
-      tab_lux[0]=lux;
-      avg_lux = (avg_lux+lux)/NB_LUX;
-  }
-      
-  return NO_ALERT;              
-}        
 
    

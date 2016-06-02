@@ -9,20 +9,33 @@ LiquidCrystal_I2C lcd(0x20,16,2);  // set the LCD address to 0x20 for a 16 chars
 int SpeedMotorRight = 0;      // Duty cycle PWM motor right between 0 and SPEEDMAX( 255)
 int SpeedMotorLeft = 0;       // Duty cycle PWM motor left between 0 and SPEEDMAX (255)
 
+#ifdef PID
 // data updated during interrupts
 volatile int TickRight = 0;   
 volatile int TickLeft = 0;
+#endif
 
-CMPS03Class CMPS03;          // The Compass class
+CMPS03Class CMPS03;           // The Compass class
 GP2Y0A21YKClass GP2Y0A21YK;   // The IR sensor class
-Servo IRServo;               // The Servo class used for IR sensor
+Servo IRServo;                // The Servo class used for IR sensor
 
 
 int motor_begin()
 {
-  
+  int ret = SUCCESS;
+ 
   Serial.println("Begin Motor Init");
 
+  // initialize the lcd 
+  ret = lcd.init();
+  if (ret == 0) {                      
+      lcd.backlight();
+      Serial.println("Init LCD OK");
+  }    
+  else {
+      Serial.print("Init LCD KO, error: ");
+      Serial.println(ret);    
+  }
   lcd.clear();
   lcd.print("Begin Motor Init");
   
@@ -76,14 +89,15 @@ int motor_begin()
      Serial.println("Init compass OK");
   }
 
-      
+#ifdef PID      
   // interrupts setup
   pinMode(EncoderTickRightPin, INPUT);      // set the pin as input
   pinMode(EncoderTickLeftPin, INPUT);       // set the pin as input
   attachInterrupt(EncoderTickRightINT, IntrTickRight, FALLING);  // set right tick interrupt
   attachInterrupt(EncoderTickLeftINT, IntrTickLeft, FALLING);    // set left tick interrupt
-  
+ 
   interrupts(); // enable all interrupts
+#endif 
   
   lcd.setCursor(0,1); 
   lcd.print("End   Motor Init");
@@ -98,6 +112,7 @@ int motor_begin()
 }
 
 
+#ifdef PID 
 void IntrTickRight()  // right tick interrupt
 {
     TickRight++;
@@ -129,6 +144,7 @@ void reset_TickLeft()
 {
   TickLeft = 0;  
 }
+#endif
 
 int get_SpeedMotorRight()
 {  
@@ -361,44 +377,45 @@ void change_speed(int speed)
  return; 
 }
 
-int go(unsigned long timeout, int pid_ind)
+int go(unsigned long timeout)
 {
  int ret = SUCCESS;
  int pid;
  int distance = 0;
  int direction = 0; /* direction between 0-254, 0: North */
  int inputpin = HIGH; 
- 
+
+#ifdef PID  
  TickLeft  = 0;  // reset ticks
  TickRight = 0;
+#endif
  
  unsigned long start = millis();
  unsigned long current = millis();
  while (millis() - start < timeout*1000) {  // go during maximum timeout seconds  
     
-       if (pid_ind == 1) {
-             if (TickLeft > TickRight) {
-                   pid = computePID (TickLeft - TickRight); // compute PID
-                   ret = adjustMotor (LEFT_MOTOR, pid);     // Adjust according PID
-                   if (ret == SPEED_ERROR) return SPEED_ERROR;
-             }      
-              if (TickLeft < TickRight) {
-                   pid = computePID (TickRight - TickLeft);  // compute PID
-                   ret = adjustMotor (RIGHT_MOTOR, pid);     // Adjust according PID
-                   if (ret == SPEED_ERROR) return SPEED_ERROR;
-             }
-       } // end PID
-
+#ifdef PID 
+       if (TickLeft > TickRight) {
+             pid = computePID (TickLeft - TickRight); // compute PID
+             ret = adjustMotor (LEFT_MOTOR, pid);     // Adjust according PID
+             if (ret == SPEED_ERROR) return SPEED_ERROR;
+       }      
+       if (TickLeft < TickRight) {
+             pid = computePID (TickRight - TickLeft);  // compute PID
+             ret = adjustMotor (RIGHT_MOTOR, pid);     // Adjust according PID
+             if (ret == SPEED_ERROR) return SPEED_ERROR;
+       }
+#endif
     
        // Check Contacts sensors, HIGH in normal situation
        inputpin = digitalRead(ContactRightPin);  // read input value
        if (inputpin == LOW) {
-            Serial.print("-->obstacle right");
+            Serial.println("-->obstacle right");
             return OBSTACLE_RIGHT;   
        }  
        inputpin = digitalRead(ContactLeftPin);  // read input value
        if (inputpin == LOW) { 
-           Serial.print("-->obstacle left");
+           Serial.println("-->obstacle left");
            return OBSTACLE_LEFT;   
        }
             

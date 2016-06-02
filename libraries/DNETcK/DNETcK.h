@@ -292,9 +292,14 @@ private:
     // also, if you pass TcpClient to a method taking Print
     // that method will see all of the write() methods off of Print
     using Print::write;
-    void write(uint8_t bData);
-    void write(const char *str);
-    void write(const uint8_t *buffer, size_t size);
+// Change due to new PID release
+//    void write(uint8_t bData);
+//    void write(const char *str);
+//    void write(const uint8_t *buffer, size_t size);
+    virtual size_t write(uint8_t bData);
+    virtual size_t write(const char *str);
+    virtual size_t write(const uint8_t *buffer, size_t size);
+
 
 public:
     TcpClient();

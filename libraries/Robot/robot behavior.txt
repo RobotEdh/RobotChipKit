@@ -1,0 +1,27 @@
+
+  during n miliseconds:
+     check contacts sensors left and right, return in case of obstacle
+     check distance using IR every 1 second, return in case < DISTANCE_MIN
+             
+             
+             
+  obstacle management
+    stop
+    buzz(3);
+    blink(Led_Red); 
+    
+    dir = check_around using TiltPan ans IR
+    if (dir == DIRECTION_LEFT) {
+                   start_forward
+                   turn  -45 degrees during 5s max
+    else if (dir == DIRECTION_RIGHT) {
+                   start_forwaerd
+                   turn  +45 degrees during 5s max
+    else
+               	   buzz(3);
+                   blink(Led_Red);
+              	   turn back during 10s max
+                   
+  
+  
+   

@@ -19,13 +19,10 @@
 #include <DWIFIcK.h>
 
 #include <WiFiRobot.h>
+#include <Serial2IOT.h>
  
 
-
-uint16_t cmd[CMD_SIZE];
-int16_t resp[RESP_SIZE];
-int resp_len = 0;
-  
+ 
 void setup()
 {
   int ret = SUCCESS;
@@ -34,23 +31,8 @@ void setup()
   ret = robot_begin(); 
   if (ret != SUCCESS) exit;
 
-  Serial.println("Call command INFOS");
-  cmd[0] = CMD_INFOS;
-  cmd[1] = 0;
-  cmd[2] = 0;
-  ret = robot_command (cmd, resp, &resp_len);
-  Serial.print("Call CmdRobot, ret: ");
-  Serial.println(ret);
-  
-  
-  Serial.println("Call command PICTURE");
-  cmd[0] = CMD_PICTURE;
-  cmd[1] = 0;
-  cmd[2] = 0;
-  ret = robot_command (cmd, resp, &resp_len);
-  Serial.print("Call CmdRobot, ret: ");
-  Serial.println(ret);
-  
+  Serial.println("robot begin OK");
+ 
  }
 
 

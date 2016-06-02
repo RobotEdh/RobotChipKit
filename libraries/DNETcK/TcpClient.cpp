@@ -628,9 +628,13 @@ size_t TcpClient::readStream(byte *rgbRead, size_t cbReadMax)
 **      is to be put on the wire in one packet, Write should be used.
 **
 */
-void TcpClient::write(uint8_t bData){writeByte(bData);}
-void TcpClient::write(const char *str){if(str != NULL) {writeStream((const byte *) str, strlen(str));}}
-void TcpClient::write(const uint8_t *buffer, size_t size){writeStream(buffer, size);}
+// Change due to new PID release
+//void TcpClient::write(uint8_t bData){writeByte(bData);}
+//void TcpClient::write(const char *str){if(str != NULL) {writeStream((const byte *) str, strlen(str));}}
+//void TcpClient::write(const uint8_t *buffer, size_t size){writeStream(buffer, size);}
+ size_t TcpClient::write(uint8_t bData){writeByte(bData);}
+ size_t TcpClient::write(const char *str){if(str != NULL) {writeStream((const byte *) str, strlen(str));}}
+ size_t TcpClient::write(const uint8_t *buffer, size_t size){writeStream(buffer, size);}
 
 /***	int TcpClient::writeByte(byte bData)
 **      int TcpClient::writeByte(byte bData, DNETcK::STATUS * pStatus)

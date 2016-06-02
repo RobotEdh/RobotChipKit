@@ -23,39 +23,8 @@
 #define CAMERA_ERROR -8
 #define SDCARD_ERROR -9
 
-#define CMD_SIZE 3
-#define RESP_SIZE 13
-    
-const char szField[RESP_SIZE][30]={    
-"motor_state",
-"SpeedMotorRight",
-"SpeedMotorLeft",
-"TickRight",
-"TickLeft",
-"direction",
-"distance",
-"temperature",
-"brightness",
-"alert",
-"noise",
-"acc_z",
-"no_picture"
-};
-     
-
-#define CMD_START         0x01
-#define CMD_STOP          0x02
-#define CMD_INFOS         0x03
-#define CMD_PICTURE       0x04
-#define CMD_TURN_RIGHT    0x05
-#define CMD_TURN_LEFT     0x06
-#define CMD_CHECK_AROUND  0x07
-#define CMD_MOVE_TILT_PAN 0x08
-#define CMD_GO            0x09
-#define CMD_ALERT         0x10
-
-#define STATE_STOP 0x00
-#define STATE_GO   0x01
+#define STATE_STOP 0
+#define STATE_GO   1
 
 #define SPEEDMAX     255     // 255=PWM max
 #define SPEEDNOMINAL 100     // speed at start
@@ -83,12 +52,13 @@ const char szField[RESP_SIZE][30]={
     
 #define InMotorLeft2Pin    33     // In pin of Motor controller #2 for motor left #2 connected to digital pin J9-05(PMD4/RE4)
 #define EnableMotorLeft2Pin 9     // Enable pin of Motor controller #2 for motor left #2 connected to PWM pin J3-03(OC4/RD3)    Use TIMER_OC4
-    
+
+#ifdef PID     
 #define EncoderTickRightINT  4   // INT used by the encoder for motor right connected to interrupt pin INT4 J4-02(AETXEN/SDA1/INT4/RA15)  Use INT4
 #define EncoderTickRightPin 20
 #define EncoderTickLeftINT   3   // INT used by the encoder for motor left  connected to interrupt pin INT3 J4-01(AETXCLK/SCL1/INT3/RA14) Use INT3
 #define EncoderTickLeftPin  21
-
+#endif
 
 #define IRSERVO_Pin    36        // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
 #define GP2Y0A21YK_PIN A0        // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
@@ -96,8 +66,10 @@ const char szField[RESP_SIZE][30]={
 #define ContactRightPin 37   // Contact sensor Right pin connected to digital pin J9-01 (PMD0/RE0)
 #define ContactLeftPin  38   // Contact sensor Left pin connected to digital pin J8-18 (SCK1/IC3/PMCS2/PMA15/RD10)
 
+#ifdef PID
 void IntrTickRight();  // interrupt handler encoder right
 void IntrTickLeft();   // interrupt handler encoder right
+#endif
 
 int motor_begin();     
 /* Description: initialize everything, must be called during setup            */                                            
@@ -115,7 +87,7 @@ int motor_begin();
 /*              interrupts                                                    */ 
 /*              stop                                                          */
 
-
+#ifdef PID
 int get_TickRight();
 /* Description: get TickRight                                                 */                                            
 /* input:       none                                                          */
@@ -141,6 +113,7 @@ void reset_TickLeft();
 /* input:       none                                                          */
 /* output:      none                                                          */
 /* lib:         none                                                          */
+#endif
 
 int get_SpeedMotorRight();
 /* Description: get SpeedMotorRight                                           */                                            
@@ -288,7 +261,7 @@ void change_speed(int speed);
 /*                  = return number of decrements done                        */                                     
 /* lib:         analogWrite                                                   */ 
  
-int adjustMotor (int motor, int pid);
+int adjustMotor (int motor);
 /* Description: Adjust the speed of the motor according the PID value         */
 /* input:       motor                                                         */ 
 /*                  = LEFT_MOTOR                                              */ 
@@ -299,16 +272,13 @@ int adjustMotor (int motor, int pid);
 /* lib:         analogWrite                                                   */                                        
                                                                       
                                      
-int go(unsigned long timeout, int pid_ind); 
+int go(unsigned long timeout); 
 /* Description: go during timeout seconds or before in case of obstacle       */
 /*              detected by IR sensor.                                        */
 /*              if pid_ind = 1 then use a PID method (calling adjustMotor)    */
 /*              to control motors speed between left and right                */                  
 /* input:       timeout                                                       */ 
 /*                  = timeout in seconds                                      */   
-/* input:       pid_ind                                                       */
-/*                  = 0: disable PID adjustement                              */
-/*                  = 1: enable PID adjustement                               */    
 /* output:      return                                                        */                            
 /*                  = SPEED_ERROR if speed computed > SPEEDMAX                */
 /*                  = OBSTACLE_LEFT or OBSTACLE_RIGHT if an obstacle is hit   */
