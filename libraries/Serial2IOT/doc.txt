@@ -1,0 +1,44 @@
+                            COMMAND
+BROWSER
+click
+POST
+CMD=xx|PARAM=p1|p2|p3|>
+
+PHOTON
+function command
+send serial
+0xFA 0xFB # C 0  a # P  b c # P d e  0xFE 0xFF 
+
+ROBOT
+robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen)
+0xFA 0xFB # R 0  a # P  b c # P d e  0xFE 0xFF 
+
+PHOTON
+return integer
+
+BROWSER
+check return_value
+
+                            INFOS
+BROWSER
+every n seconds
+GET variable infos
+json "aaa" : i, "bbb":  j
+
+
+PHOTON
+every m seconds
+variable infos
+send serial
+0xFA 0xFB # C 0  a # P b c # P d e  0xFE 0xFF 
+
+ROBOT
+robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen)
+0xFA 0xFB # R 0  a # P b c # P d e  0xFE 0xFF 
+
+PHOTON
+update variable infos
+json "aaa" : i, "bbb":  j
+
+BROWSER
+check return_value

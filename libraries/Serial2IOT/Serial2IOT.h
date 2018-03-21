@@ -23,6 +23,7 @@ const uint8_t RESP_OK      = 2;
 const uint8_t RESP_KO      = 3;
 
 const uint8_t TAG_CMD      = 'C';
+const uint8_t TAG_CMDID    = 'I';
 const uint8_t TAG_PARAM    = 'P';
 const uint8_t TAG_RESP     = 'R';
 const uint8_t TAGSYMBOL    = '#';
@@ -56,9 +57,10 @@ class RIOTClass
         /*                  = 0 otherwise                                             */ 
         /* lib:         Serial2.available                                             */
         /*              Serial2.read                                                  */
-        
+        void RIOTsend(uint8_t msgtype,                 uint16_t *param, uint8_t paramlen);        
         void RIOTsend(uint8_t msgtype, uint8_t value1, uint16_t *param, uint8_t paramlen);
-        void RIOTsend(uint8_t msgtype,                 uint16_t *param, uint8_t paramlen);
+        void RIOTsend(uint8_t msgtype,                 uint16_t *param, uint8_t paramlen, uint8_t wcmdId);
+        void RIOTsend(uint8_t msgtype, uint8_t value1, uint16_t *param, uint8_t paramlen, uint8_t wcmdId);
         /* Description: Send a message to the IOT and get the response                */                                            
         /* input:       message                                                       */ 
         /*                  = message to send                                         */ 

@@ -76,13 +76,28 @@ int RIOTClass::RIOTread(uint8_t *msg, uint8_t *msglen)
 // Send a message
 void RIOTClass::RIOTsend(uint8_t msgtype, uint16_t *param, uint8_t paramlen)
 {
-    RIOTsend(msgtype, 0, param, paramlen);
+    RIOTsend(msgtype, 0, param, paramlen, 0);
 }
 
 void RIOTClass::RIOTsend(uint8_t msgtype, uint8_t value1, uint16_t *param, uint8_t paramlen)
 {
+    RIOTsend(msgtype, value1, param, paramlen, 0);
+}
+
+void RIOTClass::RIOTsend(uint8_t msgtype, uint16_t *param, uint8_t paramlen, uint8_t wcmdId)
+{
+    RIOTsend(msgtype, 0, param, paramlen, wcmdId);
+}
+
+void RIOTClass::RIOTsend(uint8_t msgtype, uint8_t value1, uint16_t *param, uint8_t paramlen, uint8_t wcmdId)
+{
     Serial2.write(SBN1);
     Serial2.write(SBN2);
+    
+    Serial2.write(TAGSYMBOL);
+    Serial2.write(TAG_CMDID);
+    Serial2.write(uint8_t(0));
+    Serial2.write(wcmdId);
     
     Serial2.write(TAGSYMBOL);
     

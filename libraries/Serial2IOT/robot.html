@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<title>Robot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+
+<head>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+
+    google.charts.load('current', {'packages':['gauge']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+        var Temperaturedata = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['Temperature', infos.Temperature]
+        ]);
+        var Brightnessdata = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['Brightness', infos.Brightness]
+        ]);
+
+        var chart_Temperature = new google.visualization.Gauge(document.getElementById('div_Temperature'));
+        var Temperatureoptions = {
+          width: 400, height: 120,
+          min: 10, max: 40,
+          redFrom: 30, redTo: 40,
+          yellowFrom:25, yellowTo: 30,
+          greenFrom:20, greenTo: 25,
+          minorTicks: 5
+        };
+        chart_Temperature.draw(Temperaturedata, Temperatureoptions);
+      
+        var chart_Brightness = new google.visualization.Gauge(document.getElementById('div_Brightness'));       
+        var Brightnessoptions = {
+          width: 400, height: 120,
+          min: 0, max: 800,
+          redFrom: 300, redTo: 800,
+          greenFrom:0, greenTo: 300,
+          minorTicks: 50
+        };
+        chart_Brightness.draw(Brightnessdata, Brightnessoptions);
+
+    } //end function drawChart
+ 
+    var deviceID    = "20002f001447343338333633";
+    var accessToken = "4fe8f0e9c0367676a0544a6baa29a2c3c3a8ab79";
+    var commandFunc = "robotCmd";
+    var infosFunc   = "robotInfos"
+    var lastCmd     = -1;
+    
+    var infos       =
+        {
+        "MotorState" : 1, 
+        "Direction" : 120,  
+        "Distance" : 30,   
+        "Temperature" : 22,
+        "Brightness"  : 140,
+        "Noise" : 300,
+        "AlertStatus" : 2,
+        "PictureNumber" : 3
+    };
+    var MotorStateList = ["Stop", "Go"];
+    var AlertList = ["No alert", "Motion", "Lux", "Temperature", "Noise"];
+     
+    function displayinfos()
+    {   
+       document.getElementById("p_Distance").innerHTML = 'Distance obstacle: ' + '<b>'+infos.Distance + ' cm'+ '</b>';
+       document.getElementById("p_MotorState").innerHTML = 'Motor state: ' + '<b>' + MotorStateList[infos.MotorState] + '</b>';
+       document.getElementById("p_Alert").innerHTML = 'Alert status: '  + '<b>' + AlertList[infos.AlertStatus] + '</b>';
+       if (infos.AlertStatus > 0) {
+          document.getElementById("p_Alert").style.color = "red";
+       }   
+       document.getElementById("PictureNumber").innerHTML = infos.PictureNumber;    
+       document.getElementById("div_infos").innerHTML = 'MotorState: ' + infos.MotorState + ' - Direction:' + infos.Direction + ' - Distance:' + infos.Distance + ' - Temperature:' + infos.Temperature + ' - Brightness:' + infos.Brightness  + ' - Noise:' + infos.Noise + ' - Alert status:' + infos.AlertStatus + ' - Picture number: ' + infos.PictureNumber;
+    } // end function displayinfo
+       
+    function updateTextInput0(val) {
+       document.getElementById('textInput0').value=val; 
+    }   
+    
+    function updateTextInput1(val) {
+       document.getElementById('textInput1').value=val; 
+    }
+    
+    function updateTextInput2(val) {
+       document.getElementById('textInput2').value=val; 
+    }
+    
+    function sendCommand()
+    {
+       if(document.getElementById('Start').checked) {
+         console.log("Start checked");
+         if (lastCmd == -1) {
+            lastCmd = 2;
+            sparkPost('CMD=START|>');
+          }
+       }      
+       else if(document.getElementById('Stop').checked) {
+         console.log("Stop checked");
+         if (lastCmd == -1) {
+            lastCmd = 3;
+            sparkPost('CMD=STOP|>');     
+         }
+       }
+       else if(document.getElementById('CheckAround').checked) {
+         console.log("Check around");
+         if (lastCmd == -1) {
+            lastCmd = 4;
+            sparkPost('CMD=CHECK_AROUND|>');
+        }
+       }
+       else if(document.getElementById('Check').checked) {
+         console.log("Check");
+         if (lastCmd == -1) {
+            lastCmd = 5;
+            sparkPost('CMD=CHECK|>');
+         }
+       }
+       else if(document.getElementById('Turn').checked) {
+         console.log("Turn");
+         if (lastCmd == -1) {          
+            lastCmd = 6;
+            sparkPost('CMD=TURN' + '|PARAM=' + document.getElementById('TurnValue').value + '|>');                                     
+         }
+       }
+       else if(document.getElementById('Picture').checked) {
+         console.log("Picture checked");
+         if (lastCmd == -1) {
+            lastCmd = 7;
+            sparkPost('CMD=PICTURE|>'); 
+         }
+       } 
+       else if(document.getElementById('Alert').checked) {
+         console.log("Alert checked");
+         if (lastCmd == -1) {
+            lastCmd = 8;
+            sparkPost('CMD=ALERT|>');
+         }
+       }
+       else if(document.getElementById('Go').checked) {
+         console.log("Go checked");
+         if (lastCmd == -1) {
+            lastCmd = 9;
+            sparkPost('CMD=GO' + '|PARAM=' + document.getElementById('GoValue').value + '|>');                   
+         }
+       } 
+       else if(document.getElementById('MoveTitltPan').checked) {
+         console.log("MoveTitltPan checked");
+         if (lastCmd == -1) {
+            lastCmd = 10;
+            sparkPost('CMD=MOVE_TILT_PAN' + '|PARAM=' +  document.getElementById('HorizontalValue').value + '|' + document.getElementById('VerticalValue').value + '|>');                   
+         }
+       }
+       else if(document.getElementById('Infos').checked) {
+         console.log("Infos checked");
+         if (lastCmd == -1) {
+            lastCmd = 11;
+            sparkPost('CMD=INFOS' + '|PARAM=' + document.getElementById('InfosValue').value + '|>');
+        }
+       }       
+       else if(document.getElementById('PI').checked) {
+         console.log("PI checked");
+         if (lastCmd == -1) {
+            lastCmd = 12;
+            sparkPost('CMD=PI' + '|PARAM=' + document.getElementById('PIactivate').value + '|' + document.getElementById('PIinfosValue').value + '|>');                   
+         }
+       }
+       else if(document.getElementById('Test').checked) {
+         console.log("Test checked");
+         if (lastCmd == -1) {
+            lastCmd = 99;
+            sparkPost('CMD=TEST' + '|PARAM=' + '12' + '|>');
+          }
+       }                              
+ 
+    } // function sendCommand
+    
+    
+    function sparkPost(command) {
+	   var requestURL = "https://api.particle.io/v1/devices/" + deviceID + "/" + commandFunc + "/";
+	   console.log(command);
+       
+       $.post( requestURL,
+             { params: command, access_token: accessToken },
+             function(data,status)
+             {
+                       console.log("Data: " + data + "\nStatus: " + status);
+                       var rawData = JSON.parse(data);
+                       result = JSON.parse(rawData.return_value);
+                       console.log("result: " + result);
+                             
+                       if (result < 0) alert ("error send command: " + result);
+                       else
+                       {
+                             switch (lastCmd)
+                             {                              
+                             case 4: //check around
+                                   var tmptxt='?';
+                                   if      (result == 1) tmptxt = 'Left OK';
+                                   else if (result == 2) tmptxt = 'Right OK';
+                                   else                  tmptxt = 'Obstacle';
+                                   document.getElementById("CheckAroundResult").innerHTML = ' - Result: ' + '<b>' + tmptxt + '</b>';
+                                   break;
+                             
+                             case 5: //Check
+                                   document.getElementById("p_Alert").innerHTML = 'Alert status: ' + '<b>' + AlertList[result] + '</b>';
+                                   if (result > 0) {
+                                       document.getElementById("p_Alert").style.color = "red";
+                                   } 
+                                   infos.AlertStatus = result;
+                                   break;
+                             
+                             case 7: // picture
+                             case 8: // alert
+                                   document.getElementById("PictureNumber").innerHTML = result;
+                                   infos.PictureNumber = result;
+                                   break;
+                             
+                             case 99: // test
+                                   alert("Test sucessfull");
+                                   break;
+                             }
+                             lastCmd = -1;
+                       }     
+             }                              
+        ); // end post
+    } // end sparkPost
+    
+    
+    var GetInfosFreq = setInterval(function(){ GetInfos() }, 5000); // every 5 secs
+    function GetInfos ()
+    {
+        var requestURL = "https://api.particle.io/v1/devices/" + deviceID + "/" + infosFunc + "?access_token=" + accessToken;
+        $.get(requestURL,
+            function(data, status)
+            {
+               console.log("Data: " + data + "\nStatus: " + status);
+               var obj = JSON.parse(data);
+               infos = JSON.parse(obj.result);
+               console.log(infos);
+               var d = new Date();
+               var t = d.toLocaleTimeString();
+               document.getElementById("uptime").innerHTML = t;
+               displayinfos();
+            },
+        "json"
+        );
+    }  // end startGetInfos
+                    
+</script>   
+
+<style>
+h1 { 
+    text-align: center;
+    font-weight: bold;
+    font-family: verdana;
+    font-size:200%;
+}
+p {
+    font-size: 80%;
+    line-height: 1;
+    margin-top: 0em;
+    margin-bottom: 0em;
+}
+ul {
+    display: block;
+    list-style-type: disc;
+    margin-top: 1em;
+    margin-bottom: 1 em;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 20px;
+}
+input[type=range][orient=vertical]
+{
+    writing-mode: bt-lr; /* IE */
+    -webkit-appearance: slider-vertical; /* WebKit */
+    width: 8px;
+    height: 175px;
+    padding: 0 5px;
+}
+</style>
+
+</head>
+  
+<body>   
+   
+<div class="w3-container w3-pale-blue">
+
+<h1>Robot</h1> 
+
+<div id="div_Brightness" style="width: 400px; height: 120px; float: right;"></div> 
+<div id="div_Temperature" style="width: 400px; height: 120px; float: right;"></div>
+
+<ul>
+<li><p id="p_MotorState"    style="font-size: 100%">Motor State:</p></li>
+<li><p id="p_Distance"      style="font-size: 100%">Distance obstacle:</p> </li>
+<li><p id="p_Alert"         style="font-size: 100%; color: black">Alert status:</p> </li>
+</ul>
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="Start" style="height:35px; width:15px" checked>
+<label class="w3-validate">Start</label></p>
+      
+<p>
+<input class="w3-radio" type="radio" name="command" id="Stop" style="height:35px; width:15px">
+<label class="w3-validate">Stop</label></p>
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="CheckAround" style="height:35px; width:15px">
+<label class="w3-validate">Check around</label>
+<span id="CheckAroundResult" style="font-size: 100%; font-weight: bold; color:Darkcyan"></span>
+</p>
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="Check" style="height:35px; width:15px">
+<label class="w3-validate">Check</label></p>
+    
+<p>
+<input class="w3-radio" type="radio" name="command" id="Turn" style="height:35px; width:15px">
+<label class="w3-validate">Turn (-180&deg to +180&deg) </label>
+</p>
+<p>
+<input type="range" id="TurnValue" min="-180" max="180" step="10" list="steplist" onchange="updateTextInput0(this.value)" style="margin-left: 25px;margin-top: 10px">
+<label for="textInput0">value:</label>
+<input type="text" id="textInput0" value="0" size="4" style="background-color: LightSkyBlue; border-style: none; text-align: right"> &deg
+</p>
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="Picture" style="height:35px; width:15px">
+<label class="w3-validate">Picture</label> (# 
+<span id="PictureNumber" style="font-size: 100%; font-weight: bold; color: Darkcyan"></span>)
+</p>
+
+ <p>
+<input class="w3-radio" type="radio" name="command" id="Alert" style="height:35px; width:15px">
+<label class="w3-validate">Alert</label></p>
+ 
+ <p>
+<input class="w3-radio" type="radio" name="command" id="Go" style="height:35px; width:15px">
+<label class="w3-validate">Go during: </label>
+<input type="number" id="GoValue" min="0" max="3600" value="60" step = "60" style="background-color: LightSkyBlue;margin-top: 10px; width:100px" maxlength="4" size="4" > seconds
+</p>
+
+ <p>
+<input class="w3-radio" type="radio" name="command" id="MoveTitltPan" style="height:35px; width:15px">
+<label class="w3-validate">Move TitltPan (-180&deg to +180&deg) </label>
+</p>
+ <p>
+<input type="range" id="HorizontalValue" min="-180" max="180" step="10" list="steplist" onchange="updateTextInput1(this.value)" style="margin-left: 25px;margin-top: 10px" orient="vertical">
+<label for="textInput1">value:</label>
+<input type="text" id="textInput1" value="0" size="4" style="background-color: LightSkyBlue; border-style: none; text-align: right"> &deg
+
+<input type="range" id="VerticalValue" min="-180" max="180" step="10" list="steplist" style=" margin-left: 50px;margin-top: 10px" onchange="updateTextInput2(this.value)">
+<label for="textInput2">value:</label>
+<input type="text" id="textInput2" value="0" size="4" style="background-color: LightSkyBlue; border-style: none; text-align: right"> &deg
+</p>
+<datalist id="steplist">
+    <option>-180</option>
+    <option>-150</option>
+    <option>-120</option>
+    <option>-90</option>
+    <option>-60</option>
+    <option>-30</option>    
+    <option>0</option>
+    <option>30</option>
+    <option>60</option>
+    <option>90</option>
+    <option>120</option>
+    <option>150</option>
+    <option>180</option>
+</datalist>
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="Infos" style="height:35px; width:15px">
+<span>Infos every: </span>
+<input type="number" id="InfosValue" min="5" max="3600" value="60" step = "60" style="background-color: LightSkyBlue; width:100px" maxlength="4" size="4" > seconds
+</p>
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="PI" style="height:35px; width:15px">
+<label>PI communication mode: </label>
+<select id="PIactivate" style="background-color: LightSkyBlue">
+    <option value="0" selected>no communication</option>
+    <option value="1">alerts only</option>
+    <option value="2">alerts & infos</option>
+</select>
+<span style="margin-left: 20px">Infos every: </span>
+<input type="number" id="PIinfosValue" min="5" max="3600" value="60" step = "60" style="background-color: LightSkyBlue; width:100px" maxlength="4" size="4" > seconds
+</p>
+
+
+<p>
+<input class="w3-radio" type="radio" name="command" id="Test" style="height:35px; width:15px">
+<label class="w3-validate">Test</label></p>
+           
+ <p>
+<input type="button" value="Valid" style="margin-left: 200px; margin-top: 30px; margin-bottom: 20px; font-weight: bold; font-size: 150%" onclick="sendCommand()">
+</p>
+   
+</div>
+<p id="uptime"></p>
+<div id="div_infos">infos</div>
+
+</body>
+
+</html> 
