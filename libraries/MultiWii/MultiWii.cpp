@@ -13,7 +13,7 @@ March  2013     V2.2
 #include <avr/pgmspace.h>
 #include "Arduino.h"
 #else
-#include "WProgram.h"
+#include "Arduino.h"
 #endif
 
 #include "config.h"

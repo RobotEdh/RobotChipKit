@@ -5,7 +5,7 @@
   Released into the public domain.
 */
 
-#include <WProgram.h> // used for delay function (core lib)
+#include <Arduino.h> // used for delay function (core lib)
 
 #include <LSY201.h>
 #include <sdcard.h>   // used to store the picture on a SD-Card
@@ -46,11 +46,11 @@ JPEGCameraClass::JPEGCameraClass()
 {
 }
 
-//Initialize the serial1 port and call reset ()
+//Initialize the Serial3 port and call reset ()
 int JPEGCameraClass::begin(void)
 {
 	//Camera baud rate is 38400
-	Serial1.begin(38400);
+	Serial3.begin(38400);
 	
 	//Reset the camera
 	return reset();	
@@ -72,20 +72,20 @@ int JPEGCameraClass::sendCommand(const uint8_t * command, uint8_t* response, int
 {
 	int ibuf=-1;
 
-	while(Serial1.available() > 0) {
-	    ibuf = Serial1.read();
+	while(Serial3.available() > 0) {
+	    ibuf = Serial3.read();
     } // waiting for data in the serial buffer
  
 	//Send each character in the command string to the camera through the camera serial port
 	for(int i=0; i<wlen; i++){
-		Serial1.write(*command++);
+		Serial3.write(*command++);
 	}
 
 	//Get the response from the camera and add it to the response string
 	for(int i=0; i<rlen; i++)
 	{
-		while(Serial1.available() == 0); // waiting for data in the serial buffer
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0); // waiting for data in the serial buffer
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}
@@ -100,16 +100,16 @@ int JPEGCameraClass::getSize(int * size)
 	uint8_t response[7];
 
 	//Flush out any data currently in the serial buffer
-	Serial1.flush();
+	Serial3.flush();
 	
 	//Send the command to get read_size bytes of data from the current address
-	for(int i=0; i<5; i++) Serial1.write(GET_SIZE[i]);
+	for(int i=0; i<5; i++) Serial3.write(GET_SIZE[i]);
 
 
 	//Read the response header.
 	for(int i=0; i<7; i++){
-		while(Serial1.available() == 0);
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0);
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;;
 	}
@@ -118,8 +118,8 @@ int JPEGCameraClass::getSize(int * size)
 	
 	//Now read the actual data and add it to the response string.
     for(int j=0; j<2; j++){
-		while(Serial1.available() == 0);
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0);
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[j] = (uint8_t)ibuf;;
 	}
@@ -140,7 +140,7 @@ int JPEGCameraClass::reset()
 	int ibuf=-1;
 
  	//Flush out any data currently in the serial buffer
-	Serial1.flush();
+	Serial3.flush();
 
  	ret = sendCommand(RESET_CAMERA, response, 4, 4);
 
@@ -152,8 +152,8 @@ int JPEGCameraClass::reset()
           int cnt = 0;
 
           do {
-		    while(Serial1.available() == 0); // waiting for data in the serial buffer
-		    ibuf = Serial1.read();
+		    while(Serial3.available() == 0); // waiting for data in the serial buffer
+		    ibuf = Serial3.read();
 		    if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		    Serial.write(byte(ibuf));    // display the init message
             cnt++;
@@ -291,18 +291,18 @@ int JPEGCameraClass::compress(int ratio)
     if ((ratio < 0x00) || (ratio > 0xFF)) return -3;
         
 	//Flush out any data currently in the serial buffer
-	Serial1.flush();
+	Serial3.flush();
 	
 	//Send the command to compress according the ratio
-	for(int i=0; i<8; i++)Serial1.write(COMPRESS[i]);
+	for(int i=0; i<8; i++)Serial3.write(COMPRESS[i]);
 	
-	Serial1.write((uint8_t)ratio);
+	Serial3.write((uint8_t)ratio);
 	
 	//Get the response from the camera and add it to the response string. Always 5 bytes for basic commands
 	for(int i=0; i<5; i++)
 	{
-		while(Serial1.available() == 0); // waiting for data in the serial buffer
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0); // waiting for data in the serial buffer
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}
@@ -323,22 +323,22 @@ int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int 
 	int end_frame=0;
 
 	//Send the command to get read_size bytes of data from the current address
-	for(int i=0; i<8; i++)Serial1.write(READ_DATA[i]);
+	for(int i=0; i<8; i++)Serial3.write(READ_DATA[i]);
 	
-	Serial1.write((uint8_t)(address>>8));
-	Serial1.write((uint8_t)address);
-	Serial1.write((uint8_t)0x00);
-	Serial1.write((uint8_t)0x00);
-	Serial1.write((uint8_t)(read_size>>8));
-	Serial1.write((uint8_t)read_size);
-	Serial1.write((uint8_t)0x00);
-	Serial1.write((uint8_t)0x0A);	// delay between 2 frames read must be = 0x0A*0.01 ms = 0.1 ms
+	Serial3.write((uint8_t)(address>>8));
+	Serial3.write((uint8_t)address);
+	Serial3.write((uint8_t)0x00);
+	Serial3.write((uint8_t)0x00);
+	Serial3.write((uint8_t)(read_size>>8));
+	Serial3.write((uint8_t)read_size);
+	Serial3.write((uint8_t)0x00);
+	Serial3.write((uint8_t)0x0A);	// delay between 2 frames read must be = 0x0A*0.01 ms = 0.1 ms
 
 	//Read the response header.
 	for(int i=0; i<5; i++)
 	{
-		while(Serial1.available() == 0); // waiting for data in the serial buffer
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0); // waiting for data in the serial buffer
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -10; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}
@@ -350,8 +350,8 @@ int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int 
 	j= 0;
 	while(j < read_size)
 	{
-		while(Serial1.available() == 0); // waiting for data in the serial buffer
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0); // waiting for data in the serial buffer
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -100; // serial buffer empty, should not happen as we wait before
 	        buf[j] = (uint8_t)ibuf;
 	        if((j > 1) && (buf[j-1] == (uint8_t)0xFF) && (buf[j] == (uint8_t)0xD9))end_frame = 1; //end of frame detected
@@ -362,8 +362,8 @@ int JPEGCameraClass::readData(long int address, uint8_t * buf, int * count, int 
 	//Read the response footer.
 	for(int i=0; i<5; i++)
 	{
-		while(Serial1.available() == 0); // waiting for data in the serial buffer
-		ibuf = Serial1.read();
+		while(Serial3.available() == 0); // waiting for data in the serial buffer
+		ibuf = Serial3.read();
 		if (ibuf == -1) return -1000; // serial buffer empty, should not happen as we wait before
 		response[i] = (uint8_t)ibuf;
 	}

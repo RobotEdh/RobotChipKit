@@ -2,7 +2,7 @@
 #include <avr/eeprom.h>
 #include "Arduino.h"
 #else
-#include "WProgram.h"
+#include "Arduino.h"
 #include "Deeprom.h"
 #endif
 

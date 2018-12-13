@@ -1,7 +1,7 @@
 #ifndef ROBOT_h
 #define ROBOT_h
 
-#include <WProgram.h> // used for pin definition
+#include <Arduino.h> // used for pin definition
 #include <inttypes.h> // used for uint8_t type
 #include <motor.h>
 
@@ -17,33 +17,13 @@
 #define CMD_CHECK         0x0A
 #define CMD_PI            0x0B
 
+#define PI_NO_COMM        0
+#define PI_ALERT_ONLY     1
+#define PI_ALERT_INFOS    2
+
 #define CMD_SIZE   10
 
-
-// 0: motor_state
-// 1: SpeedMotorRight
-// 2: SpeedMotorLeft    
-// 3: direction
-// 4: distance
-// 5: temperature
-// 6: brightness
-// 7: noise
-// 8 alert status
-// 9: picture number
-#define RESP_SIZE 10
-    
-const char szField[RESP_SIZE][30]={    
-"motor_state",
-"SpeedMotorRight",
-"SpeedMotorLeft",
-"direction",
-"distance",
-"temperature",
-"brightness",
-"noise",
-"alert_status",
-"no_picture"
-};
+#define PAYLOAD_SIZE 80
 
 #define NO_ALERT          0
 #define ALERT_MOTION      1
@@ -57,18 +37,16 @@ const char szField[RESP_SIZE][30]={
 #define MAX_VAR_TEMPERATURE 1.5
 
 
-#define Led_Blue   70  // Led Bleue connected to digital pin J14-02 (TMS/RA0)
-#define Led_Red    71  // Led Red   connected to digital pin J14-04 (TCK/RA1)
-#define buzzPin    39  // Buzzer connected                 to digital pin J8-15 (PMRD/CN14/RD5)
+#define Led_Green   22  
+#define Led_Red     23  
+#define Led_Blue    24 
+#define buzzPin     25  
 
-#define TEMT6000_Pin A1   // Brightness Sensor TEMT6000 analogic pin J5-02 A1 (PGEC1/AN1/CN3/RB1)   Use ADC module channel 2
-#define MICRO_Pin    A2   // Electret micro             analogic pin J5-03 A1 (AN2/C2IN-/CN4/RB2)   Use ADC module channel 2
+#define TEMT6000_Pin A2   // Brightness Sensor TEMT6000 analogic pin A2 
+#define MICRO_Pin    A3   // Electret micro             
+#define MOTION_PIN  19    // Pin used by the Motion sensor connected to interrupt INT4 on MEGA2560
 
-#define MOTION_INT   3    // INT used by the Motion sensor connected to interrupt pin INT3 J4-01(AETXCLK/SCL1/INT3/RA14) Use INT3
-#define MOTION_PIN  21
-
-#define IOT_INT      4    // INT used by the IOT connected to interrupt pin INT4 J4-02 (AETXEN/SDA1/INT4/RA15) Use INT4
-#define IOT_PIN     20
+#define IOT_PIN     18    // Pin used by the IOT connected to interrupt INT5 on MEGA2560
 
 void IntrMotion();  // interrupt handler Motion sensor
 void IntrIOT();     // interrupt handler IOT
@@ -145,5 +123,5 @@ int robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen);
 
 int robot_main(); 
 int robot_IOT();    
-
+int robot_Send_Picture (uint8_t n);
 #endif

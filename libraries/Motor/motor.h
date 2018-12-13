@@ -8,8 +8,7 @@
 #ifndef MOTOR_h
 #define MOTOR_h
 
-#include <WProgram.h> // used for pin definition
-#include <wiring.h>   // used for analogic read function (core lib)
+#include <Arduino.h> // used for pin definition
 #include <PID.h>
 
 #define SUCCESS 0
@@ -20,8 +19,6 @@
 #define TIMEOUT -5
 #define BAD_ANGLE -6
 #define COMPASS_ERROR -7
-#define CAMERA_ERROR -8
-#define SDCARD_ERROR -9
 
 #define STATE_STOP 0
 #define STATE_GO   1
@@ -41,17 +38,17 @@
 #define DISTANCE_MIN 50 // 50 cm before stopping, must be > 20cm which is lower range of IR sensor and
                         // must be > 30cm which is the distance run by the motor in 1 second between 2 checks
 
-#define InMotorRight1Pin    30    // In pin of Motor controller #1 for motor right #1 connected to digital pin J9-08(PMD7/RE7)
-#define EnableMotorRight1Pin 3    // Enable pin of Motor controller #1 for motor right #1 connected to PWM pin J14-07(SDO1/OC1/INT0/RD0)   Use TIMER_OC1
+#define InMotorRight1Pin    30    // In pin of Motor controller #1 for motor right #1 connected to digital pin 30
+#define EnableMotorRight1Pin 4    // Enable pin of Motor controller #1 for motor right #1 connected to PWM pin 4
     
-#define InMotorRight2Pin    31    // In pin of Motor controller #1 for motor right #2 connected to digital pin J9-07(PMD6/RE6)
-#define EnableMotorRight2Pin 5    // Enable pin of Motor controller #1 for motor right #2 connected to PWM pin J14-11(OC2/RD1)   Use TIMER_OC2
+#define InMotorRight2Pin    31    // In pin of Motor controller #1 for motor right #2 connected to digital pin 31
+#define EnableMotorRight2Pin 5    // Enable pin of Motor controller #1 for motor right #2 connected to PWM pin 5
     
-#define InMotorLeft1Pin    32     // In pin of Motor controller #2 for motor left #1 connected to digital pin J9-06(PMD5/RE5)
-#define EnableMotorLeft1Pin 6     // Enable pin of Motor controller #2 for motor left #1 connected to PWM pin J14-13(OC3/RD2)    Use TIMER_OC3
+#define InMotorLeft1Pin    33     // In pin of Motor controller #2 for motor left #1 connected to digital pin 33
+#define EnableMotorLeft1Pin 7     // Enable pin of Motor controller #2 for motor left #1 connected to PWM pin 7
     
-#define InMotorLeft2Pin    33     // In pin of Motor controller #2 for motor left #2 connected to digital pin J9-05(PMD4/RE4)
-#define EnableMotorLeft2Pin 9     // Enable pin of Motor controller #2 for motor left #2 connected to PWM pin J3-03(OC4/RD3)    Use TIMER_OC4
+#define InMotorLeft2Pin    32     // In pin of Motor controller #2 for motor left #2 connected to digital pin 32
+#define EnableMotorLeft2Pin 6     // Enable pin of Motor controller #2 for motor left #2 connected to PWM pin 6
 
 #ifdef PID     
 #define EncoderTickRightINT  4   // INT used by the encoder for motor right connected to interrupt pin INT4 J4-02(AETXEN/SDA1/INT4/RA15)  Use INT4
@@ -60,11 +57,11 @@
 #define EncoderTickLeftPin  21
 #endif
 
-#define IRSERVO_Pin    36        // IR Servo pin connected to digital pin J9-02 (PMD1/RE1)
-#define GP2Y0A21YK_PIN A0        // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
+#define IRSERVO_Pin    46        // IR Servo pin connected to digital PWM 46
+#define GP2Y0A21YK_PIN A1        // IR sensor GP2Y0A21YK analogic pin A1
 
-#define ContactRightPin 37   // Contact sensor Right pin connected to digital pin J9-01 (PMD0/RE0)
-#define ContactLeftPin  38   // Contact sensor Left pin connected to digital pin J8-18 (SCK1/IC3/PMCS2/PMA15/RD10)
+#define ContactLeftPin  26   // Contact sensor Left pin connected to digital 26
+#define ContactRightPin 27   // Contact sensor Right pin connected to digital 27
 
 #ifdef PID
 void IntrTickRight();  // interrupt handler encoder right

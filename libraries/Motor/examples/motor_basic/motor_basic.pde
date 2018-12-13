@@ -1,145 +1,112 @@
-#include <Servo.h>      // Servo
-#include <Wire.h>       // I2C protocol for Compass
 
 #include <motor.h>
-#include <GP2Y0A21YK.h>        // IR sensor
-#include <CMPS03.h>            // Compass
-#include <LiquidCrystal_I2C.h> // LCD
-
-void printTicks()
-{
-  int tickR = -1;
-  int tickL = -1;
-  
-  tickR = get_TickRight();
-  tickL = get_TickLeft();
-  Serial.print("TickRight=");
-  Serial.print(tickR); 
-  Serial.print("\tTickLeft=");
-  Serial.println(tickL);
-}
 
 
-void resetTicks()
-{
-  
-  delay(1000); //wait end command 
-  reset_TickRight();
-  reset_TickLeft();
-}
+
 
   
 void setup()
 { 
   Serial.begin(9600); // initialize serial port
-  motor_begin(); 
+  // H bridge setup
+  pinMode(InMotorRight1Pin, OUTPUT);      // set the pin as output
+  pinMode(EnableMotorRight1Pin, OUTPUT);  // set the analogig pin as output for PWM
+  pinMode(InMotorRight2Pin, OUTPUT);      // set the pin as output
+  pinMode(EnableMotorRight2Pin, OUTPUT);  // set the analogig pin as output for PWM
+  pinMode(InMotorLeft1Pin, OUTPUT);       // set the pin as output
+  pinMode(EnableMotorLeft1Pin, OUTPUT);   // set the analogig pin as output for PWM
+  pinMode(InMotorLeft2Pin, OUTPUT);       // set the pin as output
+  pinMode(EnableMotorLeft2Pin, OUTPUT);   // set the analogig pin as output for PWM
+  
+  Serial.println("H bridge setup done");  
+
+
 }
 
 
 void loop()
 {
-  int ret;
-  
-  Serial.println(" --> stop");  
-  stop();
-  resetTicks();
-  delay(5000); //make it readable 
-  printTicks();   
 
   Serial.println(" --> start_forward motor 1"); 
-  start_forward_test(1);
-  resetTicks();
-  delay(5000); //make it readable
-  printTicks();
+  digitalWrite(InMotorRight1Pin, HIGH); 
+  analogWrite(EnableMotorRight1Pin, SPEEDNOMINAL);
+  delay(5000); //make it readable 
+   
+  Serial.println(" --> stop");  
+  analogWrite(EnableMotorRight1Pin, 0);
+  delay(5000); //make it readable 
+
+
+  Serial.println(" --> start_backward motor 1"); 
+  digitalWrite(InMotorRight1Pin, LOW); 
+  analogWrite(EnableMotorRight1Pin, SPEEDNOMINAL); 
+  delay(5000); //make it readable 
+
+  Serial.println(" --> stop");  
+  analogWrite(EnableMotorRight1Pin, 0);;
+  delay(5000); //make it readable 
+  
   
   Serial.println(" --> start_forward motor 2"); 
-  start_forward_test(2);
-  resetTicks();
-  delay(5000); //make it readable
-  printTicks();
+  digitalWrite(InMotorRight2Pin, HIGH); 
+  analogWrite(EnableMotorRight2Pin, SPEEDNOMINAL);
+  delay(5000); //make it readable 
    
-  Serial.println(" --> start_forward motor 3"); 
-  start_forward_test(3);
-  resetTicks();
-  delay(5000); //make it readable
-  printTicks();
+  Serial.println(" --> stop");  
+  analogWrite(EnableMotorRight2Pin, 0);
+  delay(5000); //make it readable 
+
+
+  Serial.println(" --> start_backward motor 2"); 
+  digitalWrite(InMotorRight2Pin, LOW); 
+  analogWrite(EnableMotorRight2Pin, SPEEDNOMINAL); 
+  delay(5000); //make it readable 
+
+  Serial.println(" --> stop");  
+  analogWrite(EnableMotorRight2Pin, 0);;
+  delay(5000); //make it readable 
+  
+  
+    Serial.println(" --> start_forward motor 3"); 
+  digitalWrite(InMotorLeft1Pin, HIGH); 
+  analogWrite(EnableMotorLeft1Pin, SPEEDNOMINAL);
+  delay(5000); //make it readable 
+   
+  Serial.println(" --> stop");  
+  analogWrite(EnableMotorLeft1Pin, 0);
+  delay(5000); //make it readable 
+
+
+  Serial.println(" --> start_backward motor 3"); 
+  digitalWrite(InMotorLeft1Pin, LOW); 
+  analogWrite(EnableMotorLeft1Pin, SPEEDNOMINAL); 
+  delay(5000); //make it readable 
+
+  Serial.println(" --> stop");  
+  analogWrite(EnableMotorLeft1Pin, 0);;
+  delay(5000); //make it readable 
+  
+  
   
   Serial.println(" --> start_forward motor 4"); 
-  start_forward_test(4);
-  resetTicks();
-  delay(5000); //make it readable
-  printTicks();
-  
+  digitalWrite(InMotorLeft2Pin, HIGH); 
+  analogWrite(EnableMotorLeft2Pin, SPEEDNOMINAL);
+  delay(5000); //make it readable 
+   
   Serial.println(" --> stop");  
-  stop();
-  resetTicks();
+  analogWrite(EnableMotorLeft2Pin, 0);
   delay(5000); //make it readable 
-  printTicks(); 
-  
-  Serial.println(" --> start_forward"); 
-  start_forward();
-  resetTicks();
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.print(" --> accelerate +80 RIGHT_MOTOR, ret:"); 
-  ret =  accelerate_n(RIGHT_MOTOR, 80);
-  resetTicks();
-  Serial.println(ret); 
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.print(" --> accelerate +80 LEFT_MOTOR, ret:"); 
-  ret =  accelerate_n(LEFT_MOTOR, 80);
-  resetTicks();
-  Serial.println(ret); 
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.print(" --> accelerate +20 BOTH_MOTOR, ret:"); 
-  ret =  accelerate_n(BOTH_MOTOR, 20);
-  resetTicks();
-  Serial.println(ret); 
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.print(" --> deccelerate -30 RIGHT_MOTOR, ret:"); 
-  ret =  deccelerate_n(RIGHT_MOTOR, 30);
-  resetTicks();
-  Serial.println(ret); 
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.print(" --> deccelerate -50 LEFT_MOTOR, ret:"); 
-  ret =  deccelerate_n(LEFT_MOTOR, 50);
-  resetTicks();
-  Serial.println(ret); 
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.print(" --> deccelerate -40 BOTH_MOTOR, ret:"); 
-  ret =  deccelerate_n(BOTH_MOTOR, 40);
-  resetTicks();
-  Serial.println(ret); 
-  delay(5000); //make it readable
-  printTicks();
-  
-  Serial.println(" --> stop");
-  stop();
-  resetTicks();
+
+
+  Serial.println(" --> start_backward motor 4"); 
+  digitalWrite(InMotorLeft2Pin, LOW); 
+  analogWrite(EnableMotorLeft2Pin, SPEEDNOMINAL); 
   delay(5000); //make it readable 
-  printTicks();
-  
-  Serial.println(" --> start_backward"); 
-  start_backward();
-  resetTicks();
-  delay(5000); //make it readable   
-  printTicks();
-  
+
   Serial.println(" --> stop");  
-  stop();
-  resetTicks();
+  analogWrite(EnableMotorLeft2Pin, 0);;
   delay(5000); //make it readable 
-  printTicks();
+  
+
 }
 

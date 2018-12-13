@@ -1,4 +1,4 @@
-#include "WProgram.h"
+#include "Arduino.h"
 #include "Wire.h" // used for I2C protocol (lib)
 
 #include "config.h"

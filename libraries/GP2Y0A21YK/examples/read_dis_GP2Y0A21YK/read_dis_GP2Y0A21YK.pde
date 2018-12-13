@@ -1,5 +1,3 @@
-#include <wiring.h>
-
 #include <GP2Y0A21YK.h>
 
 

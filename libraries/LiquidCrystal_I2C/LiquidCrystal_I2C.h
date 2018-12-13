@@ -1,10 +1,16 @@
-//DFRobot.com
+//YWROBOT
 #ifndef LiquidCrystal_I2C_h
 #define LiquidCrystal_I2C_h
 
 #include <inttypes.h>
 #include "Print.h" 
 #include <Wire.h>
+
+#if defined(ARDUINO) && ARDUINO >= 100
+#define printByte(args)  write(args);
+#else
+#define printByte(args)  print(args,BYTE);
+#endif
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -52,7 +58,6 @@
 #define Rw B00000010  // Read/Write bit
 #define Rs B00000001  // Register select bit
 
-
 // custom chars, 7 maximum
 #define  lcd_bell    0
 #define  lcd_note    1
@@ -62,11 +67,10 @@
 #define  lcd_celcius 5
 #define  lcd_pipe    6
 
-
 class LiquidCrystal_I2C : public Print {
 public:
   LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows);
-  uint8_t begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS );
+  void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS );
   void clear();
   void home();
   void noDisplay();
@@ -95,7 +99,8 @@ public:
   virtual void write(uint8_t);
 #endif
   void command(uint8_t);
-  uint8_t init();
+  void init();
+  
 
 ////compatibility API function aliases
 void blink_on();						// alias for blink()
@@ -119,11 +124,11 @@ void draw_vertical_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixe
 	 
 
 private:
-  uint8_t init_priv();
-  uint8_t send(uint8_t, uint8_t);
-  uint8_t write4bits(uint8_t);
-  uint8_t expanderWrite(uint8_t);
-  uint8_t pulseEnable(uint8_t);
+  void init_priv();
+  void send(uint8_t, uint8_t);
+  void write4bits(uint8_t);
+  void expanderWrite(uint8_t);
+  void pulseEnable(uint8_t);
   uint8_t _Addr;
   uint8_t _displayfunction;
   uint8_t _displaycontrol;

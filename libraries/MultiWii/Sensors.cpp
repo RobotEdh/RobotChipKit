@@ -1,7 +1,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
-#include "WProgram.h"
+#include "Arduino.h"
 #define TWBR int notused // change the I2C clock rate to 400kHz, change frequency TWI_FREQ 400000 defined in twi.h
 #define TWI_FREQ 400000
 #include "Wire.h" // used for I2C protocol (lib)

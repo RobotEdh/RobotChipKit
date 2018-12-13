@@ -8,8 +8,7 @@
 #ifndef Micro_h
 #define Micro_h
 
-#include <WProgram.h> // used for pin definition
-#include <wiring.h>   // used for analogic read function (core lib)
+#include <Arduino.h> // used for pin definition
 
 #define MICRO_PIN_DEFAULT A0  // Default Micro analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
 /* Analogic interface is provided on pin A0 */

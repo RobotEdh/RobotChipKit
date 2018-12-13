@@ -7,14 +7,13 @@
 
 #ifndef Motion_h
 #define Motion_h
-#include "WProgram.h"
-#include <wiring.h> // used for digital read function (core lib)
+#include "Arduino.h"
 
 
-#define MOTION_PIN_DEFAULT 3   // Default Infrared motion sensor digital pin 3
-/* Digital interface is provided on pin   3 */
-/* Power +5V is set on pin VCC              */
-/* Ground    is set on pin GND              */
+#define MOTION_PIN_DEFAULT 28   // Default Infrared motion sensor Digital pin 28 
+/* Digital interface is provided on  Digital pin 28       */
+/* Power +5V is set on pin VCC                            */
+/* Ground    is set on pin GND                            */
 
 class MotionClass
 {  

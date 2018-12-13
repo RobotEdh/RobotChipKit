@@ -8,10 +8,9 @@
 #ifndef GP2Y0A21YK_h
 #define GP2Y0A21YK_h
 
-#include <WProgram.h> // used for pin definition
-#include <wiring.h>   // used for analogic read function (core lib)
+#include <Arduino.h> // used for pin definition
 
-#define GP2Y0A21YK_PIN_DEFAULT A0   // IR sensor GP2Y0A21YK analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
+#define GP2Y0A21YK_PIN_DEFAULT A1   // IR sensor GP2Y0A21YK analogic pin A1
 /* Analogic interface is provided on pin V0 */
 /* Power +3V is set on pin VCC              */
 /* Ground    is set on pin GND              */

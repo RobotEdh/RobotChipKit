@@ -29,7 +29,7 @@
 
 #if defined(ARDUINO)
  #if (ARDUINO < 100)
-  #include "WProgram.h"
+  #include "Arduino.h"
  #endif
 #elif defined(__MSP430G2452__) || defined(__MSP430G2553__) // LaunchPad specific
  #include "legacymsp430.h"

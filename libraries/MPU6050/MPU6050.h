@@ -37,7 +37,7 @@ THE SOFTWARE.
 #ifndef _MPU6050_H_
 #define _MPU6050_H_
 
-#include "WProgram.h"
+#include "Arduino.h"
 
 
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin high (VCC), default for InvenSense evaluation board

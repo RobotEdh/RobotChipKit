@@ -12,8 +12,7 @@
 #include <Micro.h>             // Micro
 #include <sdcard.h>            // SD Card
 #include <SD.h> 
-#include <WiFiRobot.h>
-#include <Serial2IOT.h>
+#include <IOTSerial.h>         // Serial lib to communicate with IOT
 
 /* classes aleady defined in motor */
 extern GP2Y0A21YKClass GP2Y0A21YK;  // The IR sensor class
@@ -25,11 +24,13 @@ extern CMPS03Class CMPS03;          // The Compass class
        MotionClass Motion;          // The Motion class
        MicroClass Micro;            // The Micro class
        JPEGCameraClass JPEGCamera;  // The Camera class 
-       WiFiRobotClass WiFiRobot;    // The WIFI class for the Robot
-       RIOTClass IOT;               // The IOT 
+       IOTSerialClass IOTSerial;    // The IOT serial
+
+// SD variables
+extern SdFile root;          // SD Root
+extern SdFile FilePicture;   // SD File
 
 // data updated during interrupts
-volatile int IntMotion = 0;   
 volatile int IntIOT = 0; 
 
 int HPos = 90;
@@ -37,11 +38,12 @@ int VPos = 90;
 int motor_state = STATE_STOP;
 int alert_status = 0;
 int no_picture = 0;                 // Picture number
-int PI_activated = 0;
+int PI_activated = PI_NO_COMM; 
+unsigned long PI_freqInfos = 30000;  // 30s
 unsigned long previousTime = 0;
 unsigned long previousTime2 = 0;
-unsigned long PI_freqInfos = 0;
-unsigned long freqCheck = 10*1000;
+
+unsigned long freqCheck = 0; // no check
 unsigned long GOtimeout = 10;
  
 double tab_temperature[NB_TEMPERATURE] = {0};
@@ -50,7 +52,6 @@ double avg_temperature = 0;
 int tab_lux[NB_LUX] = {0};
 unsigned long avg_lux = 0;
 
- 
 
 void IntrIOT()  // IOT interrupt
 {
@@ -58,11 +59,6 @@ void IntrIOT()  // IOT interrupt
     digitalWrite(Led_Blue, HIGH);  // turn on led
 }
 
-void IntrMotion()  // Motion sensor interrupt
-{
-    IntMotion = 1;
-    digitalWrite(Led_Red, HIGH);  // turn on led
-}
 
 void reset_leds()
 {
@@ -77,7 +73,7 @@ void blink(int led)
   reset_leds();
 
   // blink the resquested led
-  for (int i=0;i<5;i++){
+  for (int i=0;i<3;i++){
         digitalWrite(led, HIGH);  // turn on led
         delay(500);
         digitalWrite(led, LOW);  // turn off led
@@ -98,16 +94,23 @@ void buzz(int buzzNb)
 int robot_begin()
 {
   int ret = SUCCESS;
- 
+  int ivalue = 0;
+  
   ret = motor_begin(); 
   if (ret != SUCCESS) return ret;
 
   Serial.println("Begin Robot Init");
+  Serial.println("****************");
+  
+  lcd.clear();
+  lcd.print("Begin Robot Init");
    
-  pinMode(Led_Blue, OUTPUT);     // set the pin as output
-  blink(Led_Blue);  
+  pinMode(Led_Green, OUTPUT);      // set the pin as output
+  blink(Led_Green); 
   pinMode(Led_Red, OUTPUT);      // set the pin as output
   blink(Led_Red);  
+  pinMode(Led_Blue, OUTPUT);     // set the pin as output
+  blink(Led_Blue);
   Serial.println("Init Leds OK");
     
   // initialize the buzzer
@@ -127,11 +130,16 @@ int robot_begin()
   {  
         Serial.print("Error Init Camera, error: ");
         Serial.println(ret);
+        lcd.setCursor(0,1); 
+        lcd.print("Init Camera KO  ");
   }        
   else
   {
         Serial.println("Init Camera OK");
-  }    
+        lcd.setCursor(0,1); 
+        lcd.print("Init Camera OK  ");
+  } 
+  delay(5*1000);lcd.clear();    
   
   // initialize the SD-Card    
   ret = initSDCard();
@@ -139,10 +147,12 @@ int robot_begin()
   {  
         Serial.print("Error Init SD-Card, error: ");
         Serial.println(ret);
+        lcd.print("Init SD-Card KO ");
   }                                                                    
   else
   {
         Serial.println("Init SD-Card OK");
+        lcd.print("Init SD-Card OK ");
   }
     
   // get infos from SD-Card  
@@ -151,43 +161,64 @@ int robot_begin()
   {  
         Serial.print("Error Infos SD-Card, error: ");
         Serial.println(ret);
+        lcd.setCursor(0,1); 
+        lcd.print("Err Infos SDCard");
   }
   else
   {
         no_picture = ret+1;
         Serial.print("no_picture starts at: ");
         Serial.println(no_picture);
-  }     
+        lcd.setCursor(0,1); 
+        lcd.print("Num picture:");lcd.print(no_picture);
+  }   
+  delay(5*1000);lcd.clear();  
+    
     
   // initialize the brightness sensor   
   TEMT6000.TEMT6000_init(TEMT6000_Pin); // initialize the pin connected to the sensor
   Serial.println("Init Brightness sensor OK");
   
+  ivalue = TEMT6000.TEMT6000_getLight();
+  Serial.print("Value between 0 (dark) and 1023 (bright): ");
+  Serial.println(ivalue); 
+  lcd.print("Lux:");lcd.print(ivalue);lcd.printByte(lcd_pipe);
+  
   // initialize the temperature sensor   
   TMP102.TMP102_init();
   Serial.println("Init Temperature sensor OK");
+  
+  double temperature = TMP102.TMP102_read();
+  ivalue = (int)(100.0 * temperature);
+  Serial.print("Temperature: ");
+  Serial.println(ivalue); 
+  lcd.print("T:");lcd.print(ivalue);lcd.printByte(lcd_celcius);lcd.printByte(lcd_pipe);   
   
   // initialize the electret micro   
   //Micro.Micro_init(MICRO_Pin); // initialize the pin connected to the micro
   //Serial.println("Init Micro OK");
 
-  // initialize the motion sensor, interrupt setting 
-  pinMode(MOTION_PIN, INPUT);                        // set the pin as input
-  attachInterrupt(MOTION_INT, IntrMotion, RISING);   // set Motion interrupt
+  // initialize the motion sensor
+  pinMode(MOTION_PIN, INPUT);
   Serial.println("Init Motion sensor OK");
 
-  // initialize the IOT, interrupt setting
-  IOT.begin();
-  pinMode(IOT_PIN, INPUT);                           // set the pin as input
-  attachInterrupt(IOT_INT, IntrIOT, RISING);         // set IOT interrupt
+  // initialize the IOT Serial 1 
+  IOTSerial.IOTSbegin(1); // initialize the IOT Serial 1 to communicate with IOT WIFClient ESP8266
+  Serial.println ("Init IOT Serial 1 to communicate with IOT WIFClient ESP8266 OK");
+  
+  // initialize the IOT Serial 2, interrupt setting
+  IOTSerial.IOTSbegin(2); // initialize the IOT Serial 2 to communicate with IOT WIFServer ESP8266
+  Serial.println ("Init IOT Serial 2 to communicate with IOT WIFServer ESP8266 OK");
+  pinMode(IOT_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(IOT_PIN), IntrIOT, RISING);         // set IOT interrupt
  
-  interrupts();                                      // enable all interrupts
-  Serial.println ("Init IOT OK");
-
+  interrupts(); // enable all interrupts
+  Serial.print("Init Interrupts OK, IntIOT: "); Serial.println(IntIOT);
+  
   lcd.setCursor(0,1); 
   lcd.print("End   Robot Init");
+  delay(5*1000);lcd.clear();  
  
-  Serial.println("");
   Serial.println("End Robot Init");
   Serial.println("**************");
   Serial.println("");
@@ -198,51 +229,45 @@ int robot_begin()
 
 int infos (uint16_t *resp, uint8_t *resplen)
 {    
-     // 0: motor_state
-     resp[0] = motor_state;
-     Serial.print("motor_state: ");Serial.println((int)resp[0]);
+     // alert status
+     resp[ALERT_STATUS] = alert_status;
+     Serial.print("alert status: ");Serial.println((int)resp[ALERT_STATUS]);
      
-     // 1: SpeedMotorRight
-     resp[1] = get_SpeedMotorRight();
-     Serial.print("SpeedMotorRight: ");Serial.println((int)resp[1]);
+     // picture number
+     resp[NO_PICTURE] = no_picture;
+     Serial.print("no_picture: ");Serial.println((int)resp[NO_PICTURE]);
      
-     // 2: SpeedMotorLeft
-     resp[2] = get_SpeedMotorLeft();
-     Serial.print("SpeedMotorLeft: ");Serial.println((int)resp[2]);
+     // motor_state
+     resp[MOTOR_STATE] = motor_state;
+     Serial.print("motor_state: ");Serial.println((int)resp[MOTOR_STATE]);
      
-     // 3: direction
-     resp[3] = CMPS03.CMPS03_read();
-     Serial.print("direction: ");Serial.println((int)resp[3]);
+     // direction
+     resp[DIRECTION] = CMPS03.CMPS03_read();
+     Serial.print("direction: ");Serial.println((int)resp[DIRECTION]);
      
-     // 4: distance
+     // distance
      int dist = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
-     if (dist > 0) resp[4] = dist;
-     else          resp[4] = 0;
-     Serial.print("distance: ");Serial.println((int)resp[4]);
+     if (dist > 0) resp[DISTANCE] = dist;
+     else          resp[DISTANCE] = 0;
+     Serial.print("distance: ");Serial.println((int)resp[DISTANCE]);
      
-     // 5: temperature
+     // temperature
      double temperature = TMP102.TMP102_read();
-     resp[5] = (int16_t)(100.0 * temperature);
-     Serial.print("temperature: ");Serial.println((int)resp[5]);
+     resp[TEMPERATURE] = (int16_t)(100.0 * temperature);
+     Serial.print("temperature: ");Serial.println((int)resp[TEMPERATURE]);
      
-     // 6: brightness
-     resp[6] = TEMT6000.TEMT6000_getLight();
-     Serial.print("brightness: ");Serial.println((int)resp[6]);
+     // brightness
+     resp[BRIGHTNESS] = TEMT6000.TEMT6000_getLight();
+     Serial.print("brightness: ");Serial.println((int)resp[BRIGHTNESS]);
      
-     // 7: noise
+     // noise
      //resp[7] = Micro.Micro_getNoise();
-     resp[7] = 0;
-     Serial.print("noise: ");Serial.println((int)resp[7]);
+     resp[NOISE] = 0;
+     Serial.print("noise: ");Serial.println((int)resp[NOISE]);
      
-     // 8: alert status
-     resp[8] = alert_status;
-     Serial.print("alert status: ");Serial.println((int)resp[8]);
-     
-     // 9: picture number
-     resp[9] = no_picture;
-     Serial.print("no_picture: ");Serial.println((int)resp[9]);
 
-     *resplen = 9+1;
+
+     *resplen = RESP_SIZE;
  
      return SUCCESS;
 }     
@@ -254,10 +279,10 @@ int check ()
   int i = 0;
   
   // Check Motion
-  if (IntMotion) {
-       IntMotion = 0;  // reset interrupt for next time
-       digitalWrite(Led_Red, LOW);  // turn on led
-       Serial.print("Alert Motion trigerred: ");	
+  int status = Motion.Motion_status();
+  if (status) {
+        blink(Led_Red);   
+       Serial.print("Alert Motion");	
        return ALERT_MOTION;
   }
   // Check Noise
@@ -419,17 +444,17 @@ int robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen)
 
      ret = infos (resp, &infolen);
        
-     if (resp[0] == STATE_GO) {
-         lcd.print((int)resp[1]);lcd.print((char)126);lcd.print((byte)lcd_pipe);lcd.print((int)resp[2]);lcd.print((char)127);
+     if (resp[MOTOR_STATE] == STATE_GO) {
+         lcd.print("RUNING");
      }    
      else
      {
          lcd.print("STOPPED");
      }
      lcd.setCursor(0,1);   
-     lcd.print((int)resp[7]); lcd.print((byte)lcd_celcius);lcd.print((byte)lcd_pipe);   
-     lcd.print((int)resp[6]); lcd.print("cm");lcd.print((byte)lcd_pipe);
-     lcd.print((int)resp[5]); lcd.print((char)223); //degree    
+     lcd.print((int)resp[TEMPERATURE]); lcd.print((byte)lcd_celcius);lcd.write(lcd_pipe);   
+     lcd.print((int)resp[DISTANCE]); lcd.print("cm");lcd.write(lcd_pipe); 
+     lcd.print((int)resp[DIRECTION]); lcd.print((char)223); //degree    
  
      *resplen = infolen;
      break;
@@ -450,7 +475,7 @@ int robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen)
      ret = JPEGCamera.makePicture (no_picture);
      if (ret == SUCCESS)
      { 
-       lcd.setCursor(0,1);
+        lcd.setCursor(0,1);
         lcd.print("picture: "); lcd.print(no_picture);
      }
      else
@@ -737,17 +762,17 @@ int robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen)
      ret = infos (resp, &infolen);
               
      if (error == 0) {
-         if (resp[0] == STATE_GO) {
-             lcd.print((int)resp[1]);lcd.print((char)126);lcd.print((byte)lcd_pipe);lcd.print((int)resp[2]);lcd.print((char)127);
-         }    
+         if (resp[MOTOR_STATE] == STATE_GO) {
+            lcd.print("RUNNING");
+          }    
          else
          {
              lcd.print("STOPPED");
          }
          lcd.setCursor(0,1);   
-         lcd.print((int)resp[7]); lcd.print((byte)lcd_celcius);lcd.print((byte)lcd_pipe);   
-         lcd.print((int)resp[6]); lcd.print("cm");lcd.print((byte)lcd_pipe);
-         lcd.print((int)resp[5]); lcd.print((char)223); //degree   
+         lcd.print((int)resp[TEMPERATURE]); lcd.print((byte)lcd_celcius);lcd.write(lcd_pipe);   
+         lcd.print((int)resp[DISTANCE]); lcd.print("cm");lcd.write(lcd_pipe);
+         lcd.print((int)resp[DIRECTION]); lcd.print((char)223); //degree   
      } 
      
      *resplen = infolen;      
@@ -758,7 +783,7 @@ int robot_command (uint16_t *cmd, uint16_t *resp, uint8_t *resplen)
      lcd.print("PI activated ");lcd.print((int)cmd[1]);
  
      PI_activated = (int)cmd[1];
-     if (PI_activated == 2) PI_freqInfos = (int)cmd[2]* 1000;
+     if (PI_activated <> PI_NO_COMM) PI_freqInfos = (int)cmd[2]* 1000;
         
      Serial.print("PI_activated: "); Serial.println(PI_activated);
      Serial.print("PI_freqInfos: ");Serial.println(PI_freqInfos);
@@ -793,17 +818,15 @@ int robot_main ()
  uint16_t cmd[CMD_SIZE];
  uint16_t resp[RESP_SIZE];
  uint8_t resplen = 0;
- char buf[1024]= "";
- char szresp[10]= "";
  unsigned long currentTime;
  unsigned long currentTime2;
+ uint8_t n_pict = 0;
     
  int ret = SUCCESS;
  
  while (1) {
-       
        currentTime2 = millis();
-       if (currentTime2 > previousTime2 + freqCheck) {
+       if ((currentTime2 > previousTime2 + freqCheck) && (freqCheck > 0)) {
              previousTime2 = currentTime2;   
              Serial.print("Call command CHECK every ");Serial.print(freqCheck/1000);Serial.println(" seconds");
              cmd[0] = CMD_CHECK;
@@ -825,46 +848,46 @@ int robot_main ()
              Serial.println("Call command INFOS");
              cmd[0] = CMD_INFOS;
              ret = robot_command (cmd, resp, &resplen);
+             n_pict = (uint8_t)(resp[NO_PICTURE]); // Last Picture number
+             Serial.print("n_pict: "); Serial.println(n_pict);
              Serial.print("Call robot_command, ret: "); Serial.print(ret); Serial.print(", resplen: "); Serial.println(resplen);
             
-             for(uint8_t j=0; j<resplen; j++)
-             {
-                    strcat(buf,szField[j]);
-                    strcat(buf,"=");
-                    sprintf(szresp, "%10d", (int)resp[j]);
-                    strcat(buf,szresp);
-                    strcat(buf,"&");
-             }
-			 Serial.println(buf);
- 
              Serial.println("Call command ALERT");
   	         cmd[0] = CMD_ALERT;
              ret = robot_command (cmd, resp, &resplen);  
              Serial.print("Call robot_command, ret: "); Serial.println(ret);
              
              // Send Infos + last 3 pictures in WIFI to the PI server if it is activated
-             if (PI_activated > 0) {
-                Serial.println("Call WiFiRobot_SendAlert");
-                ret = WiFiRobot.WiFiRobot_SendAlert(buf, resp[0]); // resp[0] = last picture number
-                if (ret != SUCCESS) {
-                      Serial.print("WiFiRobot_SendAlert error: "); Serial.println(ret);
-                }
-                else
-                {
-                      Serial.println("WiFiRobot_SendAlert OK"); 
-                      alert_status = 0;
-                }
+             if ((PI_activated == PI_ALERT_ONLY)|| (PI_activated == PI_ALERT_INFOS)) {
+                
+                resp[NO_PICTURE] = 0; // No picture send
+                //Send the Infos message first time quickly
+                Serial.println("Call IOTSsend 1 INFOS");
+                ret = IOTSerial.IOTSsend (1, INFOS, resp, resplen);
+                
+                //Send the 3 last pictures
+                Serial.println("Call robot_Send_Picture ");
+                if (n_pict > 2) ret = robot_Send_Picture(n_pict-2); 
+                if (n_pict > 1) ret = robot_Send_Picture(n_pict-1);  
+                ret = robot_Send_Picture(n_pict); 
+                
+                //Send the Infos message again to attach pictures
+                resp[NO_PICTURE] = n_pict;
+                Serial.println("Call IOTSsend 1 INFOS");
+                ret = IOTSerial.IOTSsend (1, INFOS, resp, resplen);
+                alert_status = 0;
              }
              else
              {
-                      Serial.println("PI communucation not activated"); 
-                      alert_status = 0;   
+                Serial.println("PI communucation not activated"); 
+                alert_status = 0;   
              }                        
        }
-       else if (IntIOT > 0) { // Photon wants to do something...
-             Serial.println("Request received from Photon, call robot_IOT");	
-             Serial.println("***************");
+       else if (IntIOT > 0) { // IOT wants to do something...
+             Serial.println("Request received from IOT, call robot_IOT");	
+             Serial.println("*****************************************");
              Serial.println("");
+             IntIOT = 0;
  
              ret = robot_IOT(); 
              if (ret != SUCCESS) {
@@ -873,11 +896,10 @@ int robot_main ()
              else
              {
                    Serial.println("robot_IOT OK"); 
-                   IntIOT = 0;
              }
 
        }
-       else if (PI_activated == 2)
+       else if (PI_activated == PI_ALERT_INFOS)
        {
              if ((PI_freqInfos > 0) && (currentTime > previousTime + PI_freqInfos)) {
                    previousTime = currentTime;      
@@ -886,22 +908,9 @@ int robot_main ()
                    cmd[0] = CMD_INFOS;
                    ret = robot_command (cmd, resp, &resplen);
                    Serial.print("Call robot_command, ret: "); Serial.println(ret);
-            
-                   for(uint8_t j=0; j<resplen; j++)
-                   {
-                          strcat(buf,szField[j]);
-                          strcat(buf,"=");
-                          sprintf(szresp, "%10d", (int)resp[j]);
-                          strcat(buf,szresp);
-                          strcat(buf,"&");
-                   }
-			       Serial.println(buf);
-			 
-                   Serial.println("Call WiFiRobot_SendInfos");
-                   ret = WiFiRobot.WiFiSendInfos(buf);
-                   if (ret != SUCCESS) {
-                         Serial.print("WiFiRobot_SendInfos error: "); Serial.println(ret);
-                   }
+       
+                   Serial.println("Call IOTSsend 1 INFOS");
+                   ret = IOTSerial.IOTSsend (1, INFOS, resp, resplen);
              }
         
        }   
@@ -936,27 +945,27 @@ int robot_IOT ()
  
  Serial.println("Start robot_IOT");
 
- //Read the message received from Photon
- ret = IOT.RIOTread(msg, &msg_len);
- Serial.print("Call RIOTread, ret: "); Serial.print(ret); Serial.print(", msg_len: "); Serial.println((int)msg_len);
+ //Read the message received from IOT
+ ret = IOTSerial.IOTSread(2, msg, &msg_len);
+ Serial.print("Call IOTSread 2, ret: "); Serial.print(ret); Serial.print(", msg_len: "); Serial.println((int)msg_len);
 
  if (ret != SUCCESS) {
-       Serial.println("error RIOTread, Call RIOTsend with RESP_KO");  
-       IOT.RIOTsend(RESP_KO, resp, 0);
+       Serial.println("error IOTSread, Call IOTSsend 2 with RESP_KO");  
+       ret = IOTSerial.IOTSsend(2, RESP_KO);
  }
    
- IOT.RIOTgetTags(msg, tag, value, &nbtags);   
+ IOTSerial.IOTSgetTags(msg, tag, value, &nbtags);   
  
  Serial.print("nbtags: "); Serial.print((int)nbtags);
  if (nbtags < 1) {
-       Serial.println("nbtags < 1, Call RIOTsend with RESP_KO");    
-       IOT.RIOTsend(RESP_KO, resp, 0);
+       Serial.println("nbtags < 1, Call IOTSsend 2 with RESP_KO");    
+       ret = IOTSerial.IOTSsend(2, RESP_KO);
  }
  
  Serial.print(", tag[0]: "); Serial.print((int)tag[0],HEX); Serial.print(", value[0]: "); Serial.println((int)value[0],HEX);
  if (tag[0] != TAG_CMDID) {
-       Serial.println("TAG_CMDID Missing, Call RIOTsend with RESP_KO");    
-       IOT.RIOTsend(RESP_KO, resp, 0);
+       Serial.println("TAG_CMDID Missing, Call IOTSsend 2 with RESP_KO");    
+       ret = IOTSerial.IOTSsend(2, RESP_KO);
  }
  else
  {   
@@ -968,8 +977,8 @@ int robot_IOT ()
  {
        Serial.println("Tag CMD");
        if (nbtags > MAX_TAGS) {
-               Serial.println("nbtags > MAX_TAGS, Call RIOTsend with RESP_KO");    
-               IOT.RIOTsend(RESP_KO, resp, 0, cmdId);
+               Serial.println("nbtags > MAX_TAGS, Call IOTSsend 2 with RESP_KO");    
+               ret = IOTSerial.IOTSsend(2, RESP_KO);
        }     
              
        for (uint8_t j=0; j<(nbtags-1); j++)
@@ -978,42 +987,99 @@ int robot_IOT ()
            Serial.print("cmd["); Serial.print((int)j); Serial.print("]: "); Serial.println((int)cmd[j],HEX);
        }
  
-       // Execute the command received from Photon
+       // Execute the command received from IOT
        ret = robot_command (cmd, resp, &resplen);  
        Serial.print("Call robot_command, ret: "); Serial.println(ret);
 
        if (ret == SUCCESS) { 
-        	 Serial.println("Call RIOTsend with RESP_OK");    
-             IOT.RIOTsend(RESP_OK, resp, resplen, cmdId);
+        	 Serial.println("Call IOTSsend 2 with RESP_OK");    
+             ret = IOTSerial.IOTSsend(2, RESP_OK, resp, resplen, cmdId);
        }
        else
        {
-        	 Serial.println("Call RIOTsend with RESP_KO");    
-             IOT.RIOTsend(RESP_KO, resp, 0, cmdId);
+        	 Serial.println("Call IOTSsend 2 with RESP_KO");    
+             ret = IOTSerial.IOTSsend(2, RESP_KO);
        }        
  }
- else if (tag[1] == TAG_RESP)
- {		
-      Serial.println("Tag RESP");
-      if (nbtags > RESP_SIZE) {
-           	 Serial.println("nbtags > RESP_SIZE, Call RIOTsend with RESP_KO");    
-             IOT.RIOTsend(RESP_KO, resp, 0);
-      }
-      
-      // Update the robot with the response received from Photon            
-      for (uint8_t j=0; j<(nbtags-1); j++)
-      {
-           resp[j] = value[j+1];
-           Serial.print(", resp["); Serial.print((int)j); Serial.print("]: "); Serial.println((int)resp[j],HEX);
-      }
- }
  else {
-       Serial.println("Call RIOTsend with RESP_KO");    
-       IOT.RIOTsend(RESP_KO, resp, 0);
+       Serial.println("Call IOTSsend 2 with RESP_KO");    
+       IOTSerial.IOTSsend(2, RESP_KO);
  }
     
  Serial.println("End OK robot_IOT"); 
  return SUCCESS;                     
 }			 
 
+
+
+int robot_Send_Picture (uint8_t n)
+{    
+ uint16_t param[MAX_PARAMS];
+ uint8_t paramlen = 0;
+ uint8_t msg[MSG_SIZE_MAX];
+ uint8_t msg_len = 0;
+ uint8_t tag [MAX_TAGS];
+ uint16_t value [MAX_TAGS];
+ uint8_t nbtags;
+ 
+ char filename[12+1];
+ uint16_t nbytes = 0;
+ uint8_t buf[PAYLOAD_SIZE];
+ 
+ int ret = SUCCESS;
+ 
+ Serial.println("Start robot_Send_Picture");
+ 
+ // Open picture file
+ sprintf(filename, "PICT%d.jpg", n);  
+ if (!FilePicture.open(&root, filename, O_READ)) return FILE_OPEN_ERROR; 
+ Serial.println("open ok "); 
+ 
+ //Send the Picture message 
+ param[0] = (uint16_t)n;
+ param[1] = (uint16_t)FilePicture.fileSize();
+ paramlen = 2;
+
+ ret = IOTSerial.IOTSsend(1, PICTURE, param, paramlen); 
+            
+ //Read the message replied to be sure that the client is ready to receive the picture
+ ret = IOTSerial.IOTSread(1, msg, &msg_len);
+ Serial.print("Call IOTSread 1, ret: "); Serial.print(ret); Serial.print(", msg_len: "); Serial.println((int)msg_len);
+
+ if (ret != SUCCESS) {
+     Serial.println("error IOTSread");  
+     ret = IOTSerial.IOTSflush(1);
+     return 0;
+ }
+ 
+ //Decode the message
+ IOTSerial.IOTSgetTags(msg, tag, value, &nbtags); // parse the response  
+ Serial.print("Call IOTSgetTags, nbtags: "); Serial.println((int)nbtags);
+    
+ if (nbtags < 1)          return -1; 
+    
+ Serial.print("tag[0]: ");Serial.println((int)tag[0],HEX); 
+ if (tag[0]!= TAG_CMDID)   return -2;
+ Serial.print("tag[1]: "); Serial.println((int)tag[1]);  
+ if (tag[1]!= TAG_RESP)   return -3;
+ Serial.print("value[1]: "); Serial.println((int)value[1]);        
+ if (value[1] == RESP_KO) return -4;
+ if (value[1] != RESP_OK) return -5;
+
+  // read from the file until there's nothing else in it:
+ while ((nbytes = FilePicture.read(buf, sizeof(buf))) > 0 && ret == SUCCESS) {
+       for (uint16_t i = 0;i<nbytes;i++)
+       {
+         ret = IOTSerial.IOTSRawsend(1, buf [i]); 
+       }
+ 
+ }// while 
+  
+ //Close file
+ if (!FilePicture.close()) return FILE_CLOSE_ERROR; 
+ 
+    
+ Serial.println("End OK robot_IOT"); 
+ return SUCCESS;                     
+}			 
 

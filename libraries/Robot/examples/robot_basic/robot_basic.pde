@@ -23,8 +23,8 @@
 
 
 uint16_t cmd[CMD_SIZE];
-int16_t resp[RESP_SIZE];
-int resp_len = 0;
+uint16_t resp[RESP_SIZE];
+uint8_t resp_len = 0;
   
 void setup()
 {
@@ -39,7 +39,7 @@ void setup()
   cmd[1] = 0;
   cmd[2] = 0;
   ret = robot_command (cmd, resp, &resp_len);
-  Serial.print("Call CmdRobot, ret: ");
+  Serial.print("Call robot_command, ret: ");
   Serial.println(ret);
   
   
@@ -48,7 +48,7 @@ void setup()
   cmd[1] = 0;
   cmd[2] = 0;
   ret = robot_command (cmd, resp, &resp_len);
-  Serial.print("Call CmdRobot, ret: ");
+  Serial.print("Call robot_command, ret: ");
   Serial.println(ret);
   
  }

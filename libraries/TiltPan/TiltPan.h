@@ -2,11 +2,12 @@
 #define TILTPAN_h
 
 #include <inttypes.h> // used for uint8_t type
+#include <Arduino.h> // used for delay
 
-#define HSERVO_Pin  34   // Horizontal Servo pin connected to digital pin J9-04 (PMD3/RE3)
+#define HSERVO_Pin  44  // Horizontal Servo pin connected to digital PWM pin 44
 /* Power +5V */
 /* Ground    */
-#define VSERVO_Pin  35   // Vertical Servo pin connected to digital pin J9-03 (PMD2/RE2)
+#define VSERVO_Pin  45   // Vertical Servo pin connected to digital PWM pin 45
 /* Power +5V */
 /* Ground    */
 

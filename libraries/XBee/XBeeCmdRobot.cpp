@@ -68,7 +68,7 @@ int XBeeCmdRobot ()
    
      if (ret == SUCCESS)
      {
-           ret = CmdRobot (cmd, resp, &resp_len);
+           ret = robot_command (cmd, resp, &resp_len);
            if (ret == SUCCESS)
            {
                  if (resp_len > 0)

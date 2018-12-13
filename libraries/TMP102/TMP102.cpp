@@ -4,7 +4,7 @@
   Released into the public domain.
 */
 
-#include <WProgram.h> // used for delay function (core lib)
+#include <Arduino.h> // used for delay function (core lib)
 #include <Wire.h>     // used for I2C protocol (lib)
 
 #include <TMP102.h>

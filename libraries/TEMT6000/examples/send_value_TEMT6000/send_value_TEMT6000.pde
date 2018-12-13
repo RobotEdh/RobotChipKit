@@ -1,5 +1,4 @@
 #include <VirtualWire.h> // RF transmission library
-#include <wiring.h>
 #include <TEMT6000.h>
  
 TEMT6000Class TEMT6000;

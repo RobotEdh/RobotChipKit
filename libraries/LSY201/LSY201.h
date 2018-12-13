@@ -9,10 +9,10 @@
 #define LSY201_h
 
 /* Camera                                                                */
-/* UART2 interface is provided on pins:                                  */
+/* Serial interface is provided on pins:                                 */
 /*        1 = Power +5V                                                  */                
-/*        2 = TX connected to J4-04 (AETXD1/SCK1A/U1BTX/U1ARTS/CN21/RD15)*/
-/*        3 = RX connected to J4-03 (AETXD0/SS1A/U1BRX/U1ACTS/CN20/RD14) */
+/*        2 = TXD connected to RX                                        */
+/*        3 = RXD connected to TX                                        */
 /*        4 = Ground                                                     */
 
 
@@ -39,16 +39,16 @@ class JPEGCameraClass
         /*                  = 0 otherwise                                             */ 
         /* lib:         sendCommand                                                   */
         /*              uint8Compare                                                  */
-        /*              Serial1.flush                                                 */
-        /*              Serial1.available                                             */
-        /*              Serial1.read                                                  */
+        /*              Serial.flush                                                 */
+        /*              Serial.available                                             */
+        /*              Serial.read                                                  */
         		
 		int begin(void);
-        /* Description: Initialize the serial1 port and call reset ()                 */                                            
+        /* Description: Initialize the Serial port and call reset ()                 */                                            
         /* input:       none                                                          */                      
         /* output:      return                                                        */ 
         /*                  = return of the reset() function otherwise                */ 
-        /* lib:       	Serial1.begin                                                 */
+        /* lib:       	Serial.begin                                                 */
         /*              reset                                                         */	
 			
 		int getSize(int * size);
@@ -61,10 +61,10 @@ class JPEGCameraClass
         /*                  = -10 if error reading the serial buffer                  */
         /*                  = 0 otherwise                                             */ 
         /* lib:         uint8Compare                                                  */
-        /*              Serial1.flush                                                 */
-        /*              Serial1.available                                             */
-        /*              Serial1.read                                                  */
-        /*              Serial1.write                                                 */       		
+        /*              Serial.flush                                                 */
+        /*              Serial.available                                             */
+        /*              Serial.read                                                  */
+        /*              Serial.write                                                 */       		
 		
 		int takePicture(void);
         /* Description: Take a picture                                                */                                            
@@ -102,9 +102,9 @@ class JPEGCameraClass
         /*                  = -10, -100, -1000 if error reading the serial buffer     */
         /*                  = 0 otherwise                                             */ 
         /* lib:         uint8Compare                                                  */
-        /*              Serial1.available                                             */
-        /*              Serial1.read                                                  */
-        /*              Serial1.write                                                 */ 
+        /*              Serial.available                                             */
+        /*              Serial.read                                                  */
+        /*              Serial.write                                                 */ 
         		
 		int compress(int ratio);
         /* Description: Compress the picture according the ratio                      */                                            
@@ -116,10 +116,10 @@ class JPEGCameraClass
         /*                  = -10 if error reading the serial buffer                  */
         /*                  = 0 otherwise                                             */ 
         /* lib:         uint8Compare                                                  */
-        /*              Serial1.flush                                                 */
-        /*              Serial1.available                                             */
-        /*              Serial1.read                                                  */
-        /*              Serial1.write                                                 */       		
+        /*              Serial.flush                                                 */
+        /*              Serial.available                                             */
+        /*              Serial.read                                                  */
+        /*              Serial.write                                                 */       		
 		
 		int imageSizeSmall(void);
         /* Description: Change the size of the image is Small format (160*120)        */
@@ -223,9 +223,9 @@ class JPEGCameraClass
         /*              return                                                        */                            
         /*                  = -10 if error reading the serial buffer                  */
         /*                  = 0 otherwise                                             */ 
-        /* lib:         Serial1.write                                                 */
-        /*              Serial1.available                                             */
-        /*              Serial1.read                                                  */
+        /* lib:         Serial.write                                                 */
+        /*              Serial.available                                             */
+        /*              Serial.read                                                  */
         /*              millis                                                        */
         
 		int uint8Compare(const uint8_t *a1, const uint8_t *a2, int len);

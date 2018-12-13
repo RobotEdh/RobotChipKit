@@ -23,21 +23,31 @@ Servo IRServo;                // The Servo class used for IR sensor
 int motor_begin()
 {
   int ret = SUCCESS;
+  int ivalue = 0;
  
   Serial.println("Begin Motor Init");
+  Serial.println("****************");
 
   // initialize the lcd 
-  ret = lcd.init();
-  if (ret == 0) {                      
-      lcd.backlight();
-      Serial.println("Init LCD OK");
-  }    
-  else {
-      Serial.print("Init LCD KO, error: ");
-      Serial.println(ret);    
-  }
+  lcd.init();
+  lcd.backlight();
+
   lcd.clear();
+  lcd.printByte(lcd_bell);    lcd.print(" ");
+  lcd.printByte(lcd_note);    lcd.print(" ");
+  lcd.printByte(lcd_clock);   lcd.print(" ");
+  lcd.printByte(lcd_smiley);  lcd.print(" ");
+  lcd.printByte(lcd_duck);    lcd.print(" ");
+  lcd.printByte(lcd_celcius); lcd.print(" ");
+  lcd.printByte(lcd_pipe);
+
+  delay (5*1000);
+  lcd.clear();
+  Serial.println("Init LCD OK");
   lcd.print("Begin Motor Init");
+  lcd.setCursor(0,1); 
+  lcd.print("Init LCD OK     ");
+  
   
   // H bridge setup
   pinMode(InMotorRight1Pin, OUTPUT);      // set the pin as output
@@ -51,7 +61,9 @@ int motor_begin()
   
   stop();
   lcd.print("Init motors OK");
-  Serial.println("Init motors OK"); 
+  Serial.println("Init motors OK");
+  delay(5*1000);lcd.clear(); 
+   
 
   // initialize the pin connected to the Contact sensors 
   pinMode(ContactRightPin, INPUT);
@@ -60,7 +72,12 @@ int motor_begin()
     
   // initialize the pin connected to the IR sensor 
   GP2Y0A21YK.GP2Y0A21YK_init(GP2Y0A21YK_PIN); 
+  ivalue = GP2Y0A21YK.GP2Y0A21YK_getDistanceCentimeter();
+  Serial.print("Distance: ");
+  Serial.println(ivalue); 
+  lcd.print("IR:");lcd.print(ivalue);lcd.print(" cm");lcd.printByte(lcd_pipe);   
   Serial.println("Init IR sensor OK");
+  delay(5*1000);lcd.clear(); 
 
   // initialize the PWM pin connected to the servo used for the IR sensor and initialize the associate Timer interrupt
   IRServo.attach(IRSERVO_Pin);  
@@ -80,15 +97,24 @@ int motor_begin()
   int revision = CMPS03.CMPS03_revision();
   if (revision < 0) {
      Serial.print("Init compass K0 ->Error I2C: ");
-     Serial.println(revision);    
+     Serial.println(revision);   
+     lcd.setCursor(0,1); 
+     lcd.print("Init Compass KO "); 
   }
   else
   {  
      Serial.print("Compass Revision: ");
      Serial.println(revision);
-     Serial.println("Init compass OK");
+     ivalue = CMPS03.CMPS03_read();
+     Serial.print("Direction: ");
+     Serial.println(ivalue); 
+     lcd.print("CRev:");lcd.print(revision);lcd.printByte(lcd_pipe);lcd.print(ivalue);lcd.print((char)223);lcd.printByte(lcd_pipe);
+     lcd.setCursor(0,1); 
+     lcd.print("Init Compass OK ");    
+     Serial.println("Init compass OK");    
   }
-
+  delay(5*1000);lcd.clear();
+  
 #ifdef PID      
   // interrupts setup
   pinMode(EncoderTickRightPin, INPUT);      // set the pin as input
@@ -99,14 +125,12 @@ int motor_begin()
   interrupts(); // enable all interrupts
 #endif 
   
-  lcd.setCursor(0,1); 
   lcd.print("End   Motor Init");
-  
-  Serial.println("");
   Serial.println("End Motor Init");
   Serial.println("**************");
   Serial.println("");
-
+  delay(5*1000);lcd.clear(); 
+  
   return SUCCESS;
   
 }

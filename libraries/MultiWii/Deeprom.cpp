@@ -38,7 +38,7 @@ extern "C" {
 #define	OPT_BOARD_INTERNAL
 #include <pins_arduino.h>
 
-#include "WProgram.h"
+#include "Arduino.h"
 #include "Deeprom.h"
 
 /* ------------------------------------------------------------ */

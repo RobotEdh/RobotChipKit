@@ -1,7 +1,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
-#include "WProgram.h"
+#include "Arduino.h"
 #include <sys/attribs.h> //EDH used for __ISR
 #define cli()  asm volatile("di") //turn intrupts off
 #define sei()  asm volatile("ei") //turn intrupts on

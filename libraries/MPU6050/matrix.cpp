@@ -3,7 +3,7 @@
  * @email : lucas.dietrich.pro@gmail.com
  * @website http://www.kestrel.fr
  */
-#include "WProgram.h"
+#include "Arduino.h"
 #include "matrix.h"
 
 dMatrix_t IdentityMatrix = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};

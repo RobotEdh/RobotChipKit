@@ -1,4 +1,4 @@
-#include "WProgram.h"
+#include "Arduino.h"
 #include <sys/attribs.h> //used for __ISR
 
 #include "config.h"

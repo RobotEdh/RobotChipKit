@@ -8,11 +8,10 @@
 #ifndef TEMT6000_h
 #define TEMT6000_h
 
-#include <WProgram.h> // used for pin definition
-#include <wiring.h>   // used for analogic read function (core lib)
+#include <Arduino.h> // used for pin definition
 
-#define TEMT6000_PIN_DEFAULT A0  // Default Brightness Sensor TEMT6000 analogic pin J5-01 A0 (PGED1/AN0/CN2/RB0)   Use ADC module channel 2
-/* Analogic interface is provided on pin A0 */
+#define TEMT6000_PIN_DEFAULT A2  // Default Brightness Sensor TEMT6000 analogic pin  A2
+/* Analogic interface is provided on pin A2 */
 /* Power +5V is set on pin VCC              */
 /* Ground    is set on pin GND              */
 

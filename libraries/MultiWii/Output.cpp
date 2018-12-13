@@ -1,7 +1,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
-#include "WProgram.h"
+#include "Arduino.h"
 
     // For PIC32 Timers, define prescale settings by PWM frequency
     #define MOTOR12_312KHZ 0 // 1:1, actual frequency 312KHz

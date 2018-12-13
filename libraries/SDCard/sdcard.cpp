@@ -1,9 +1,4 @@
 #include <sdcard.h>
-#include <SD.h>       
-
-#ifndef PICEDH_SdFat_h
-#error You need to copy the PICEDH_SD utility lib in hardware_pic32libraries_SD
-#endif
 
 Sd2Card card;       // SD Card       
 SdVolume volume;    // SD Volume
@@ -94,44 +89,26 @@ int infoSDCard(void){
 	Serial.print("\nVolume type is FAT");
 	Serial.print(volume.fatType(), DEC);
 				  				
-	uint32_t volumesize, volume_free;
-	volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
-	volume_free = volume.blocksPerCluster();  
-	Serial.print("\nNb blocks per cluster: ");
-	Serial.print(volumesize);
-	volumesize *= volume.clusterCount();       // we'll have a lot of clusters
-    volume_free *= volume.freeClusterCount();
-	Serial.print("\nClusters count: ");
-	Serial.print(volume.clusterCount());  
-	volumesize *= 512;
-	volume_free *= 512;
-	Serial.print("\nBlock size: 512");        // SD card blocks are always 512 bytes
-	Serial.print("\nVolume size (bytes): ");
-	Serial.print(volumesize);
-	Serial.print(" / Volume free (bytes): ");
-	Serial.print(volume_free);	
-	Serial.print(" / % free: ");
-	Serial.print(100.0*(double)(volume_free)/(double)(volumesize));			
-	Serial.print("\nVolume size (Kbytes): ");
-	volumesize /= 1024;
-	Serial.print(volumesize);
-	Serial.print(" / Volume free (Kbytes): ");
-	volume_free /= 1024;
-	Serial.print(volume_free);				
-	Serial.print("\nVolume size (Mbytes): ");
-	volumesize /= 1024;
-	Serial.print(volumesize);
-	Serial.print(" / Volume free (Mbytes): ");
-	volume_free /= 1024;
-	Serial.print(volume_free);
-			
+    uint32_t volumesize;
+    volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
+    volumesize *= volume.clusterCount();       // we'll have a lot of clusters
+    volumesize /= 2;                           // SD card blocks are always 512 bytes (2 blocks are 1KB)
+    Serial.print("Volume size (Kb):  ");
+    Serial.println(volumesize);
+    Serial.print("Volume size (Mb):  ");
+    volumesize /= 1024;
+    Serial.println(volumesize);
+    Serial.print("Volume size (Gb):  ");
+    Serial.println((float)volumesize / 1024.0);
+
 	// list all files in the card with date and size			    
     Serial.println("\nFiles found on the card (name, date and size in bytes): ");
-	uint16_t n = root.ls(LS_R | LS_DATE | LS_SIZE);
-	Serial.println("");
-	Serial.print(n); Serial.println(" files found");
+    root.openRoot(volume);
+
+    // list all files in the card with date and size
+    root.ls(LS_R | LS_DATE | LS_SIZE);
 	Serial.println("");
 				
-    return n;		
+    return 0;		
 }
 		

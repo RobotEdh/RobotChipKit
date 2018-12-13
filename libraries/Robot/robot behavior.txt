@@ -21,19 +21,18 @@
          8: alert status
          9: picture number
       
-       then =>
-         call CMD_ALERT to perform:
+       call CMD_ALERT to perform:
             If motor_state == STATE_GO => Stop
             Make 3 pictures left, front and right
             Send Infos + last 3 pictures in WIFI to the PI server if it is activated 
 
-     Else if Photon wants to do something =>
-       Read the message received from Photon   
-       If it is a command, Execute the command received from Photon and reply to Photon
-       If it is a response, Update the robot with the response received from Photon 
+     Else if ESP8266 wants to do something (interrupt received) =>
+       Read the message received from ESP8266
+       If it is a command, Execute the command received from ESP8266 and reply to ESP8266
+       If it is a response, Update the robot with the response received from ESP8266
     
      Else if the PI server is activated for periodic infos and delay is reached => 
-       call CMD_INFOS to get the following infos:
+       Call CMD_INFOS to get the following infos:
          0: motor_state
          1: SpeedMotorRight
          2: SpeedMotorLeft
@@ -45,12 +44,12 @@
          8: alert status
          9: picture number
      
-       Then send Infos in WIFI to the PI server
+       Send Infos in WIFI to the PI server
    
      Else if motor_state == STATE_GO =>
-       call CMD_GO to perform:
+       Call CMD_GO to perform:
          if motor_state != STATE_GO, start_forward
-         call go to perform:
+         Call go to perform:
             Check Contacts sensors right and left
             Check distance minimum with IR every second
             return in case of obstacle
@@ -59,10 +58,10 @@
             buzz(3);
             blink(Led_Red); 
             check_around using TiltPan and IR
-            if (dir == DIRECTION_LEFT) {
+            if (dir == DIRECTION_LEFT) 
                    start_forward
                    turn  -45 degrees during 5s max
-            else if (dir == DIRECTION_RIGHT) {
+            else if (dir == DIRECTION_RIGHT)
                    start_forward
                    turn  +45 degrees during 5s max
             else

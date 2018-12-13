@@ -171,7 +171,7 @@ int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
     
     for (uint8_t k = 0; k < length; k += min(length, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
-                Wire.send(regAddr);
+                Wire.write(regAddr);
                 ret = Wire.endTransmission();
    #ifdef I2CDEV_SERIAL_DEBUG
         Serial.print("endTransmission, ret: ");
@@ -183,7 +183,7 @@ int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
                 if (ret == 0) {Serial.print("+++");return -12;}
 
                 for (; Wire.available() && (timeout == 0 || millis() - t1 < timeout); count++) {
-                    data[count] = Wire.receive();
+                    data[count] = Wire.read();
                     #ifdef I2CDEV_SERIAL_DEBUG
                         Serial.print(data[count], HEX);
                         if (count + 1 < length) Serial.print(" ");
@@ -211,7 +211,7 @@ int8_t I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint1
     
 for (uint8_t k = 0; k < length * 2; k += min(length * 2, BUFFER_LENGTH)) {
                 Wire.beginTransmission(devAddr);
-                Wire.send(regAddr);
+                Wire.write(regAddr);
                 ret = Wire.endTransmission();
                 if (ret != 0) return -1;               
                 
@@ -223,10 +223,10 @@ for (uint8_t k = 0; k < length * 2; k += min(length * 2, BUFFER_LENGTH)) {
                 for (; Wire.available() && count < length && (timeout == 0 || millis() - t1 < timeout);) {
                     if (msb) {
                         // first byte is bits 15-8 (MSb=15)
-                        data[count] = Wire.receive() << 8;
+                        data[count] = Wire.read() << 8;
                     } else {
                         // second byte is bits 7-0 (LSb=0)
-                        data[count] |= Wire.receive();
+                        data[count] |= Wire.read();
                         count++;
                     }
                     msb = !msb;
@@ -362,10 +362,10 @@ bool I2Cdev::writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data) {
  */
 bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t* data) {
     Wire.beginTransmission(devAddr);
-    Wire.send((uint8_t) regAddr); // send address
+    Wire.write((uint8_t) regAddr); // send address
  
     for (uint8_t i = 0; i < length; i++) {
-            Wire.send((uint8_t) data[i]);
+            Wire.write((uint8_t) data[i]);
     }
  
     int ret = Wire.endTransmission();
@@ -374,11 +374,11 @@ bool I2Cdev::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_
 
 bool I2Cdev::writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t* data) { 
     Wire.beginTransmission(devAddr);
-    Wire.send(regAddr); // send address
+    Wire.write(regAddr); // send address
  
      for (uint8_t i = 0; i < length * 2; i++) {
-            Wire.send((uint8_t)(data[i++] >> 8)); // send MSB
-            Wire.send((uint8_t)data[i]); // send LSB
+            Wire.write((uint8_t)(data[i++] >> 8)); // send MSB
+            Wire.write((uint8_t)data[i]); // send LSB
     }
     
     int ret = Wire.endTransmission();
@@ -413,7 +413,7 @@ MPU6050::MPU6050(uint8_t address) {
 int MPU6050::initialize(uint8_t Accel_FS, uint8_t Gyro_FS) {
    
     Serial.println(">>Wire begin");
-    if(!Wire.begin()) return -1;  
+    Wire.begin();
     
     Serial.println(">>reset");
     if(!reset()) return -1; 

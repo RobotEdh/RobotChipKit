@@ -1,5 +1,3 @@
-#include <wiring.h>
-
 #include <Micro.h>
 
 MicroClass Micro;

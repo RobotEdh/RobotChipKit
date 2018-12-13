@@ -4,7 +4,7 @@
  * @website http://www.kestrel.fr
  */
 
-#include "WProgram.h"
+#include "Arduino.h"
 #include "MPU_math.h"
 
 

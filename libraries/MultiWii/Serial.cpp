@@ -1,7 +1,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
-#include "WProgram.h"
+#include "Arduino.h"
 #define  PGM_P    const char *
 #define  strlen_P strlen
 #endif

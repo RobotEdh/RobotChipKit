@@ -28,7 +28,7 @@ void setup()
   int count;
 
   Serial.begin(9600);
-  if (!SD.begin(4)) Serial.println("\n\n\ninitialization SD card failed!"); else Serial.println("\n\n\ninitialization card OK!");
+  if (!SD.begin(8)) Serial.println("\n\n\ninitialization SD card failed!"); else Serial.println("\n\n\ninitialization card OK!");
   myFile = SD.open("test63.jpg", FILE_WRITE);
  
   ret=JPEGCamera.begin();
@@ -85,7 +85,7 @@ void setup()
   Serial.println ();
    
   myFile.close();
-  Serial.print ("close ok ");
+  Serial.print ("close file ok ");
   Serial.println ();
   
  
